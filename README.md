@@ -1,18 +1,35 @@
 # host-client
 
-> A Vue.js project
+## Run Environment
 
-## Build Setup
+First, start local blockchain with by opening the Ganache application.
 
-``` bash
-# install dependencies
+Then:
+
+```bash
+# get recent contracts, deploy them and run
+./deployRun.sh
+```
+
+```bash
+# if contracts already deployed
 npm install
+npm run serve
+```
 
-# serve with hot reload at localhost:8080
-npm run dev
+## Standalone setup and run commands
 
-# build for production with minification
+```bash
+# compiles and minifies for production
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+```bash
+# run unit tests
+npm run test:unit
+```
+
+```bash
+# lints and fixes files
+npm run lint
+```
