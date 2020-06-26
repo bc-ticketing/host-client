@@ -11,8 +11,3 @@ truffle migrate --reset
 cd ..
 rm -rf ../src/abi
 cp -r abi ../src/
-
-#start vue.js client
-cd ..
-npm install
-npm run serve
