@@ -1517,12 +1517,12 @@
         }
       },
       "links": {},
-      "address": "0xabAd4aBA6a4049a771764f8F98dc0bA9AA7FE167",
-      "transactionHash": "0x608f53785de95b7ae9d9eae85baee8d4ad4c5621a22f5fbcc97009d5288292b6"
+      "address": "0x463EE02F15B5aa0B2EF41B001Af6A56B4fC231cF",
+      "transactionHash": "0x8e4f03c3981e7d9a843fbc0895fb9e7fa6c1177fbff9cb855a4f380995c50131"
     }
   },
   "schemaVersion": "3.2.0",
-  "updatedAt": "2020-06-26T09:39:32.533Z",
+  "updatedAt": "2020-07-23T08:48:30.525Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}
