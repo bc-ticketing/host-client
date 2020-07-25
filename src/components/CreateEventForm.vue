@@ -167,6 +167,13 @@
             :disabled="sending"
             >Uploaod to ipfs</md-button
           >
+          <md-button
+            type="submit"
+            class="md-primary"
+            @click="downloadFromIpfs"
+            :disabled="sending"
+            >Download from ipfs</md-button
+          >
         </md-card-actions>
         <md-card-actions>
           <md-button type="submit" class="md-primary" :disabled="sending"
@@ -179,6 +186,10 @@
         <p>description: {{ this.form.description }}</p>
         <p>idApprover: {{ this.form.idApprover }}</p>
         <p>idLevel: {{ this.form.idLevel }}</p>
+        <p>ipfs hash: {{ this.ipfsHash }}</p>
+        <p>https://ipfs.io/ipfs/{{this.ipfsHash}}</p>
+        <p>ipfs data: {{ this.ipfsData }}</p>
+
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded"
@@ -204,9 +215,18 @@ import {
 } from "vuelidate/lib/validators";
 import { NETWORKS } from "./../util/constants/constants.js";
 import { getWeb3 } from "../util/getWeb3";
-
+import IpfsHttpClient,{CID}  from 'ipfs-http-client';
 import Web3 from "web3";
+import {fromBase58} from "multihashes";
+
 const web3 = new Web3("ws://localhost:7545");
+const ipfs2 = new IpfsHttpClient(
+  {
+    host: "localhost",
+    port: 5001,
+    protocol: "http",
+  }
+);
 
 export default {
   name: "CreateEventForm",
@@ -214,6 +234,7 @@ export default {
   data: () => ({
     accounts: null,
     ipfsHash: null,
+    ipfsData: null,
     ethToken: "0x0",
     daiTokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
     form: {
@@ -237,30 +258,30 @@ export default {
   validations: {
     form: {
       eventTitle: {
-        required,
+        // required,
         minLength: minLength(3),
       },
       eventType: {
-        required,
+        // required,
       },
       description: {
-        required,
+        // required,
         minLength: minLength(10),
       },
       erc20Token: {
-        required,
+        // required,
         minLength: minLength(42),
         maxLength: maxLength(42),
       },
       idLevel: {
-        required,
+        // required,
         maxLength: maxLength(1),
       },
       idApprover: {
-        required,
+        // required,
       },
       email: {
-        required,
+        // required,
         email,
       },
     },
@@ -293,24 +314,33 @@ export default {
       this.form.email = null;
     },
     async uploadToIpfs() {
-      // todo upload to ipfs correctly
-      this.sending = true;
+      //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
+      const response = await ipfs2.add(this.form.eventTitle);
+      this.ipfsHash = response.path
 
-      try {
-        const ipfs = await this.$ipfs;
-        this.ipfsHash = await ipfs.add("hoi zäme");
+      // this.sending = true;
 
-        console.log("ipfsHash: " + this.ipfsHash.cid.string);
-      } catch (err) {
-        console.log(err);
+      // try {
+      //   const ipfs = await this.$ipfs;
+      //   this.ipfsHash = await ipfs.add("hoi zäme");
+
+      //   console.log("ipfsHash: " + this.ipfsHash.cid.string);
+      // } catch (err) {
+      //   console.log(err);
+      // }
+      // // Instead of this timeout, here you can call your API
+      // window.setTimeout(() => {
+      //   this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
+      //   this.ipfsAdded = true;
+      //   this.sending = false;
+      //   this.clearForm();
+      // }, 1500);
+    },
+    async downloadFromIpfs(){
+      console.log("downloading from ipfs...");
+      for await (const chunk of ipfs2.cat(this.ipfsHash)) {
+        this.ipfsData = Buffer(chunk, 'utf8').toString();
       }
-      // Instead of this timeout, here you can call your API
-      window.setTimeout(() => {
-        this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
-        this.ipfsAdded = true;
-        this.sending = false;
-        this.clearForm();
-      }, 1500);
     },
     parseIPFSData() {
       var items = "#event-title, #description";
@@ -325,9 +355,9 @@ export default {
     validateEvent() {
       this.$v.$touch();
 
-      if (!this.$v.$invalid) {
-        this.uploadToIpfs();
-      }
+      // if (!this.$v.$invalid) {
+      //   this.uploadToIpfs();
+      // }
     },
     async getIpfsNodeInfo() {
       try {

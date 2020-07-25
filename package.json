@@ -11,6 +11,7 @@
   "dependencies": {
     "@walletconnect/web3-provider": "^1.1.0",
     "body-parser": "^1.19.0",
+    "cids": "^0.8.3",
     "core-js": "^3.6.5",
     "ejs": "^3.1.3",
     "express": "^4.17.1",
@@ -18,6 +19,7 @@
     "idetix-utils": "^1.0.12",
     "ipfs": "^0.48.1",
     "ipfs-http-client": "^45.0.0",
+    "multihashes": "^1.0.1",
     "vue": "^2.6.11",
     "vue-material": "^1.0.0-beta-14",
     "vue-router": "^3.2.0",
