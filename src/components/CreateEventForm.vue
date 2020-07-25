@@ -8,7 +8,7 @@
 
         <md-card-content>
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-30">
+            <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('eventTitle')">
                 <label for="event-title">Event Title</label>
                 <md-input
@@ -75,7 +75,7 @@
           </div>
 
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-30">
+            <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('erc20Token')">
                 <label for="erc20Token">Accepted Token For Payment</label>
                 <md-input
@@ -186,14 +186,15 @@
         success!</md-snackbar
       >
       <md-snackbar :md-active.sync="eventContractDeployed"
-        >The event was successfully deployed! Contract address:</md-snackbar
+        >The event {{ lastEvent }} was successfully deployed! Contract
+        address:</md-snackbar
       >
     </form>
   </div>
 </template>
 
 <script>
-import { nonFungibleBaseId } from "idetix-utils";
+// import { nonFungibleBaseId } from "idetix-utils";
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -201,11 +202,17 @@ import {
   minLength,
   maxLength,
 } from "vuelidate/lib/validators";
+import { NETWORKS } from "./../util/constants/constants.js";
+import { getWeb3 } from "../util/getWeb3";
+
+import Web3 from "web3";
+const web3 = new Web3("ws://localhost:7545");
 
 export default {
   name: "CreateEventForm",
   mixins: [validationMixin],
   data: () => ({
+    accounts: null,
     ipfsHash: null,
     ethToken: "0x0",
     daiTokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -259,9 +266,12 @@ export default {
     },
   },
   mounted: function() {
-    // this.getIpfsNodeInfo();
-    this.upload();
-    console.log(nonFungibleBaseId);
+    console.log(web3);
+    const getAccountAtIndex = async (index) => {
+      const accounts = await web3.eth.getAccounts();
+      return accounts[index];
+    };
+    console.log(getAccountAtIndex(1));
   },
   methods: {
     getValidationClass(fieldName) {
@@ -345,6 +355,17 @@ export default {
       }
     },
   },
+  //   computed: {
+  //     web3() {
+  //       return this.$store.state.web3;
+  //     },
+  //     networkName() {
+  //       return NETWORKS[this.web3.networkId];
+  //     },
+  //     isConnected() {
+  //       return this.web3.networkId != null;
+  //     },
+  //   },
 };
 </script>
 
