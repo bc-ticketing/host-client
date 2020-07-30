@@ -1,10 +1,10 @@
 import Web3 from "web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-// const web3 = new Web3("ws://localhost:7545");
+const web3 = new Web3("ws://localhost:7545");
 
 async function getWeb3() {
-  await linkWeb3(true);
+  await linkWeb3(false);
   try {
     // Acccounts now exposed
     var web3 = {};
@@ -12,6 +12,7 @@ async function getWeb3() {
     web3.accounts = await window.web3.eth.getAccounts();
     web3.account = web3.accounts[0];
     web3.balance = await window.web3.eth.getBalance(web3.account);
+    web3.eth = await window.web3.eth;
     return web3;
   } catch (error) {
     // User denied account access...

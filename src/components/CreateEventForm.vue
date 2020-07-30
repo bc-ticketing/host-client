@@ -17,12 +17,11 @@
                   v-model="form.eventTitle"
                   :disabled="sending"
                 />
-                <span class="md-error" v-if="!$v.form.eventTitle.required"
-                  >The event title is required</span
-                >
-                <span class="md-error" v-else-if="!$v.form.eventTitle.minlength"
-                  >Invalid event title</span
-                >
+                <span
+                  class="md-error"
+                  v-if="!$v.form.eventTitle.required"
+                >The event title is required</span>
+                <span class="md-error" v-else-if="!$v.form.eventTitle.minlength">Invalid event title</span>
               </md-field>
             </div>
           </div>
@@ -30,11 +29,7 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('eventType')">
                 <label for="event-type">Event Type</label>
-                <md-select
-                  name="event-type"
-                  id="event-type"
-                  v-model="form.eventType"
-                >
+                <md-select name="event-type" id="event-type" v-model="form.eventType">
                   <md-option value="Music">Music</md-option>
                   <md-option value="Sports">Sports</md-option>
                   <md-option value="Theatre">Theatre</md-option>
@@ -63,11 +58,7 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('erc20Token')">
                 <label for="erc20Token">Accepted Token For Payment</label>
-                <md-input
-                  name="erc20Token"
-                  id="erc20Token"
-                  v-model="form.erc20Token"
-                />
+                <md-input name="erc20Token" id="erc20Token" v-model="form.erc20Token" />
                 <!-- <span class="md-error" v-if="!$v.form.erc20Token.required"
                   >The token that is accepted for payment is required</span
                 >
@@ -76,7 +67,7 @@
                 >
                 <span class="md-error" v-else-if="!$v.form.erc20Token.maxLength"
                   >Invalid event token hash</span
-                > -->
+                >-->
               </md-field>
             </div>
           </div>
@@ -84,12 +75,7 @@
           <div class="md-layout-item md-small-size-100">
             <md-field :class="getValidationClass('idApprover')">
               <label for="idApprover">ID Approver</label>
-              <md-select
-                name="idApprover"
-                id="idApprover"
-                v-model="form.idApprover"
-                md-dense
-              >
+              <md-select name="idApprover" id="idApprover" v-model="form.idApprover" md-dense>
                 <md-option value="Idetix">Idetix</md-option>
               </md-select>
               <span class="md-error">An ID approver is required</span>
@@ -100,23 +86,14 @@
           <div class="md-layout-item md-small-size-100">
             <md-field :class="getValidationClass('idLevel')">
               <label for="idLevel">Identification level</label>
-              <md-select
-                type="number"
-                id="idLevel"
-                name="idLevel"
-                v-model="form.idLevel"
-              >
+              <md-select type="number" id="idLevel" name="idLevel" v-model="form.idLevel">
                 <!-- <md-option></md-option> -->
                 <md-option value="1">1</md-option>
                 <md-option value="2">2</md-option>
                 <md-option value="3">3</md-option>
               </md-select>
-              <span class="md-error" v-if="!$v.form.idLevel.required"
-                >The id level is required</span
-              >
-              <span class="md-error" v-else-if="!$v.form.idLevel.maxlength"
-                >Invalid id level</span
-              >
+              <span class="md-error" v-if="!$v.form.idLevel.required">The id level is required</span>
+              <span class="md-error" v-else-if="!$v.form.idLevel.maxlength">Invalid id level</span>
             </md-field>
           </div>
 
@@ -129,29 +106,23 @@
               autocomplete="email"
               v-model="form.email"
             />
-            <span class="md-error" v-if="!$v.form.email.required"
-              >The email is required</span
-            >
-            <span class="md-error" v-else-if="!$v.form.email.email"
-              >Invalid email</span
-            >
+            <span class="md-error" v-if="!$v.form.email.required">The email is required</span>
+            <span class="md-error" v-else-if="!$v.form.email.email">Invalid email</span>
           </md-field>
         </md-card-content>
 
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="uploadEventToIpfs"
-            >Uploaod to ipfs</md-button
-          >
-          <md-button type="submit" class="md-primary" @click="downloadFromIpfs"
-            >Download from ipfs</md-button
-          >
+          <md-button type="submit" class="md-primary" @click="uploadEventToIpfs">Uploaod to ipfs</md-button>
+          <md-button type="submit" class="md-primary" @click="downloadFromIpfs">Download from ipfs</md-button>
         </md-card-actions>
         <md-card-actions>
-          <md-button type="submit" class="md-primary" :disabled="sending"
-            >Deploy event contract</md-button
-          >
+          <md-button
+            type="submit"
+            class="md-primary"
+            @click="deployEventContract"
+          >Deploy event contract</md-button>
         </md-card-actions>
         <p>eventTitle: {{ this.form.eventTitle }}</p>
         <p>eventType: {{ this.form.eventType }}</p>
@@ -164,14 +135,14 @@
         <p>ipfs data: {{ this.ipfsData }}</p>
       </md-card>
 
-      <md-snackbar :md-active.sync="ipfsAdded"
-        >The event {{ lastEvent }} was uploaded to IPFS with
-        success!</md-snackbar
-      >
-      <md-snackbar :md-active.sync="eventContractDeployed"
-        >The event {{ lastEvent }} was successfully deployed! Contract
-        address:</md-snackbar
-      >
+      <md-snackbar :md-active.sync="ipfsAdded">
+        The event {{ lastEvent }} was uploaded to IPFS with
+        success!
+      </md-snackbar>
+      <md-snackbar :md-active.sync="eventContractDeployed">
+        The event {{ lastEvent }} was successfully deployed! Contract
+        address:
+      </md-snackbar>
     </form>
   </div>
 </template>
@@ -183,29 +154,33 @@ import {
   required,
   email,
   minLength,
-  maxLength,
+  maxLength
 } from "vuelidate/lib/validators";
 import { NETWORKS } from "./../util/constants/constants.js";
-import { getWeb3 } from "../util/getWeb3";
+import getWeb3 from "../util/getWeb3";
 import IpfsHttpClient, { CID } from "ipfs-http-client";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import Web3 from "web3";
 import { fromBase58 } from "multihashes";
+import fs from "fs";
+import { address, ABI } from "../constants/EventFactory.js";
+// import ssabi from "../abi/SimpleStorage.json";
 
 const web3 = new Web3("ws://localhost:7545");
 const ipfs2 = new IpfsHttpClient({
   host: "localhost",
   port: 5001,
-  protocol: "http",
+  protocol: "http"
 });
 
 export default {
   name: "CreateEventForm",
   mixins: [validationMixin],
   data: () => ({
+    simonWeb3: null,
     simonArgs: null,
     simonCid: null,
-    ipfsHash: null,
+    ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsData: null,
     ipfsString: null,
     ethToken: "0x0",
@@ -221,48 +196,48 @@ export default {
       erc20Token: null,
       idApprover: "Idetix",
       idLevel: null,
-      email: null,
+      email: null
     },
     ipfsAdded: false, // todo: set true, when ipfs hash is returned
     eventContractDeployed: false, // todo: set after web3js event catches deployment event
     sending: false,
-    lastEvent: null,
+    lastEvent: null
   }),
   validations: {
     form: {
       eventTitle: {
         // required,
-        minLength: minLength(3),
+        minLength: minLength(3)
       },
       eventType: {
         // required,
       },
       eventDescription: {
         // required,
-        minLength: minLength(10),
+        minLength: minLength(10)
       },
       erc20Token: {
         // required,
         minLength: minLength(42),
-        maxLength: maxLength(42),
+        maxLength: maxLength(42)
       },
       idLevel: {
         // required,
-        maxLength: maxLength(1),
+        maxLength: maxLength(1)
       },
       idApprover: {
         // required,
       },
       email: {
         // required,
-        email,
-      },
-    },
+        email
+      }
+    }
   },
   methods: {
     getValidationClass(fieldName) {
       return {
-        "md-invalid": false,
+        "md-invalid": false
       };
       // const field = this.$v.form[fieldName];
       // if (field) {
@@ -319,7 +294,7 @@ export default {
     createIpfsString() {
       return JSON.stringify({
         title: this.form.eventTitle,
-        description: this.form.eventDescription,
+        description: this.form.eventDescription
       });
     },
     async uploadEventToIpfs() {
@@ -409,7 +384,56 @@ export default {
     //     this.status = `Error: ${err}`;
     //   }
     // },
+    async deployEventContract() {
+      const eventFactoryContractAddress =
+        "0x150D855f9eEd27612f40c21C08011fD43c1462c3";
+      const ssAddress = "0x55c5e43157694a5dd488972Cc721F884Fd60F8Dd";
+      const web3 = await getWeb3();
+      const eventFactory = new web3.eth.Contract(ABI, address);
+      const args = cidToArgs(this.ipfsHash);
+      eventFactory.methods
+        .createEvent(
+          args.hashFunction,
+          args.size,
+          args.digest,
+          "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
+          1,
+          "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359"
+        )
+        .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
+
+      const eventAddresses = await eventFactory.methods.getEvents().call();
+      console.log(eventAddresses);
+
+      // console.log(abi);
+      // const eventFactory = new web3.eth.Contract(abi.abi, eventFactoryContractAddress);
+      // eventFactory.methods
+      // .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
+      // console.log(abi);
+      // console.log(eventFactory);
+      // const args = cidToArgs(this.ipfsHash);
+      // eventFactory.methods.createEvent(
+      //   args.hashFunction,
+      //   args.size,
+      //   args.digest,
+      //   "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
+      //   1,
+      //   "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359"
+      // );
+      // // .send()
+      // // .then((e) => console.log(e));
+      // const events = await eventFactory.getEvents();
+      // console.log(events);
+    }
   },
+  mounted: function() {
+    this.simonWeb3 = web3;
+  }
+  // computed: {
+  //   simonWeb3() {
+  //     return web3;
+  //   },
+  // },
   //   computed: {
   //     web3() {
   //       return this.$store.state.web3;
