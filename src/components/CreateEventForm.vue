@@ -144,11 +144,7 @@
           <md-button type="submit" class="md-primary" @click="uploadEventToIpfs"
             >Uploaod to ipfs</md-button
           >
-          <md-button
-            type="submit"
-            class="md-primary"
-            @click="downloadFromIpfs"
-            :disabled="sending"
+          <md-button type="submit" class="md-primary" @click="downloadFromIpfs"
             >Download from ipfs</md-button
           >
         </md-card-actions>
@@ -164,9 +160,8 @@
         <p>idApprover: {{ this.form.idApprover }}</p>
         <p>idLevel: {{ this.form.idLevel }}</p>
         <p>ipfs hash: {{ this.ipfsHash }}</p>
-        <p>https://ipfs.io/ipfs/{{this.ipfsHash}}</p>
+        <p>https://ipfs.io/ipfs/{{ this.ipfsHash }}</p>
         <p>ipfs data: {{ this.ipfsData }}</p>
-
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded"
@@ -192,20 +187,17 @@ import {
 } from "vuelidate/lib/validators";
 import { NETWORKS } from "./../util/constants/constants.js";
 import { getWeb3 } from "../util/getWeb3";
-import IpfsHttpClient,{CID}  from 'ipfs-http-client';
+import IpfsHttpClient, { CID } from "ipfs-http-client";
 import { cidToArgs, argsToCid } from "idetix-utils";
-
 import Web3 from "web3";
-import {fromBase58} from "multihashes";
+import { fromBase58 } from "multihashes";
 
 const web3 = new Web3("ws://localhost:7545");
-const ipfs2 = new IpfsHttpClient(
-  {
-    host: "localhost",
-    port: 5001,
-    protocol: "http",
-  }
-);
+const ipfs2 = new IpfsHttpClient({
+  host: "localhost",
+  port: 5001,
+  protocol: "http",
+});
 
 export default {
   name: "CreateEventForm",
@@ -269,12 +261,15 @@ export default {
   },
   methods: {
     getValidationClass(fieldName) {
-      const field = this.$v.form[fieldName];
-      if (field) {
-        return {
-          "md-invalid": false, //field.$invalid && field.$dirty,
-        };
-      }
+      return {
+        "md-invalid": false,
+      };
+      // const field = this.$v.form[fieldName];
+      // if (field) {
+      //   return {
+      //     "md-invalid": false, //field.$invalid && field.$dirty,
+      //   };
+      // }
     },
     clearForm() {
       this.$v.$reset();
@@ -288,7 +283,7 @@ export default {
     async uploadToIpfs() {
       //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
       const response = await ipfs2.add(this.form.eventTitle);
-      this.ipfsHash = response.path
+      this.ipfsHash = response.path;
 
       // this.sending = true;
 
@@ -308,18 +303,18 @@ export default {
       //   this.clearForm();
       // }, 1500);
     },
-    async downloadFromIpfs(){
+    async downloadFromIpfs() {
       console.log("downloading from ipfs...");
       for await (const chunk of ipfs2.cat(this.ipfsHash)) {
-        this.ipfsData = Buffer(chunk, 'utf8').toString();
+        this.ipfsData = Buffer(chunk, "utf8").toString();
       }
       // Instead of this timeout, here you can call your API
-      window.setTimeout(() => {
-        this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
-        this.ipfsAdded = true;
-        this.sending = false;
-        // this.clearForm();
-      }, 1500);
+      // window.setTimeout(() => {
+      //   this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
+      //   this.ipfsAdded = true;
+      //   this.sending = false;
+      //   // this.clearForm();
+      // }, 1500);
     },
     createIpfsString() {
       return JSON.stringify({
@@ -335,15 +330,17 @@ export default {
       // todo upload to ipfs correctly
       this.sending = true;
       try {
-        const ipfs = await this.$ipfs;
-        this.ipfsHash = await ipfs.add(this.ipfsString);
+        // const ipfs = await this.$ipfs;
+        const response = await ipfs2.add(this.ipfsString);
+        this.ipfsHash = response.path;
+        console.log("ipfsString: " + this.ipfsString);
         console.log("ipfshash: " + this.ipfsHash);
         console.log("ipfscidstring: " + this.ipfsHash.cid.string);
         this.simonArgs = cidToArgs(this.ipfsHash.cid.string);
         this.simonCid = argsToCid(
-                this.simonArgs.hashFunction,
-                this.simonArgs.size,
-                this.simonArgs.digest
+          this.simonArgs.hashFunction,
+          this.simonArgs.size,
+          this.simonArgs.digest
         );
       } catch (err) {
         console.log(err);
