@@ -144,6 +144,13 @@
           <md-button type="submit" class="md-primary" @click="uploadEventToIpfs"
             >Uploaod to ipfs</md-button
           >
+          <md-button
+            type="submit"
+            class="md-primary"
+            @click="downloadFromIpfs"
+            :disabled="sending"
+            >Download from ipfs</md-button
+          >
         </md-card-actions>
         <md-card-actions>
           <md-button type="submit" class="md-primary" :disabled="sending"
@@ -156,6 +163,10 @@
         <p>description: {{ this.form.description }}</p>
         <p>idApprover: {{ this.form.idApprover }}</p>
         <p>idLevel: {{ this.form.idLevel }}</p>
+        <p>ipfs hash: {{ this.ipfsHash }}</p>
+        <p>https://ipfs.io/ipfs/{{this.ipfsHash}}</p>
+        <p>ipfs data: {{ this.ipfsData }}</p>
+
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded"
@@ -181,10 +192,20 @@ import {
 } from "vuelidate/lib/validators";
 import { NETWORKS } from "./../util/constants/constants.js";
 import { getWeb3 } from "../util/getWeb3";
+import IpfsHttpClient,{CID}  from 'ipfs-http-client';
 import { cidToArgs, argsToCid } from "idetix-utils";
 
 import Web3 from "web3";
+import {fromBase58} from "multihashes";
+
 const web3 = new Web3("ws://localhost:7545");
+const ipfs2 = new IpfsHttpClient(
+  {
+    host: "localhost",
+    port: 5001,
+    protocol: "http",
+  }
+);
 
 export default {
   name: "CreateEventForm",
@@ -193,6 +214,7 @@ export default {
     simonArgs: null,
     simonCid: null,
     ipfsHash: null,
+    ipfsData: null,
     ipfsString: null,
     ethToken: "0x0",
     daiTokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -217,30 +239,30 @@ export default {
   validations: {
     form: {
       eventTitle: {
-        required,
+        // required,
         minLength: minLength(3),
       },
       eventType: {
-        required,
+        // required,
       },
       eventDescription: {
-        required,
+        // required,
         minLength: minLength(10),
       },
       erc20Token: {
-        required,
+        // required,
         minLength: minLength(42),
         maxLength: maxLength(42),
       },
       idLevel: {
-        required,
+        // required,
         maxLength: maxLength(1),
       },
       idApprover: {
-        required,
+        // required,
       },
       email: {
-        required,
+        // required,
         email,
       },
     },
@@ -263,6 +285,42 @@ export default {
       this.form.idApprover = null;
       this.form.email = null;
     },
+    async uploadToIpfs() {
+      //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
+      const response = await ipfs2.add(this.form.eventTitle);
+      this.ipfsHash = response.path
+
+      // this.sending = true;
+
+      // try {
+      //   const ipfs = await this.$ipfs;
+      //   this.ipfsHash = await ipfs.add("hoi zäme");
+
+      //   console.log("ipfsHash: " + this.ipfsHash.cid.string);
+      // } catch (err) {
+      //   console.log(err);
+      // }
+      // // Instead of this timeout, here you can call your API
+      // window.setTimeout(() => {
+      //   this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
+      //   this.ipfsAdded = true;
+      //   this.sending = false;
+      //   this.clearForm();
+      // }, 1500);
+    },
+    async downloadFromIpfs(){
+      console.log("downloading from ipfs...");
+      for await (const chunk of ipfs2.cat(this.ipfsHash)) {
+        this.ipfsData = Buffer(chunk, 'utf8').toString();
+      }
+      // Instead of this timeout, here you can call your API
+      window.setTimeout(() => {
+        this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
+        this.ipfsAdded = true;
+        this.sending = false;
+        // this.clearForm();
+      }, 1500);
+    },
     createIpfsString() {
       return JSON.stringify({
         title: this.form.eventTitle,
@@ -283,9 +341,9 @@ export default {
         console.log("ipfscidstring: " + this.ipfsHash.cid.string);
         this.simonArgs = cidToArgs(this.ipfsHash.cid.string);
         this.simonCid = argsToCid(
-          this.simonArgs.hashFunction,
-          this.simonArgs.size,
-          this.simonArgs.digest
+                this.simonArgs.hashFunction,
+                this.simonArgs.size,
+                this.simonArgs.digest
         );
       } catch (err) {
         console.log(err);
@@ -302,6 +360,22 @@ export default {
       // check if required input fields are valid and then upload the event form to ipfs
       this.$v.$touch();
       return !this.$v.$invalid;
+    },
+    async getIpfsNodeInfo() {
+      try {
+        // Await for ipfs node instance.
+        const ipfs = await this.$ipfs;
+        // Call ipfs `id` method.
+        // Returns the identity of the Peer.
+        const { agentVersion, id } = await ipfs.id();
+        this.agentVersion = agentVersion;
+        this.id = id;
+        // Set successful status text.
+        this.status = "Connected to IPFS =)";
+      } catch (err) {
+        // Set error status text.
+        this.status = `Error: ${err}`;
+      }
     },
     async upload() {
       try {
@@ -339,7 +413,6 @@ export default {
     //   }
     // },
   },
-  computed: {},
   //   computed: {
   //     web3() {
   //       return this.$store.state.web3;
