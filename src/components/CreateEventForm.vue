@@ -148,7 +148,8 @@
 </template>
 
 <script>
-// import { nonFungibleBaseId } from "idetix-utils";
+import getWeb3 from "../util/getWeb3";
+import IpfsHttpClient, { CID } from "ipfs-http-client";
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -156,18 +157,16 @@ import {
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
-import { NETWORKS } from "./../util/constants/constants.js";
-import getWeb3 from "../util/getWeb3";
-import IpfsHttpClient, { CID } from "ipfs-http-client";
-import { cidToArgs, argsToCid } from "idetix-utils";
-import Web3 from "web3";
-import { fromBase58 } from "multihashes";
-import fs from "fs";
-import { address, ABI } from "../constants/EventFactory.js";
-// import ssabi from "../abi/SimpleStorage.json";
 
-const web3 = new Web3("ws://localhost:7545");
-const ipfs2 = new IpfsHttpClient({
+// project internal imports
+import { NETWORKS } from "./../util/constants/constants.js";
+import { cidToArgs, argsToCid } from "idetix-utils";
+import {
+  EVENT_FACTORY_ABI,
+  EVENT_FACTORY_ADDRESS
+} from "../constants/EventFactory.js";
+
+const ipfs = new IpfsHttpClient({
   host: "localhost",
   port: 5001,
   protocol: "http"
@@ -177,9 +176,8 @@ export default {
   name: "CreateEventForm",
   mixins: [validationMixin],
   data: () => ({
-    simonWeb3: null,
-    simonArgs: null,
-    simonCid: null,
+    ipfsArgs: null,
+    ipfsCid: null,
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsData: null,
     ipfsString: null,
@@ -257,7 +255,7 @@ export default {
     },
     async uploadToIpfs() {
       //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
-      const response = await ipfs2.add(this.form.eventTitle);
+      const response = await ipfs.add(this.form.eventTitle);
       this.ipfsHash = response.path;
 
       // this.sending = true;
@@ -280,7 +278,7 @@ export default {
     },
     async downloadFromIpfs() {
       console.log("downloading from ipfs...");
-      for await (const chunk of ipfs2.cat(this.ipfsHash)) {
+      for await (const chunk of ipfs.cat(this.ipfsHash)) {
         this.ipfsData = Buffer(chunk, "utf8").toString();
       }
       // Instead of this timeout, here you can call your API
@@ -306,16 +304,16 @@ export default {
       this.sending = true;
       try {
         // const ipfs = await this.$ipfs;
-        const response = await ipfs2.add(this.ipfsString);
+        const response = await ipfs.add(this.ipfsString);
         this.ipfsHash = response.path;
         console.log("ipfsString: " + this.ipfsString);
         console.log("ipfshash: " + this.ipfsHash);
         console.log("ipfscidstring: " + this.ipfsHash.cid.string);
-        this.simonArgs = cidToArgs(this.ipfsHash.cid.string);
-        this.simonCid = argsToCid(
-          this.simonArgs.hashFunction,
-          this.simonArgs.size,
-          this.simonArgs.digest
+        this.ipfsArgs = cidToArgs(this.ipfsHash.cid.string);
+        this.ipfsCid = argsToCid(
+          this.ipfsArgs.hashFunction,
+          this.ipfsArgs.size,
+          this.ipfsArgs.digest
         );
       } catch (err) {
         console.log(err);
@@ -385,11 +383,11 @@ export default {
     //   }
     // },
     async deployEventContract() {
-      const eventFactoryContractAddress =
-        "0x150D855f9eEd27612f40c21C08011fD43c1462c3";
-      const ssAddress = "0x55c5e43157694a5dd488972Cc721F884Fd60F8Dd";
       const web3 = await getWeb3();
-      const eventFactory = new web3.eth.Contract(ABI, address);
+      const eventFactory = new web3.eth.Contract(
+        EVENT_FACTORY_ABI,
+        EVENT_FACTORY_ADDRESS
+      );
       const args = cidToArgs(this.ipfsHash);
       eventFactory.methods
         .createEvent(
@@ -404,31 +402,11 @@ export default {
 
       const eventAddresses = await eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
-
-      // console.log(abi);
-      // const eventFactory = new web3.eth.Contract(abi.abi, eventFactoryContractAddress);
-      // eventFactory.methods
-      // .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
-      // console.log(abi);
-      // console.log(eventFactory);
-      // const args = cidToArgs(this.ipfsHash);
-      // eventFactory.methods.createEvent(
-      //   args.hashFunction,
-      //   args.size,
-      //   args.digest,
-      //   "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
-      //   1,
-      //   "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359"
-      // );
-      // // .send()
-      // // .then((e) => console.log(e));
-      // const events = await eventFactory.getEvents();
-      // console.log(events);
     }
-  },
-  mounted: function() {
-    this.simonWeb3 = web3;
   }
+  // mounted: function() {
+  //   this.simonWeb3 = web3;
+  // }
   // computed: {
   //   simonWeb3() {
   //     return web3;

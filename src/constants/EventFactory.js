@@ -1,6 +1,6 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const address = "0x150D855f9eEd27612f40c21C08011fD43c1462c3";
-const ABI = [
+const EVENT_FACTORY_ADDRESS = "0x150D855f9eEd27612f40c21C08011fD43c1462c3";
+const EVENT_FACTORY_ABI = [
   {
     "inputs": [
       {
@@ -113,4 +113,4 @@ const ABI = [
   }
 ];
 
-export { address, ABI };
+export { EVENT_FACTORY_ADDRESS, EVENT_FACTORY_ABI };
