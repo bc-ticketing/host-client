@@ -10,22 +10,24 @@
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field>
-                <label for="ticket-name"></label>
+                <label for="ticket-name">Ticket Name</label>
                 <md-input name="ticket-name" id="ticket-name" v-model="form.ticketName" />
               </md-field>
             </div>
           </div>
 
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
-              <md-field>
-                <label for="ticket-non-fungible">Is the ticket non-fungible?</label>
-                <md-input
+            <div class="md-layout-item">
+              <!-- <md-field> -->
+              <!-- <label for="ticket-non-fungible">Is the ticket non-fungible?</label> -->
+              <md-radio v-model="form.ticketIsNonFungible" value="true">Non-Fungible</md-radio>
+              <md-radio v-model="form.ticketIsNonFungible" value="false">Fungible</md-radio>
+              <!-- <md-input
                   name="ticket-non-fungible"
                   id="ticket-non-fungible"
                   v-model="form.ticketNonFungible"
-                />
-              </md-field>
+              />-->
+              <!-- </md-field> -->
             </div>
           </div>
 
@@ -186,12 +188,17 @@ export default {
       if (this.ipfsArgs === null) {
         this.ipfsArgs = cidToArgs(this.ipfsHash);
       }
+      var nf = true;
+      if (this.form.ticketIsNonFungible != "true") {
+        nf = false;
+      }
+      console.log("nf: " + nf);
       // event.methods
       //   .createType(
       //     this.ipfsArgs.hashFunction,
       //     this.ipfsArgs.size,
       //     this.ipfsArgs.digest,
-      //     this.form.ticketIsNonFungible,
+      //     nf,
       //     this.form.ticketPrice,
       //     this.form.ticketFinalizationBlock,
       //     this.form.ticketInitialSupply
@@ -201,20 +208,20 @@ export default {
       // const nfNonce = await event.methods.nfNonce().call();
       // console.log(nfNonce);
 
-      this.temp.pastEvents = await event.methods
-        .getPastEvents("EventMetadata", {
-          fromBlock: 1
-        })
-        .call();
-      this.temp.latestEvent = this.pastEvents[
-        this.pastEvents.length - 1
-      ].returnValues;
+      // this.temp.pastEvents = await event.methods
+      //   .getPastEvents("EventMetadata", {
+      //     fromBlock: 1
+      //   })
+      //   .call();
+      // this.temp.latestEvent = this.pastEvents[
+      //   this.pastEvents.length - 1
+      // ].returnValues;
 
-      this.temp.loadedCid = argsToCid(
-        this.latestEvent["hashFunction"],
-        this.latestEvent["size"],
-        this.latestEvent["digest"]
-      );
+      // this.temp.loadedCid = argsToCid(
+      //   this.latestEvent["hashFunction"],
+      //   this.latestEvent["size"],
+      //   this.latestEvent["digest"]
+      // );
     }
     // function createType(
     //     bytes1 _hashFunction,

@@ -404,25 +404,6 @@ export default {
       console.log(eventAddresses);
     }
   }
-  // mounted: function() {
-  //   this.simonWeb3 = web3;
-  // }
-  // computed: {
-  //   simonWeb3() {
-  //     return web3;
-  //   },
-  // },
-  //   computed: {
-  //     web3() {
-  //       return this.$store.state.web3;
-  //     },
-  //     networkName() {
-  //       return NETWORKS[this.web3.networkId];
-  //     },
-  //     isConnected() {
-  //       return this.web3.networkId != null;
-  //     },
-  //   },
 };
 </script>
 
