@@ -14,17 +14,17 @@
         </md-toolbar>
 
         <md-list>
-          <md-list-item>
+          <!-- <md-list-item>
             <md-icon>home</md-icon>
             <span class="md-list-item-text">
               <router-link @click="showNavigation = false" to="/">Dashboard</router-link>
             </span>
-          </md-list-item>
+          </md-list-item>-->
 
           <md-list-item>
             <md-icon>add</md-icon>
             <span class="md-list-item-text">
-              <router-link to="/create">New Event</router-link>
+              <router-link to="/">New Event</router-link>
             </span>
           </md-list-item>
 

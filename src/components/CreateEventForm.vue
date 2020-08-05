@@ -124,15 +124,14 @@
             @click="deployEventContract"
           >Deploy event contract</md-button>
         </md-card-actions>
-        <p>eventTitle: {{ this.form.eventTitle }}</p>
+        <!-- <p>eventTitle: {{ this.form.eventTitle }}</p>
         <p>eventType: {{ this.form.eventType }}</p>
-        <!-- <p>eventTags: {{ this.form.eventTags }}</p> -->
         <p>description: {{ this.form.description }}</p>
         <p>idApprover: {{ this.form.idApprover }}</p>
         <p>idLevel: {{ this.form.idLevel }}</p>
         <p>ipfs hash: {{ this.ipfsHash }}</p>
         <p>https://ipfs.io/ipfs/{{ this.ipfsHash }}</p>
-        <p>ipfs data: {{ this.ipfsData }}</p>
+        <p>ipfs data: {{ this.ipfsData }}</p>-->
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded">
@@ -165,6 +164,7 @@ import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
 } from "../constants/EventFactory.js";
+import { DAI } from "../constants/ERC20Tokens.js";
 
 const ipfs = new IpfsHttpClient({
   host: "localhost",
@@ -182,7 +182,6 @@ export default {
     ipfsData: null,
     ipfsString: null,
     ethToken: "0x0",
-    daiTokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
     form: {
       eventTitle: null,
       eventLocation: null,
@@ -396,7 +395,7 @@ export default {
           args.digest,
           "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
           1,
-          "0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359"
+          DAI
         )
         .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
 

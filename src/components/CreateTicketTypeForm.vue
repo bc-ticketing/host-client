@@ -7,6 +7,13 @@
         </md-card-header>
 
         <md-card-content>
+          <div class="contract-address">
+            <md-field>
+              <md-input placeholder="Event Contract Address" v-model="contractAddress" />
+            </md-field>
+            <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
+          </div>
+
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field>
@@ -117,6 +124,7 @@ const ipfs = new IpfsHttpClient({
 export default {
   name: "CreateTicketTypeForm",
   data: () => ({
+    contractAddress: null,
     eventContractAddress: "0x7Ec4fc83fcAf4931A6a95e612F6E5ef1723990Fe",
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsArgs: null,
@@ -141,6 +149,9 @@ export default {
     }
   }),
   methods: {
+    setDefaultContractAddress() {
+      this.contractAddress = this.eventContractAddress;
+    },
     clearForm() {
       // this.$v.$reset();
       this.form.ticketName = null;
@@ -236,4 +247,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.contract-address {
+  display: flex;
+}
+</style>
