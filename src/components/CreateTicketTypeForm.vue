@@ -9,8 +9,9 @@
         <md-card-content>
           <div class="contract-address">
             <md-field>
-              <md-input placeholder="Event Contract Address" v-model="contractAddress" />
+              <md-input placeholder="Event Contract Address" v-model="contractAddressTemp" />
             </md-field>
+            <md-button class="md-primary" @click="setContractAddress">Set Contract Address</md-button>
             <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
           </div>
 
@@ -125,7 +126,8 @@ export default {
   name: "CreateTicketTypeForm",
   data: () => ({
     contractAddress: null,
-    eventContractAddress: "0x7Ec4fc83fcAf4931A6a95e612F6E5ef1723990Fe",
+    contractAddressTemp: null,
+    defaultContractAddress: "0x7Ec4fc83fcAf4931A6a95e612F6E5ef1723990Fe",
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsArgs: null,
     ipfsData: null,
@@ -149,8 +151,11 @@ export default {
     }
   }),
   methods: {
+    setContractAddress() {
+      this.contractAddress = this.contractAddressTemp;
+    },
     setDefaultContractAddress() {
-      this.contractAddress = this.eventContractAddress;
+      this.contractAddress = this.defaultContractAddress;
     },
     clearForm() {
       // this.$v.$reset();
