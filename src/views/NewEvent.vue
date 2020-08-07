@@ -1,19 +1,19 @@
 <template>
   <div class="new-event-container">
-    <CreateEventForm />
-    <CreateTicketTypeForm />
+    <NewEventForm />
+    <NewTicketForm />
   </div>
 </template>
 
 <script>
-import CreateEventForm from "@/components/CreateEventForm.vue";
-import CreateTicketTypeForm from "@/components/CreateTicketTypeForm.vue";
+import NewEventForm from "@/components/NewEventForm.vue";
+import NewTicketForm from "@/components/NewTicketForm.vue";
 
 export default {
   name: "NewEvent",
   components: {
-    CreateEventForm,
-    CreateTicketTypeForm
+    NewEventForm,
+    NewTicketForm
   }
 };
 </script>

@@ -59,15 +59,14 @@
               <md-field :class="getValidationClass('erc20Token')">
                 <label for="erc20Token">Accepted Token For Payment</label>
                 <md-input name="erc20Token" id="erc20Token" v-model="form.erc20Token" />
-                <!-- <span class="md-error" v-if="!$v.form.erc20Token.required"
-                  >The token that is accepted for payment is required</span
-                >
-                <span class="md-error" v-else-if="!$v.form.erc20Token.minlength"
-                  >Invalid event token hash</span
-                >
-                <span class="md-error" v-else-if="!$v.form.erc20Token.maxLength"
-                  >Invalid event token hash</span
-                >-->
+                <span
+                  class="md-error"
+                  v-if="!$v.form.erc20Token.required"
+                >The token that is accepted for payment is required</span>
+                <!-- <span
+                  class="md-error"
+                  v-else-if="!$v.form.erc20Token.maxLength"
+                >Invalid event token hash</span>-->
               </md-field>
             </div>
           </div>
@@ -75,9 +74,7 @@
           <div class="md-layout-item md-small-size-100">
             <md-field :class="getValidationClass('idApprover')">
               <label for="idApprover">ID Approver</label>
-              <md-select name="idApprover" id="idApprover" v-model="form.idApprover" md-dense>
-                <md-option value="Idetix">Idetix</md-option>
-              </md-select>
+              <md-input name="idApprover" id="idApprover" v-model="form.idApprover" />
               <span class="md-error">An ID approver is required</span>
             </md-field>
           </div>
@@ -93,11 +90,39 @@
                 <md-option value="3">3</md-option>
               </md-select>
               <span class="md-error" v-if="!$v.form.idLevel.required">The id level is required</span>
-              <span class="md-error" v-else-if="!$v.form.idLevel.maxlength">Invalid id level</span>
             </md-field>
           </div>
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('eventGranularity')">
+                <label for="event-granularity">Granularity</label>
+                <md-select
+                  type="number"
+                  id="event-granularity"
+                  name="event-granularity"
+                  v-model="form.granularity"
+                >
+                  <!-- <md-option></md-option> -->
+                  <md-option value="1">1</md-option>
+                  <md-option value="2">2</md-option>
+                  <md-option value="4">4</md-option>
+                  <md-option value="5">5</md-option>
+                  <md-option value="10">10</md-option>
+                  <md-option value="20">20</md-option>
+                  <md-option value="25">25</md-option>
+                  <md-option value="50">50</md-option>
+                  <md-option value="100">100</md-option>
+                </md-select>
+                <span
+                  class="md-error"
+                  v-if="!$v.form.granularity.required"
+                >The granularity is required</span>
+                <span class="md-error" v-else-if="!$v.form.granularity">Invalid granularity</span>
+              </md-field>
+            </div>
+          </div>
 
-          <md-field :class="getValidationClass('email')">
+          <!-- <md-field :class="getValidationClass('email')">
             <label for="email">Email</label>
             <md-input
               type="email"
@@ -108,11 +133,14 @@
             />
             <span class="md-error" v-if="!$v.form.email.required">The email is required</span>
             <span class="md-error" v-else-if="!$v.form.email.email">Invalid email</span>
-          </md-field>
+          </md-field>-->
         </md-card-content>
 
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
+        <md-card-actions>
+          <md-button type="submit" class="md-primary" @click="createEvent">Create Event</md-button>
+        </md-card-actions>
         <md-card-actions>
           <md-button type="submit" class="md-primary" @click="uploadEventToIpfs">Uploaod to ipfs</md-button>
           <md-button type="submit" class="md-primary" @click="downloadFromIpfs">Download from ipfs</md-button>
@@ -158,7 +186,7 @@ import {
 } from "vuelidate/lib/validators";
 
 // project internal imports
-import { NETWORKS } from "./../util/constants/constants.js";
+import { NETWORKS } from "../constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
@@ -173,7 +201,7 @@ const ipfs = new IpfsHttpClient({
 });
 
 export default {
-  name: "CreateEventForm",
+  name: "NewEventForm",
   mixins: [validationMixin],
   data: () => ({
     ipfsArgs: null,
@@ -181,21 +209,23 @@ export default {
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsData: null,
     ipfsString: null,
-    ethToken: "0x0",
+    ipfsError: false,
+    ipfsAdded: false, // todo: set true, when ipfs hash is returned
+    ethToken: "0",
     form: {
-      eventTitle: null,
+      eventTitle: "testTitle",
       eventLocation: null,
       eventStartTime: null,
       eventEndTime: null,
-      eventType: null,
+      eventType: "Music",
       //   eventTags: [],
-      eventDescription: null,
-      erc20Token: null,
-      idApprover: "Idetix",
-      idLevel: null,
+      eventDescription: "test description",
+      erc20Token: "0x0000000000000000000000000000000000000000",
+      idApprover: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
+      idLevel: 1,
+      granularity: 2,
       email: null
     },
-    ipfsAdded: false, // todo: set true, when ipfs hash is returned
     eventContractDeployed: false, // todo: set after web3js event catches deployment event
     sending: false,
     lastEvent: null
@@ -214,21 +244,27 @@ export default {
         minLength: minLength(10)
       },
       erc20Token: {
-        // required,
-        minLength: minLength(42),
-        maxLength: maxLength(42)
+        required
+        // maxLength: maxLength(42)
       },
       idLevel: {
-        // required,
-        maxLength: maxLength(1)
+        required
       },
       idApprover: {
-        // required,
+        required
       },
-      email: {
-        // required,
-        email
+      granularity: {
+        required
       }
+      // email: {
+      //   // required,
+      //   email
+      // }
+    }
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
     }
   },
   methods: {
@@ -252,28 +288,28 @@ export default {
       this.form.idApprover = null;
       this.form.email = null;
     },
+    async createEvent() {
+      await this.uploadToIpfs();
+      await this.deployEventContract();
+    },
     async uploadToIpfs() {
       //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
-      const response = await ipfs.add(this.form.eventTitle);
-      this.ipfsHash = response.path;
-
-      // this.sending = true;
-
-      // try {
-      //   const ipfs = await this.$ipfs;
-      //   this.ipfsHash = await ipfs.add("hoi zäme");
-
-      //   console.log("ipfsHash: " + this.ipfsHash.cid.string);
-      // } catch (err) {
-      //   console.log(err);
-      // }
-      // // Instead of this timeout, here you can call your API
-      // window.setTimeout(() => {
-      //   this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
-      //   this.ipfsAdded = true;
-      //   this.sending = false;
-      //   this.clearForm();
-      // }, 1500);
+      try {
+        const response = await ipfs.add(this.createIpfsString());
+        this.ipfsHash = response.path;
+        console.log("Uploading to ipfs");
+        console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
+        this.sending = true;
+      } catch (err) {
+        console.log(err);
+        this.ipfsError = true;
+      }
+      window.setTimeout(() => {
+        this.lastEvent = `${this.form.eventTitle} ${this.form.description}`;
+        this.ipfsAdded = true;
+        this.sending = false;
+        // this.clearForm();
+      }, 1500);
     },
     async downloadFromIpfs() {
       console.log("downloading from ipfs...");
@@ -290,8 +326,11 @@ export default {
     },
     createIpfsString() {
       return JSON.stringify({
-        title: this.form.eventTitle,
-        description: this.form.eventDescription
+        version: "1.0",
+        event: {
+          title: this.form.eventTitle,
+          description: this.form.eventDescription
+        }
       });
     },
     async uploadEventToIpfs() {
@@ -307,8 +346,8 @@ export default {
         this.ipfsHash = response.path;
         console.log("ipfsString: " + this.ipfsString);
         console.log("ipfshash: " + this.ipfsHash);
-        console.log("ipfscidstring: " + this.ipfsHash.cid.string);
-        this.ipfsArgs = cidToArgs(this.ipfsHash.cid.string);
+        console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
+        this.ipfsArgs = cidToArgs(this.ipfsHash);
         this.ipfsCid = argsToCid(
           this.ipfsArgs.hashFunction,
           this.ipfsArgs.size,
@@ -382,25 +421,35 @@ export default {
     //   }
     // },
     async deployEventContract() {
-      const web3 = await getWeb3();
-      const eventFactory = new web3.eth.Contract(
-        EVENT_FACTORY_ABI,
-        EVENT_FACTORY_ADDRESS
-      );
       const args = cidToArgs(this.ipfsHash);
-      eventFactory.methods
+      const eventFactory = this.$store.state.web3.eventFactory;
+      const eventPromise = eventFactory.methods
         .createEvent(
           args.hashFunction,
           args.size,
           args.digest,
-          "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
-          1,
-          DAI
+          this.web3.account,
+          this.form.idLevel,
+          this.form.erc20Token,
+          this.form.granularity
         )
-        .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
+        .send({ from: this.$store.state.web3.account });
+
+      eventFactory.events
+        .EventCreated()
+        .on(`data`, event => {
+          const ev = { address: event.returnValues[0], cid: this.ipfsHash };
+          this.$store.commit("addEventContract", ev);
+          console.log("Contract created with address: ", event.returnValues[0]);
+        })
+        .on(`error`, console.error);
 
       const eventAddresses = await eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
+      // const eventAddress = await eventPromise.events.EventCreated.address;
+      // console.log(eventAddress);
+      // const eventItem = { address: eventAddress, cid: this.ipfsHash };
+      // this.$store.commit("addEventContract", eventItem);
     }
   }
 };

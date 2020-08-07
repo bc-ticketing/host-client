@@ -1,21 +1,25 @@
 <template>
   <div class="modify-event-container">
     <md-button @click="newTicket = !newTicket">Create a new ticket category</md-button>
-    <CreateTicketTypeForm v-if="!ticketFormIsHidden" />
+    <!-- <NewTicketForm v-if="!ticketFormIsHidden" /> -->
+    <ModifyEventForm />
+    <ModifyTicketForm />
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import CreateTicketTypeForm from "@/components/CreateTicketTypeForm";
+import ModifyEventForm from "@/components/ModifyEventForm";
+import ModifyTicketForm from "@/components/ModifyTicketForm";
 
 export default {
-  name: "Home",
+  name: "ModifyEvent",
   data: () => ({
     ticketFormIsHidden: false
   }),
   components: {
-    CreateTicketTypeForm
+    ModifyEventForm,
+    ModifyTicketForm
   }
 };
 </script>

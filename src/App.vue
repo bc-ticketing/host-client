@@ -17,21 +17,23 @@ import Vue from "vue";
 // Importing Modules from the material kit, these are global imports
 // For components only used in single views, import locally
 import VueMaterial from "vue-material";
-// import Web3 from "web3";
 
 Vue.use(VueMaterial);
-// Vue.use(Web3);
 
 export default {
   name: "IdetixHost",
   components: {
-    Navigation,
+    Navigation
   },
-  data: () => ({
-    components: {
-      Navigation,
-    },
-  }),
+  beforeCreate() {
+    this.$store.dispatch("registerWeb3");
+    this.$store.dispatch("registerIpfs");
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
+    }
+  }
   // methods: {
   //   toggleMenu() {
   //     this.menuVisible = !this.menuVisible;

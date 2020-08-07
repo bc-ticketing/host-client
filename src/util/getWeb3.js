@@ -1,5 +1,6 @@
 import Web3 from "web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { EVENT_FACTORY_ABI, EVENT_FACTORY_ADDRESS } from "../constants/EventFactory"
 
 const web3 = new Web3("ws://localhost:7545");
 
@@ -13,6 +14,7 @@ async function getWeb3() {
     web3.account = web3.accounts[0];
     web3.balance = await window.web3.eth.getBalance(web3.account);
     web3.eth = await window.web3.eth;
+    web3.eventFactory = new window.web3.eth.Contract(EVENT_FACTORY_ABI, EVENT_FACTORY_ADDRESS);
     return web3;
   } catch (error) {
     // User denied account access...

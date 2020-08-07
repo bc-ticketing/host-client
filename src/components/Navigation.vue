@@ -14,25 +14,29 @@
         </md-toolbar>
 
         <md-list>
-          <!-- <md-list-item>
-            <md-icon>home</md-icon>
-            <span class="md-list-item-text">
-              <router-link @click="showNavigation = false" to="/">Dashboard</router-link>
-            </span>
-          </md-list-item>-->
-
-          <md-list-item>
-            <md-icon>add</md-icon>
-            <span class="md-list-item-text">
-              <router-link to="/">New Event</router-link>
-            </span>
+          <md-list-item @click="navigateTo(`/`)">
+            <md-icon>event_note</md-icon>
+            <p class="navigationText">My Events</p>
           </md-list-item>
 
-          <md-list-item>
+          <md-list-item @click="navigateTo(`/tickets`)">
+            <md-icon>notes</md-icon>
+            <p class="navigationText">Tickets</p>
+          </md-list-item>
+
+          <md-list-item @click="navigateTo(`/new-event`)">
+            <md-icon>note_add</md-icon>
+            <p class="navigationText">New Event</p>
+          </md-list-item>
+
+          <md-list-item @click="navigateTo(`/new-ticket`)">
+            <md-icon>playlist_add</md-icon>
+            <p class="navigationText">New Ticket</p>
+          </md-list-item>
+
+          <md-list-item @click="navigateTo(`/modify`)">
             <md-icon>edit</md-icon>
-            <span class="md-list-item-text">
-              <router-link to="/modify">Modify Event</router-link>
-            </span>
+            <p class="navigationText">Modify Event</p>
           </md-list-item>
         </md-list>
       </md-drawer>
@@ -44,9 +48,17 @@
 export default {
   data() {
     return {
-      showNavigation: false,
-      showSidepanel: false
+      showNavigation: false
     };
+  },
+  methods: {
+    toggleNavigation() {
+      this.showNavigation = !this.showNavigation;
+    },
+    navigateTo(route) {
+      this.$router.push(route);
+      this.showNavigation = false;
+    }
   }
 };
 </script>
@@ -55,5 +67,8 @@ export default {
 .md-drawer {
   width: 230px;
   max-width: calc(100vw - 125px);
+}
+.md-list-item-content {
+  justify-content: flex-start;
 }
 </style>

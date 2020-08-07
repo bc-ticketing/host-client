@@ -1,5 +1,5 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const EVENT_FACTORY_ADDRESS = "0x150D855f9eEd27612f40c21C08011fD43c1462c3";
+const EVENT_FACTORY_ADDRESS = "0x5d9D114D38bB1229E458811443da497294877882";
 const EVENT_FACTORY_ABI = [
   {
     "inputs": [
@@ -90,6 +90,11 @@ const EVENT_FACTORY_ABI = [
         "internalType": "address",
         "name": "_erc20Contract",
         "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_granularity",
+        "type": "uint8"
       }
     ],
     "name": "createEvent",

@@ -1,12 +1,12 @@
 <template>
   <div class="tickets-container">
-    <CreateTicketTypeForm />
+    <NewTicketForm />
   </div>
 </template>
 
 <script>
 import { EVENT_ABI } from "../constants/Event.js";
-import CreateTicketTypeForm from "../components/CreateTicketTypeForm";
+import NewTicketForm from "../components/NewTicketForm";
 
 // todo:
 //  get event information from ipfs and parse into eventcard - similar to guest-client
@@ -22,7 +22,7 @@ export default {
     contractAddress: null
   }),
   components: {
-    CreateTicketTypeForm
+    NewTicketForm
   }
 };
 </script>

@@ -108,7 +108,7 @@ import {
 } from "vuelidate/lib/validators";
 
 // project internal imports
-import { NETWORKS } from "./../util/constants/constants.js";
+import { NETWORKS } from "../constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
@@ -123,7 +123,7 @@ const ipfs = new IpfsHttpClient({
 });
 
 export default {
-  name: "CreateTicketTypeForm",
+  name: "NewTicketForm",
   data: () => ({
     contractAddress: null,
     contractAddressTemp: null,
