@@ -7,13 +7,14 @@
         </md-card-header>
 
         <md-card-content>
-          <div class="contract-address">
+          <!-- <div class="contract-address">
             <md-field>
               <md-input placeholder="Event Contract Address" v-model="contractAddressTemp" />
             </md-field>
             <md-button class="md-primary" @click="setContractAddress">Set Contract Address</md-button>
             <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
-          </div>
+          </div>-->
+          <md-button class="md-primary" @click="getMyLatestEvent">Fetch my latest event</md-button>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -88,7 +89,7 @@
           </div>
         </md-card-content>
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="uploadTicketTypeToIpfs">Upload to ipfs</md-button>
+          <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button>
           <md-button type="submit" class="md-primary" @click="createTicketType">Create ticket type</md-button>
         </md-card-actions>
       </md-card>
@@ -97,8 +98,6 @@
 </template>
 
 <script>
-import getWeb3 from "../util/getWeb3";
-import IpfsHttpClient, { CID } from "ipfs-http-client";
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -116,29 +115,24 @@ import {
 } from "../constants/EventFactory.js";
 import { EVENT_ABI } from "../constants/Event.js";
 
-const ipfs = new IpfsHttpClient({
-  host: "localhost",
-  port: 5001,
-  protocol: "http"
-});
-
 export default {
   name: "NewTicketForm",
   data: () => ({
     contractAddress: null,
     contractAddressTemp: null,
-    defaultContractAddress: "0x7Ec4fc83fcAf4931A6a95e612F6E5ef1723990Fe",
+    latestEventAddress: null,
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsArgs: null,
     ipfsData: null,
     ipfsString: null,
     form: {
-      ticketName: null,
-      ticketDescription: null,
-      ticketIsNonFungible: null,
-      ticketPrice: null,
-      ticketFinalizationBlock: null,
-      ticketInitialSupply: null
+      ticketName: "ticket name",
+      ticketDescription: "ticket description",
+      ticketIsNonFungible: false,
+      ticketPrice: 10,
+      ticketFinalizationBlock: 600,
+      ticketInitialSupply: 20,
+      currentEvent: null
     },
     ipfsAdded: false,
     ticketTypeCreated: false,
@@ -151,11 +145,17 @@ export default {
     }
   }),
   methods: {
+    async getMyLatestEvent() {
+      const eventAddresses = await this.web3.eventFactory.methods
+        .getEvents()
+        .call();
+      console.log(eventAddresses);
+      this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
+      this.currentEventAddress = this.latestEventAddress;
+      console.log("set latest event to: " + this.latestEventAddress);
+    },
     setContractAddress() {
       this.contractAddress = this.contractAddressTemp;
-    },
-    setDefaultContractAddress() {
-      this.contractAddress = this.defaultContractAddress;
     },
     clearForm() {
       // this.$v.$reset();
@@ -168,22 +168,24 @@ export default {
     createIpfsString() {
       // todo: fit to template
       return JSON.stringify({
-        ticketName: this.form.ticketName,
-        ticketDescription: this.form.ticketDescription
+        version: "1.0",
+        ticket: {
+          name: this.form.ticketName,
+          description: this.form.ticketDescription,
+          event: this.currentEventAddress
+        }
       });
     },
-    async uploadTicketTypeToIpfs() {
+    async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
       this.sending = true;
-      try {
-        const response = await ipfs.add(this.ipfsString);
-        this.ipfsHash = response.path;
-      } catch (err) {
-        console.log(err);
-      }
+      const response = await this.ipfs.add(this.ipfsString);
+      this.ipfsHash = response.path;
+      console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
+
       // Instead of this timeout, here you can call your API
       window.setTimeout(() => {
-        this.ipfsArgs = cidToArgs(this.ipfsHash.cid.string);
+        this.ipfsArgs = cidToArgs(this.ipfsHash);
         this.lastTicket = `${this.form.ticketName} ${this.ipfsHash}`;
         this.ipfsAdded = true;
         this.sending;
@@ -191,7 +193,7 @@ export default {
     },
     async downloadFromIpfs() {
       console.log("downloading from ipfs...");
-      for await (const chunk of ipfs.cat(this.ipfsHash)) {
+      for await (const chunk of this.ipfs.cat(this.ipfsHash)) {
         this.ipfsData = Buffer(chunk, "utf8").toString();
       }
     },
@@ -199,8 +201,14 @@ export default {
       return true;
     },
     async createTicketType() {
-      const web3 = await getWeb3();
-      const event = new web3.eth.Contract(EVENT_ABI, this.eventContractAddress);
+      await this.uploadToIpfs();
+      if (this.latestEventAddress === null) {
+        this.getMyLatestEvent();
+      }
+      const event = new this.web3.web3Instance.eth.Contract(
+        EVENT_ABI,
+        this.latestEventAddress
+      );
       if (this.ipfsArgs === null) {
         this.ipfsArgs = cidToArgs(this.ipfsHash);
       }
@@ -209,18 +217,19 @@ export default {
         nf = false;
       }
       console.log("nf: " + nf);
-      // event.methods
-      //   .createType(
-      //     this.ipfsArgs.hashFunction,
-      //     this.ipfsArgs.size,
-      //     this.ipfsArgs.digest,
-      //     nf,
-      //     this.form.ticketPrice,
-      //     this.form.ticketFinalizationBlock,
-      //     this.form.ticketInitialSupply
-      //   )
-      //   .send({ from: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103" });
+      let eventPromise = event.methods
+        .createType(
+          this.ipfsArgs.hashFunction,
+          this.ipfsArgs.size,
+          this.ipfsArgs.digest,
+          nf,
+          this.form.ticketPrice,
+          this.form.ticketFinalizationBlock,
+          this.form.ticketInitialSupply
+        )
+        .send({ from: this.web3.account });
 
+      console.log(eventPromise);
       // const nfNonce = await event.methods.nfNonce().call();
       // console.log(nfNonce);
 
@@ -248,6 +257,14 @@ export default {
     //     uint256 _finalizationBlock,
     //     uint256 _initialSupply
     // )
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
+    },
+    ipfs() {
+      return this.$store.state.ipfs;
+    }
   }
 };
 </script>

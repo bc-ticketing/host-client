@@ -26,10 +26,7 @@ export default new Vuex.Store({
     // IPFS
     registerIpfsInstance(state, payload) {
       console.log("registerIpfsInstance Mutation being executed", payload)
-      state.ipfs.ipfsInstance = payload;
-      state.ipfs.host = payload.host;
-      state.ipfs.port = payload.port;
-      state.ipfs.protocol = payload.protocol;
+      state.ipfs = payload;
     },
   },
   actions: {

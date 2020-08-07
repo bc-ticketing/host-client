@@ -8,12 +8,8 @@ let state = {
         error: null,
         eventFactory: null
     },
-    ipfs: {
-        ipfsInstance: null,
-        host: null,
-        port: null,
-        protocol: null
-    },
+    eventFactory: null,
+    ipfs: null,
     events: [],
     contractInstance: null
 }
