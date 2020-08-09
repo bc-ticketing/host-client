@@ -15,6 +15,7 @@
             <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
           </div>-->
           <md-button class="md-primary" @click="getMyLatestEvent">Fetch my latest event</md-button>
+          <md-button class="md-primary" @click="getMyEvents">Fetch all my events</md-button>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -88,6 +89,7 @@
             </div>
           </div>
         </md-card-content>
+
         <md-card-actions>
           <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button>
           <md-button type="submit" class="md-primary" @click="createTicketType">Create ticket type</md-button>
@@ -145,11 +147,15 @@ export default {
     }
   }),
   methods: {
-    async getMyLatestEvent() {
+    async getMyEvents() {
       const eventAddresses = await this.web3.eventFactory.methods
         .getEvents()
         .call();
       console.log(eventAddresses);
+      return eventAddresses;
+    },
+    async getMyLatestEvent() {
+      const eventAddresses = await this.getMyEvents();
       this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
       this.currentEventAddress = this.latestEventAddress;
       console.log("set latest event to: " + this.latestEventAddress);
@@ -166,7 +172,6 @@ export default {
       this.form.ticketInitialSupply = null;
     },
     createIpfsString() {
-      // todo: fit to template
       return JSON.stringify({
         version: "1.0",
         ticket: {

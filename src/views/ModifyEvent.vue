@@ -1,6 +1,7 @@
 <template>
   <div class="modify-event-container">
-    <md-button @click="newTicket = !newTicket">Create a new ticket category</md-button>
+    <p>Todo: form for event and ticket modifications.</p>
+    <!-- <md-button @click="newTicket = !newTicket">Create a new ticket category</md-button> -->
     <!-- <NewTicketForm v-if="!ticketFormIsHidden" /> -->
     <ModifyEventForm />
     <ModifyTicketForm />

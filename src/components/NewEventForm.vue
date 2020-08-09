@@ -80,7 +80,6 @@
             <md-field :class="getValidationClass('idLevel')">
               <label for="idLevel">Identification level</label>
               <md-select type="number" id="idLevel" name="idLevel" v-model="form.idLevel">
-                <!-- <md-option></md-option> -->
                 <md-option value="1">1</md-option>
                 <md-option value="2">2</md-option>
                 <md-option value="3">3</md-option>
@@ -288,6 +287,9 @@ export default {
     web3() {
       return this.$store.state.web3;
     },
+    eventFactory() {
+      return this.$store.state.web3.eventFactory;
+    },
     ipfs() {
       return this.$store.state.ipfs;
     }
@@ -454,8 +456,7 @@ export default {
     // },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
-      const eventFactory = this.$store.state.web3.eventFactory;
-      const eventPromise = eventFactory.methods
+      const eventPromise = this.eventFactory.methods
         .createEvent(
           args.hashFunction,
           args.size,
@@ -467,7 +468,7 @@ export default {
         )
         .send({ from: this.$store.state.web3.account });
 
-      eventFactory.events
+      this.eventFactory.events
         .EventCreated()
         .on(`data`, event => {
           const ev = { address: event.returnValues[0], cid: this.ipfsHash };
@@ -478,7 +479,7 @@ export default {
         })
         .on(`error`, console.error);
 
-      const eventAddresses = await eventFactory.methods.getEvents().call();
+      const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
       // const eventAddress = await eventPromise.events.EventCreated.address;
       // console.log(eventAddress);

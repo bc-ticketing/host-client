@@ -6,6 +6,8 @@ import NewEvent from "../views/NewEvent.vue"
 import TicketsOfEvent from "../views/TicketsOfEvent.vue"
 import NewTicket from "../views/NewTicket.vue"
 import ModifyEvent from "../views/ModifyEvent.vue"
+import ApproverRegister from "../views/ApproverRegister.vue"
+import ApproveIdentity from "../views/ApproveIdentity.vue"
 
 Vue.use(VueRouter);
 
@@ -40,6 +42,16 @@ const routes = [
     name: "ModifyEvent",
     component: ModifyEvent
   },
+  {
+    path: "/register",
+    name: "ApproverRegister",
+    component: ApproverRegister
+  },
+  {
+    path: "/approve",
+    name: "ApproveIdentity",
+    component: ApproveIdentity
+  }
 ];
 
 const router = new VueRouter({

@@ -22,6 +22,7 @@ export default new Vuex.Store({
       state.web3.account = payload.account;
       state.web3.balance = parseInt(payload.balance, 10);
       state.web3.eventFactory = payload.eventFactory;
+      state.web3.identityContract = payload.identityContract;
     },
     // IPFS
     registerIpfsInstance(state, payload) {
