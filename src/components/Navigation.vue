@@ -1,11 +1,22 @@
 <template>
   <div class="Navigation">
     <div class="md-layout-column">
-      <md-toolbar class="md-primary">
-        <md-button class="md-icon-button" @click="showNavigation = true">
-          <md-icon>menu</md-icon>
-        </md-button>
-        <span class="md-title">Idetix Host</span>
+      <md-toolbar class="md-primary navigation-toolbar">
+        <div class="navigation-title">
+          <md-button class="md-icon-button" @click="showNavigation = true">
+            <md-icon>menu</md-icon>
+          </md-button>
+          <span class="md-title">Idetix Host</span>
+        </div>
+        <div class="account-info-container">
+          <div class="account-info">
+            <span class="account-address">{{ prettyAddress(accountAddress) }}</span>
+            <span class="account-balance">{{ prettyBalance(accountBalance) }} ETH</span>
+          </div>
+          <md-button class="md-icon-button" @click="reloadWeb3()">
+            <md-icon>account_balance</md-icon>
+          </md-button>
+        </div>
       </md-toolbar>
 
       <md-drawer :md-active.sync="showNavigation" md-swipeable>
@@ -74,6 +85,36 @@ export default {
     navigateTo(route) {
       this.$router.push(route);
       this.showNavigation = false;
+    },
+    reloadWeb3() {
+      this.$store.dispatch("registerWeb3");
+    },
+    prettyAddress(address) {
+      const start = address.substring(0, 4);
+      const end = address.substring(address.length - 4, address.length);
+      return start + "..." + end;
+    },
+    prettyBalance(balance) {
+      if (balance.includes(".")) {
+        const truncateIndex = balance.indexOf(".") + 3;
+        return balance.substring(0, truncateIndex);
+      } else {
+        return balance;
+      }
+    }
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
+    },
+    accounts() {
+      return this.$store.state.web3.accounts;
+    },
+    accountAddress() {
+      return this.web3.account;
+    },
+    accountBalance() {
+      return this.web3.web3Instance.utils.fromWei(String(this.web3.balance));
     }
   }
 };
@@ -92,5 +133,19 @@ export default {
 }
 .modifications-container {
   border-bottom: 1px solid black;
+}
+.navigation-toolbar {
+  justify-content: space-between;
+}
+.navigation-title {
+  align-items: center;
+  display: flex;
+}
+.account-info-container {
+  align-items: center;
+  display: flex;
+}
+.account-address {
+  margin-right: 7px;
 }
 </style>

@@ -5,7 +5,12 @@
 </template>
 
 <script>
-export default {};
+export default {
+  name: "EventList",
+  data: function() {
+    return {};
+  }
+};
 </script>
 
 <style>

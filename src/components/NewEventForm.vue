@@ -213,12 +213,6 @@ import {
 } from "../constants/EventFactory.js";
 import { DAI } from "../constants/ERC20Tokens.js";
 
-const ipfs = new IpfsHttpClient({
-  host: "localhost",
-  port: 5001,
-  protocol: "http"
-});
-
 export default {
   name: "NewEventForm",
   mixins: [validationMixin],

@@ -31,15 +31,11 @@ export default {
   },
   computed: {
     web3() {
+      console.log("accounts");
+      console.log(this.$store.state.web3.accounts);
       return this.$store.state.web3;
     }
   }
-  // methods: {
-  //   toggleMenu() {
-  //     this.menuVisible = !this.menuVisible;
-  //   }
-  //},
-  // components: {}
 };
 </script>
 

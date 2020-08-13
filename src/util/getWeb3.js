@@ -13,6 +13,7 @@ async function getWeb3() {
     web3.networkId = await window.web3.eth.net.getId();
     web3.accounts = await window.web3.eth.getAccounts();
     web3.account = web3.accounts[0];
+    web3.web3Instance = await window.web3;
     web3.balance = await window.web3.eth.getBalance(web3.account);
     web3.eth = await window.web3.eth;
     web3.eventFactory = new window.web3.eth.Contract(EVENT_FACTORY_ABI, EVENT_FACTORY_ADDRESS);

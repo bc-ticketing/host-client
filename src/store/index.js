@@ -17,7 +17,7 @@ export default new Vuex.Store({
     registerWeb3Instance(state, payload) {
       console.log("registerWeb3instance Mutation being executed", payload);
       state.web3.isInjected = payload.injectedWeb3;
-      state.web3.web3Instance = payload;
+      state.web3.web3Instance = payload.web3Instance;
       state.web3.networkId = payload.networkId;
       state.web3.account = payload.account;
       state.web3.balance = parseInt(payload.balance, 10);
@@ -31,6 +31,10 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    async changeAccount({ commit }) {
+      console.log("changeAccount Action being executed");
+      const ipfs = await getWeb3();
+    },
     async registerIpfs({ commit }) {
       console.log("registerIpfs Action being executed");
       const ipfs = await getIpfs();

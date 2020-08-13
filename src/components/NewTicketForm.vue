@@ -228,7 +228,7 @@ export default {
           this.ipfsArgs.size,
           this.ipfsArgs.digest,
           nf,
-          this.form.ticketPrice,
+          this.web3.web3Instance.utils.toWei(this.form.ticketPrice),
           this.form.ticketFinalizationBlock,
           this.form.ticketInitialSupply
         )
