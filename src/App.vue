@@ -1,60 +1,61 @@
 <template>
-  <div id="app">
-    <img src="./assets/logo.png">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank">Twitter</a></li>
-    </ul>
-    <h2>Ecosystem</h2>
-    <ul>
-      <li><a href="http://router.vuejs.org/" target="_blank">vue-router</a></li>
-      <li><a href="http://vuex.vuejs.org/" target="_blank">vuex</a></li>
-      <li><a href="http://vue-loader.vuejs.org/" target="_blank">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a></li>
-    </ul>
+  <div class="app-container">
+    <Navigation />
+    <md-content class="container">
+      <router-view />
+    </md-content>
   </div>
 </template>
 
 <script>
+// Material kit css
+import "vue-material/dist/vue-material.min.css";
+import "vue-material/dist/theme/default.css";
+import Navigation from "./components/Navigation";
+import Vue from "vue";
+
+// Importing Modules from the material kit, these are global imports
+// For components only used in single views, import locally
+import VueMaterial from "vue-material";
+
+Vue.use(VueMaterial);
+
 export default {
-  name: 'app',
-  data () {
-    return {
-      msg: 'Welcome to Your Vue.js App'
+  name: "IdetixHost",
+  components: {
+    Navigation
+  },
+  beforeCreate() {
+    this.$store.dispatch("registerWeb3");
+    this.$store.dispatch("registerIpfs");
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3;
     }
   }
-}
+  // methods: {
+  //   toggleMenu() {
+  //     this.menuVisible = !this.menuVisible;
+  //   }
+  //},
+  // components: {}
+};
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+/* ----------- Fonts ----------- */
+@import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
+.page-container {
+  min-height: 300px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(#000, 0.12);
 }
 
-h1, h2 {
-  font-weight: normal;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
+.md-content {
+  padding: 16px;
 }
 </style>

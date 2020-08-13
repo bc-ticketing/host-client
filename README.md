@@ -1,18 +1,50 @@
 # host-client
 
-> A Vue.js project
+## Setup environment
+1) install ipfs (https://docs.ipfs.io/install/)
+2) make sure your ipfs node accepts CORS request from localhosts
+```bash
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin  '["http://localhost"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]' 
+```
+3) run ipfs daemon
+```bash
+ipfs daemon
+```
+4) install and start ipfs companion to connect browser to local ipfs node (https://chrome.google.com/webstore/detail/ipfs-companion/nibjojkomfdiaoajekhjakgkdhaomnch?hl=en)
 
-## Build Setup
+## Run Environment
 
-``` bash
-# install dependencies
+First, start local blockchain with by opening the Ganache application.
+
+Then:
+
+```bash
+# get recent contracts, deploy them and run
+./deployRun.sh
+```
+
+```bash
+# if contracts already deployed
 npm install
+npm run serve
+```
 
-# serve with hot reload at localhost:8080
-npm run dev
+## Standalone setup and run commands
 
-# build for production with minification
+```bash
+# compiles and minifies for production
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+```bash
+# run unit tests
+npm run test:unit
+```
+
+```bash
+# lints and fixes files
+npm run lint
+```
+
+
