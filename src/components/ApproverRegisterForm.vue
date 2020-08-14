@@ -63,12 +63,16 @@
           </div>
         </md-card-content>
 
-        <md-card-actions>
+        <!-- <md-card-actions>
           <md-button type="submit" class="md-primary" @click="createIpfsString">create ipfs string</md-button>
-        </md-card-actions>
+        </md-card-actions>-->
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="registerAsApprover">Register</md-button>
+          <md-button
+            type="submit"
+            class="md-primary"
+            @click="registerAsApprover"
+          >Register as approver</md-button>
         </md-card-actions>
       </md-card>
     </form>
@@ -87,7 +91,6 @@ import {
 // project internal imports
 import { NETWORKS } from "../constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
-import { IDENTITY_ABI, IDENTITY_ADDRESS } from "../constants/Identity.js";
 
 export default {
   name: "ApproverRegisterForm",
@@ -114,8 +117,11 @@ export default {
     web3() {
       return this.$store.state.web3;
     },
-    ipfs() {
-      return this.$store.state.ipfs;
+    identityContract() {
+      return this.$store.state.identity;
+    },
+    ipfsInstance() {
+      return this.$store.state.ipfsInstance;
     },
     approverMethods() {
       let methodArray = [];
@@ -156,7 +162,7 @@ export default {
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
       this.sending = true;
-      const response = await this.ipfs.add(this.ipfsString);
+      const response = await this.ipfsInstance.add(this.ipfsString);
       this.ipfsHash = response.path;
       console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
 
@@ -183,14 +189,10 @@ export default {
     },
     async registerAsApprover() {
       await this.uploadToIpfs();
-      const identityContract = new this.web3.web3Instance.eth.Contract(
-        IDENTITY_ABI,
-        IDENTITY_ADDRESS
-      );
       if (this.ipfsArgs === null) {
         this.ipfsArgs = cidToArgs(this.ipfsHash);
       }
-      let registerPromise = identityContract.methods
+      let register = await this.identityContract.methods
         .registerApprover(
           this.ipfsArgs.hashFunction,
           this.ipfsArgs.size,
@@ -198,7 +200,7 @@ export default {
         )
         .send({ from: this.web3.account });
 
-      console.log(registerPromise);
+      console.log(register);
     }
   }
 };

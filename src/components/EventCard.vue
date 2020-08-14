@@ -1,114 +1,82 @@
 <template>
   <div class="event-card-container">
-    <!-- todo: create event cards to show events' infos fetched from blockchain and ipfs -->
-    <div class="event-wrapper">
-      <div class="date-box">
-        <div class="wrapper">
-          <span class="month">{{ month }}</span>
-          <span class="day">{{ dayInMonth }}</span>
-        </div>
-      </div>
-      <div class="info-box">
-        <span class="time">{{ weekday }} - {{ event_data.starttime }}</span>
-        <span class="title">{{ event_data.name }}</span>
-        <span class="location">{{ event_data.venue }} - {{ event_data.location }}</span>
-      </div>
-      <div class="button-box" @click="goToDetails">
-        <md-icon>arrow_forward_ios</md-icon>
-      </div>
+    <div class="event-card-router-container">
+      <md-card md-with-hover>
+        <!-- <md-ripple> -->
+        <md-card-header>
+          <div class="md-title event-card-title">{{ title }}</div>
+          <!-- <div class="event-card-date">{{ date }}</div> -->
+          <div class="md-subhead">{{ location}}</div>
+        </md-card-header>
+        <md-card-content>
+          <div class="content-entry">{{ "Location: " + location }}</div>
+          <div class="content-entry">{{ "Type: " + type }}</div>
+          <div class="content-entry">{{ "Description: " + description }}</div>
+        </md-card-content>
+        <md-card-actions>
+          <md-button class="md-primary" @click="goToCreateTicketType()">Create a new ticket category</md-button>
+        </md-card-actions>
+        <!-- </md-ripple> -->
+      </md-card>
     </div>
   </div>
 </template>
 
 <script>
 import { WEEKDAYS, MONTHS } from "../constants/constants.js";
+
 export default {
-  name: "EventEntry",
+  name: "EventCard",
   data() {
     return {};
   },
-  props: {
-    event_data: Object
-  },
+  props: { event: Object },
   methods: {
-    goToDetails: function() {
+    goToCreateTicketType: function() {
       this.$router.push({
-        name: "event",
-        params: { data: this.event_data.id }
+        name: "NewTicket",
+        params: { address: this.event.address }
       });
     }
   },
   computed: {
-    dayInMonth: function() {
-      return this.event_data.date.split(".")[0];
+    eventInstance() {
+      return this.event;
+      //todo get event information to display in this card!
     },
-    weekday: function() {
-      var d = new Date(
-        this.event_data.date.split(".")[2],
-        this.event_data.date.split(".")[1] - 1,
-        this.event_data.date.split(".")[0]
-      );
-      return WEEKDAYS[d.getDay()];
+    title() {
+      return this.event.metadata
+        ? this.event.metadata.event.title
+        : "no title found";
     },
-    month: function() {
-      var d = new Date(
-        this.event_data.date.split(".")[2],
-        this.event_data.date.split(".")[1] - 1,
-        this.event_data.date.split(".")[0]
-      );
-      return MONTHS[d.getMonth()];
+    location() {
+      return this.event.metadata
+        ? this.event.metadata.event.location
+        : "no location found";
+    },
+    type() {
+      return this.event.metadata
+        ? this.event.metadata.event.type
+        : "no type found";
+    },
+    description() {
+      return this.event.metadata
+        ? this.event.metadata.event.description
+        : "no description found";
     }
   },
+  // watch: {
+  //   metadata
+  // },
   mounted: function() {}
 };
 </script>
 
-<style scoped>
-/* .event-wrapper {
-  display: grid;
-  grid-template-columns: 80px 1fr 50px;
+<style>
+.event-card-container {
+  margin-bottom: 10px;
 }
-.button-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.button-box .md-icon {
-  color: #ffab40;
-  cursor: pointer;
-}
-.button-box .date-box {
-  display: flex;
-  justify-content: center;
-  align-items: top;
-}
-.date-box .month {
-  text-transform: uppercase;
-  margin-bottom: 5px;
-}
-.date-box .day {
-  font-weight: bold;
-}
-.date-box span {
-  display: block;
-  margin: auto;
-  width: max-content;
-}
-.info-box span {
+.content-entry {
   display: block;
 }
-.info-box .time {
-  opacity: 0.8;
-  margin-bottom: 5px;
-}
-.info-box .title {
-  margin-bottom: 5px;
-}
-.info-box .location {
-  opacity: 0.6;
-}
-.event {
-  padding: 20px 0;
-  background-color: white;
-} */
 </style>

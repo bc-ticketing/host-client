@@ -13,9 +13,12 @@
             <span class="account-address">{{ prettyAddress(accountAddress) }}</span>
             <span class="account-balance">{{ prettyBalance(accountBalance) }} ETH</span>
           </div>
-          <md-button class="md-icon-button" @click="reloadWeb3()">
+          <div class="account-info-refresh-container">
             <md-icon>account_balance</md-icon>
-          </md-button>
+            <md-button class="md-icon-button" @click="reloadWeb3AndEvents()">
+              <md-icon>refresh</md-icon>
+            </md-button>
+          </div>
         </div>
       </md-toolbar>
 
@@ -72,7 +75,9 @@
 </template>
 
 <script>
+import { EVENT_FACTORY_ADDRESS } from "../constants/EventFactory";
 export default {
+  name: "Navigation",
   data() {
     return {
       showNavigation: false
@@ -86,15 +91,33 @@ export default {
       this.$router.push(route);
       this.showNavigation = false;
     },
-    reloadWeb3() {
-      this.$store.dispatch("registerWeb3");
+    reloadWeb3AndEvents() {
+      this.$root.$on("reloadedWeb3", async () => {
+        this.reloadEvents();
+      });
+      this.reloadWeb3();
     },
+    async reloadWeb3() {
+      await this.$store.dispatch("registerWeb3");
+      this.$root.$emit("reloadedWeb3");
+    },
+    async reloadEvents() {
+      await this.$store.dispatch("loadEventAddresses");
+      await this.$store.dispatch("loadEvents");
+    },
+    // async reloadEvents() {
+    //   await this.$store.dispatch("loadEventAddresses");
+    //   await this.$store.dispatch("loadEvents");
+    // },
     prettyAddress(address) {
       const start = address.substring(0, 4);
       const end = address.substring(address.length - 4, address.length);
       return start + "..." + end;
     },
     prettyBalance(balance) {
+      if (balance == null) {
+        return "";
+      }
       if (balance.includes(".")) {
         const truncateIndex = balance.indexOf(".") + 3;
         return balance.substring(0, truncateIndex);
@@ -111,10 +134,12 @@ export default {
       return this.$store.state.web3.accounts;
     },
     accountAddress() {
-      return this.web3.account;
+      return this.web3.account ? this.web3.account : "";
     },
     accountBalance() {
-      return this.web3.web3Instance.utils.fromWei(String(this.web3.balance));
+      return this.web3.isInjected
+        ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
+        : null;
     }
   }
 };
@@ -144,6 +169,14 @@ export default {
 .account-info-container {
   align-items: center;
   display: flex;
+}
+.account-info {
+  margin-right: 10px;
+}
+.account-info-refresh-container {
+  align-items: center;
+  display: flex;
+  margin-left: 4px;
 }
 .account-address {
   margin-right: 7px;

@@ -1,53 +1,49 @@
 <template>
   <div class="events-container">
-    <md-button class="md-primary" @click="getMyEvents">Fetch my events</md-button>
-    <md-button class="md-primary" @click="logWeb3">Log web3 object</md-button>
-    <EventEntry v-for="event in events" v-bind:key="event.id" v-bind:event_data="event"></EventEntry>
+    <EventCard v-bind:event="event" v-for="event in events" v-bind:key="event.address"></EventCard>
+    <!-- <div v-if="events.length == 0">
+      <h3>No events found for the address</h3>
+      <h4>{{ web3.account }}</h4>
+    </div>-->
   </div>
 </template>
 
 <script>
-import EventList from "../components/EventList";
+import EventCard from "../components/EventCard";
 
 export default {
   name: "Events",
+  components: {
+    EventCard
+  },
   data: () => ({
-    eventAddresses: null,
-    tempAddr: "asdfa",
     events: []
   }),
   methods: {
-    async getMyLatestEvent() {
-      const eventAddresses = await this.web3.eventFactory.methods
-        .getEvents()
-        .call();
-      console.log(eventAddresses);
-      this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
-      this.currentEventAddress = this.latestEventAddress;
-      console.log("set latest event to: " + this.latestEventAddress);
-    },
-    setContractAddress() {
-      this.contractAddress = this.contractAddressTemp;
-    },
-    async getMyEvents() {
-      console.log(
-        "fetching events of address: " + this.$store.state.web3.account
-      );
-      this.eventAddresses = await this.web3.eventFactory.methods
-        .getEvents()
-        .call();
-      console.log(this.eventAddresses);
-    },
-    logWeb3() {
-      console.log(this.web3.web3Instance);
+    updateEvents() {
+      for (const a in this.$store.state.events) {
+        var e = this.$store.state.events[a];
+        e.address = a;
+        if (e.metadata != undefined) {
+          this.events.push(e);
+        }
+      }
     }
+  },
+  beforeCreate: async function() {
+    this.$root.$on("loadedIpfsEventMetadata", () => {
+      this.updateEvents();
+    });
+  },
+  beforeMount: function() {
+    this.updateEvents();
   },
   computed: {
     web3() {
       return this.$store.state.web3;
     },
-    address() {
-      return this.tempAddr;
+    eventFactory() {
+      return this.$store.state.eventFactory;
     }
   }
 };

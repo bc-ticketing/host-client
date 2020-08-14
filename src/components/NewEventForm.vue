@@ -26,7 +26,14 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <div class="date-location-container md-layout md-gutter">
+            <!-- <div class="md-layout-item">
+              <md-datepicker name="date" id="date" v-model="form.rawDate">
+                <label for="date">Date</label>
+              </md-datepicker>
+              <md-input name="date" id="date" v-model="form.date" />
+            </div>-->
+
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('location')">
                 <label for="location">Location</label>
@@ -160,7 +167,7 @@
         <md-card-actions>
           <md-button type="submit" class="md-primary" @click="createEvent">Create Event</md-button>
         </md-card-actions>
-        <md-card-actions>
+        <!-- <md-card-actions>
           <md-button type="submit" class="md-primary" @click="uploadToIpfs">Uploaod to ipfs</md-button>
           <md-button type="submit" class="md-primary" @click="downloadFromIpfs">Download from ipfs</md-button>
         </md-card-actions>
@@ -170,15 +177,7 @@
             class="md-primary"
             @click="deployEventContract"
           >Deploy event contract</md-button>
-        </md-card-actions>
-        <!-- <p>eventTitle: {{ this.form.eventTitle }}</p>
-        <p>eventType: {{ this.form.eventType }}</p>
-        <p>description: {{ this.form.description }}</p>
-        <p>idApprover: {{ this.form.idApprover }}</p>
-        <p>idLevel: {{ this.form.idLevel }}</p>
-        <p>ipfs hash: {{ this.ipfsHash }}</p>
-        <p>https://ipfs.io/ipfs/{{ this.ipfsHash }}</p>
-        <p>ipfs data: {{ this.ipfsData }}</p>-->
+        </md-card-actions>-->
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded">
@@ -203,6 +202,7 @@ import {
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
+// import format from "date-fns/format";
 
 // project internal imports
 import { NETWORKS } from "../constants/constants.js";
@@ -223,11 +223,12 @@ export default {
     ipfsData: null,
     ipfsString: null,
     ipfsError: false,
-    ipfsAdded: false, // todo: set true, when ipfs hash is returned
+    ipfsAdded: false,
     lastEventInfo: null,
     ethToken: "0",
     form: {
       eventTitle: "testTitle",
+      // rawDate: Date(2020, 10, 1),
       location: "Zurich",
       eventStartTime: null,
       eventEndTime: null,
@@ -235,7 +236,7 @@ export default {
       //   eventTags: [],
       eventDescription: "test description",
       erc20Token: "0x0000000000000000000000000000000000000000",
-      idApprover: "0x37FcEF83b9E4Ba797ec97E5F0f7D5ccdb1716103",
+      idApprover: "0x3b7DA1a855C343806117182C058addcB096B0a69",
       idLevel: 1,
       granularity: 2,
       color: "#add8e6",
@@ -282,11 +283,14 @@ export default {
       return this.$store.state.web3;
     },
     eventFactory() {
-      return this.$store.state.web3.eventFactory;
+      return this.$store.state.eventFactory;
     },
     ipfs() {
       return this.$store.state.ipfs;
     }
+    // date() {
+    //   return format(this.form.rawDate, this.$material.locale.dateFormat);
+    // }
   },
   methods: {
     getValidationClass(fieldName) {
@@ -341,13 +345,6 @@ export default {
       for await (const chunk of this.ipfs.cat(this.ipfsHash)) {
         this.ipfsData = Buffer(chunk, "utf8").toString();
       }
-      // Instead of this timeout, here you can call your API
-      // window.setTimeout(() => {
-      //   this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
-      //   this.ipfsAdded = true;
-      //   this.sending = false;
-      //   // this.clearForm();
-      // }, 1500);
     },
     createIpfsString() {
       return JSON.stringify({
@@ -361,37 +358,6 @@ export default {
         }
       });
     },
-    // async uploadEventToIpfs() {
-    //   // if (!this.eventFormComplete()) {
-    //   //   return;
-    //   // }
-    //   this.ipfsString = this.createIpfsString();
-    //   // todo upload to ipfs correctly
-    //   this.sending = true;
-    //   try {
-    //     // const ipfs = await this.$ipfs;
-    //     const response = await this.ipfs.add(this.ipfsString);
-    //     this.ipfsHash = response.path;
-    //     console.log("ipfsString: " + this.ipfsString);
-    //     console.log("ipfshash: " + this.ipfsHash);
-    //     console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
-    //     this.ipfsArgs = cidToArgs(this.ipfsHash);
-    //     this.ipfsCid = argsToCid(
-    //       this.ipfsArgs.hashFunction,
-    //       this.ipfsArgs.size,
-    //       this.ipfsArgs.digest
-    //     );
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    //   // Instead of this timeout, here you can call your API
-    //   window.setTimeout(() => {
-    //     this.lastEvent = `${this.form.eventTitle} ${this.form.eventType}`;
-    //     this.ipfsAdded = true;
-    //     this.sending = false;
-    //     // this.clearForm();
-    //   }, 1500);
-    // },
     eventFormComplete() {
       // check if required input fields are valid and then upload the event form to ipfs
       this.$v.$touch();
@@ -422,35 +388,9 @@ export default {
         console.log(err);
       }
     },
-    // parseIPFSData() {
-    //   var items = "#event-title, #description";
-    //   var obj = {};
-    //   items.each(function() {
-    //     obj[this.id] = this.val();
-    //   });
-    //   var ipfsString = JSON.stringify(obj, null, ``);
-    //   console.log(ipfsString);
-    //   return ipfsString;
-    // },
-    // async getIpfsNodeInfo() {
-    //   try {
-    //     // Await for ipfs node instance.
-    //     const ipfs = await this.$ipfs;
-    //     // Call ipfs `id` method.
-    //     // Returns the identity of the Peer.
-    //     const { agentVersion, id } = await ipfs.id();
-    //     this.agentVersion = agentVersion;
-    //     this.id = id;
-    //     // Set successful status text.
-    //     this.status = "Connected to IPFS =)";
-    //   } catch (err) {
-    //     // Set error status text.
-    //     this.status = `Error: ${err}`;
-    //   }
-    // },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
-      const eventPromise = this.eventFactory.methods
+      const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
           args.size,
@@ -475,13 +415,14 @@ export default {
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
-      // const eventAddress = await eventPromise.events.EventCreated.address;
-      // console.log(eventAddress);
-      // const eventItem = { address: eventAddress, cid: this.ipfsHash };
-      // this.$store.commit("addEventContract", eventItem);
     }
   }
 };
 </script>
 
-<style></style>
+<style>
+.date-location-container {
+  justify-content: center;
+  display: flex;
+}
+</style>

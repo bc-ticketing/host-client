@@ -34,12 +34,12 @@
         </md-card-content>
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="approveIdentity">Verify</md-button>
+          <md-button type="submit" class="md-primary" @click="approveIdentity">Approve Identity</md-button>
         </md-card-actions>
 
-        <md-card-actions>
+        <!-- <md-card-actions>
           <md-button type="submit" class="md-primary" @click="getSecurityLevel">Fetch level</md-button>
-        </md-card-actions>
+        </md-card-actions>-->
       </md-card>
     </form>
   </div>
@@ -61,15 +61,15 @@ export default {
       return this.$store.state.web3;
     },
     identityContract() {
-      return this.$store.state.web3.identityContract;
+      return this.$store.state.web3.identity;
     }
   },
   methods: {
     async approveIdentity() {
-      const approvalPromise = await this.identityContract.methods
+      const approval = await this.identityContract.methods
         .approveIdentity(this.form.address, this.form.approvalLevel)
         .send({ from: this.$store.state.web3.account });
-      console.log(approvalPromise);
+      console.log(approval);
     },
     async getSecurityLevel() {
       const secLevel = await this.identityContract.methods

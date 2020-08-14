@@ -5,12 +5,12 @@ let state = {
         networkId: null,
         account: null,
         balance: null,
-        error: null,
-        eventFactory: null
+        error: null
     },
+    eventAddresses: [],
+    events: {},
     eventFactory: null,
-    ipfs: null,
-    events: [],
-    contractInstance: null
+    identity: null,
+    ipfsInstance: null
 }
 export default state

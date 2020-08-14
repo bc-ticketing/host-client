@@ -1,11 +1,11 @@
 <template>
   <div class="tickets-container">
-    <NewTicketForm />
+    <h3>Ticket List</h3>
   </div>
 </template>
 
 <script>
-import { EVENT_ABI } from "../constants/Event.js";
+import { EVEVENT_MINTABLE_AFTERMARKET_ABIENT_ABI } from "../constants/EventMintableAftermarket";
 import NewTicketForm from "../components/NewTicketForm";
 
 // todo:
@@ -20,10 +20,7 @@ export default {
   name: "Tickets",
   data: () => ({
     contractAddress: null
-  }),
-  components: {
-    NewTicketForm
-  }
+  })
 };
 </script>
 

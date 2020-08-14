@@ -1,7 +1,23 @@
 <template>
   <div class="create-ticket-type-container">
+    <md-card class="md-layout-item contract-address-card">
+      <md-card-header>
+        <div class="md-title">Event</div>
+      </md-card-header>
+      <md-card-content>
+        <div class="md-layout md-gutter">
+          <div class="md-layout-item md-small-size-100">
+            <md-field>
+              <label for="address">Contract address</label>
+              <md-input name="address" id="address" v-model="address" />
+            </md-field>
+          </div>
+        </div>
+      </md-card-content>
+    </md-card>
+
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
-      <md-card class="md-layout-item">
+      <md-card class="md-layout-item new-ticket-form">
         <md-card-header>
           <div class="md-title">New Ticket Type</div>
         </md-card-header>
@@ -14,8 +30,8 @@
             <md-button class="md-primary" @click="setContractAddress">Set Contract Address</md-button>
             <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
           </div>-->
-          <md-button class="md-primary" @click="getMyLatestEvent">Fetch my latest event</md-button>
-          <md-button class="md-primary" @click="getMyEvents">Fetch all my events</md-button>
+          <!-- <md-button class="md-primary" @click="getMyLatestEvent">Fetch my latest event</md-button>
+          <md-button class="md-primary" @click="getMyEvents">Fetch all my events</md-button>-->
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -91,7 +107,7 @@
         </md-card-content>
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button>
+          <!-- <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button> -->
           <md-button type="submit" class="md-primary" @click="createTicketType">Create ticket type</md-button>
         </md-card-actions>
       </md-card>
@@ -115,12 +131,12 @@ import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
 } from "../constants/EventFactory.js";
-import { EVENT_ABI } from "../constants/Event.js";
+import { EVENT_MINTABLE_AFTERMARKET_ABI } from "../constants/EventMintableAftermarket";
 
 export default {
   name: "NewTicketForm",
   data: () => ({
-    contractAddress: null,
+    address: null,
     contractAddressTemp: null,
     latestEventAddress: null,
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
@@ -128,12 +144,12 @@ export default {
     ipfsData: null,
     ipfsString: null,
     form: {
-      ticketName: "ticket name",
+      ticketName: "Standing Area",
       ticketDescription: "ticket description",
-      ticketIsNonFungible: false,
-      ticketPrice: 10,
+      ticketIsNonFungible: "false",
+      ticketPrice: "0.4",
       ticketFinalizationBlock: 600,
-      ticketInitialSupply: 20,
+      ticketInitialSupply: 400,
       currentEvent: null
     },
     ipfsAdded: false,
@@ -148,7 +164,7 @@ export default {
   }),
   methods: {
     async getMyEvents() {
-      const eventAddresses = await this.web3.eventFactory.methods
+      const eventAddresses = await this.$store.state.eventFactory.methods
         .getEvents()
         .call();
       console.log(eventAddresses);
@@ -177,14 +193,14 @@ export default {
         ticket: {
           name: this.form.ticketName,
           description: this.form.ticketDescription,
-          event: this.currentEventAddress
+          event: this.address
         }
       });
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
       this.sending = true;
-      const response = await this.ipfs.add(this.ipfsString);
+      const response = await this.ipfsInstance.add(this.ipfsString);
       this.ipfsHash = response.path;
       console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
 
@@ -207,12 +223,9 @@ export default {
     },
     async createTicketType() {
       await this.uploadToIpfs();
-      if (this.latestEventAddress === null) {
-        this.getMyLatestEvent();
-      }
       const event = new this.web3.web3Instance.eth.Contract(
-        EVENT_ABI,
-        this.latestEventAddress
+        EVENT_MINTABLE_AFTERMARKET_ABI,
+        this.address
       );
       if (this.ipfsArgs === null) {
         this.ipfsArgs = cidToArgs(this.ipfsHash);
@@ -222,7 +235,7 @@ export default {
         nf = false;
       }
       console.log("nf: " + nf);
-      let eventPromise = event.methods
+      let createResponse = await event.methods
         .createType(
           this.ipfsArgs.hashFunction,
           this.ipfsArgs.size,
@@ -234,42 +247,19 @@ export default {
         )
         .send({ from: this.web3.account });
 
-      console.log(eventPromise);
-      // const nfNonce = await event.methods.nfNonce().call();
-      // console.log(nfNonce);
-
-      // this.temp.pastEvents = await event.methods
-      //   .getPastEvents("EventMetadata", {
-      //     fromBlock: 1
-      //   })
-      //   .call();
-      // this.temp.latestEvent = this.pastEvents[
-      //   this.pastEvents.length - 1
-      // ].returnValues;
-
-      // this.temp.loadedCid = argsToCid(
-      //   this.latestEvent["hashFunction"],
-      //   this.latestEvent["size"],
-      //   this.latestEvent["digest"]
-      // );
+      console.log(createResponse);
     }
-    // function createType(
-    //     bytes1 _hashFunction,
-    //     bytes1 _size,
-    //     bytes32 _digest,
-    //     bool _isNF,
-    //     uint256 _price,
-    //     uint256 _finalizationBlock,
-    //     uint256 _initialSupply
-    // )
   },
   computed: {
     web3() {
       return this.$store.state.web3;
     },
-    ipfs() {
-      return this.$store.state.ipfs;
+    ipfsInstance() {
+      return this.$store.state.ipfsInstance;
     }
+  },
+  created() {
+    this.address = this.$route.params.address;
   }
 };
 </script>
@@ -277,5 +267,8 @@ export default {
 <style>
 .contract-address {
   display: flex;
+}
+.contract-address-card {
+  margin-bottom: 10px;
 }
 </style>

@@ -25,9 +25,42 @@ export default {
   components: {
     Navigation
   },
-  beforeCreate() {
-    this.$store.dispatch("registerWeb3");
-    this.$store.dispatch("registerIpfs");
+  methods: {
+    loadEventAddresses: async function() {
+      await this.$store.dispatch("loadEventAddresses");
+      this.$root.$emit("loadedEventAddresses");
+    },
+    loadIpfsHashesEvents: async function() {
+      await this.$store.dispatch("loadEvents");
+      this.$root.$emit("loadedEvents");
+    },
+    // loadTickets: async function() {
+    //   await this.$store.dispatch("loadTickets");
+    //   this.$root.$emit("loadedTickets");
+    // },
+    loadIpfsEventMetadata: async function() {
+      await this.$store.dispatch("loadIpfsEventMetadata");
+      this.$root.$emit("loadedIpfsEventMetadata");
+    }
+  },
+  async beforeCreate() {
+    this.$root.$on("eventFactoryCreated", async () => {
+      this.loadEventAddresses();
+    });
+    this.$root.$on("loadedEventAddresses", async () => {
+      this.loadIpfsHashesEvents();
+      // this.loadTickets();
+    });
+    this.$root.$on("loadedEvents", async () => {
+      this.loadIpfsEventMetadata();
+    });
+    await this.$store.dispatch("registerIpfs");
+    await this.$store.dispatch("registerWeb3");
+    this.$root.$emit("web3Injected");
+    await this.$store.dispatch("createEventFactory");
+    this.$root.$emit("eventFactoryCreated");
+    await this.$store.dispatch("createIdentityContract");
+    this.$root.$emit("identityContractCreated");
   },
   computed: {
     web3() {
@@ -53,5 +86,10 @@ export default {
 
 .md-content {
   padding: 16px;
+}
+.container {
+  width: 80%;
+  max-width: 1440px;
+  margin: auto;
 }
 </style>
