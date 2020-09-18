@@ -33,29 +33,43 @@
           </div>
 
           <div class="md-layout md-gutter date-container">
-            <div class="md-layout-item md-small-size-40">
+            <div class="md-layout-item">
               <md-datepicker md-immediately name="date" id="date" v-model="form.date">
-                <label for="date">Date, Start Time and Door Opening</label>
+                <label for="date">Date and Start Time</label>
               </md-datepicker>
             </div>
-            <div class="md-small-size-100" style="padding-right:12px; margin: 20px 0">
+            <div class="md-small-size-100" style="margin: 20px 0">
               <vue-timepicker v-model="form.startTime" format="HH:mm"></vue-timepicker>
             </div>
-            <div class="md-small-size-100" style="padding-right:12px; margin: 20px 0">
-              <vue-timepicker v-model="form.doorOpening" format="HH:mm"></vue-timepicker>
+            <div class="md-small-size-100 info-dialog-button">
+              <md-button
+                class="md-icon-button md-primary"
+                @click="showStartTimeDialog = true"
+                style="margin-right: 16px"
+              >
+                <md-icon>help_outline</md-icon>
+              </md-button>
             </div>
           </div>
 
+          <md-dialog :md-active.sync="showStartTimeDialog">
+            <md-dialog-title>Start Time</md-dialog-title>
+            <p
+              class="dialog-text"
+            >Specify the start time of the event here. To define a time for door opening use the finalization block on each ticket type.</p>
+            <md-button class="md-primary" @click="showStartTimeDialog = false">Close</md-button>
+          </md-dialog>
+
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('type')">
-                <label for="event-type">Category</label>
-                <md-select name="event-type" id="event-type" v-model="form.type">
+              <md-field :class="getValidationClass('category')">
+                <label for="category">Category</label>
+                <md-select name="category" id="category" v-model="form.category">
                   <md-option value="Music">Music</md-option>
                   <md-option value="Sports">Sports</md-option>
                   <md-option value="Theatre">Theatre</md-option>
                 </md-select>
-                <span class="md-error">The event type is required</span>
+                <span class="md-error">The event category is required</span>
               </md-field>
             </div>
           </div>
@@ -179,15 +193,6 @@
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('color')">
-                <label for="color">Color</label>
-                <md-input name="color" id="color" v-model="form.color" />
-              </md-field>
-            </div>
-          </div>
-
-          <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass(`eventDescription`)">
                 <label for="eventDescription">Description</label>
                 <md-textarea
@@ -201,18 +206,32 @@
             </div>
           </div>
 
-          <!-- <md-field :class="getValidationClass('email')">
-            <label for="email">Email</label>
-            <md-input
-              type="email"
-              name="email"
-              id="email"
-              autocomplete="email"
-              v-model="form.email"
-            />
-            <span class="md-error" v-if="!$v.form.email.required">The email is required</span>
-            <span class="md-error" v-else-if="!$v.form.email.email">Invalid email</span>
-          </md-field>-->
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('color')">
+                <label for="color">Color</label>
+                <md-input name="color" id="color" v-model="form.color" />
+              </md-field>
+            </div>
+          </div>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('url')">
+                <label for="url">URL</label>
+                <md-input name="url" id="url" v-model="form.url" />
+              </md-field>
+            </div>
+          </div>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('twitter')">
+                <label for="twitter">Twitter</label>
+                <md-input name="twitter" id="twitter" v-model="form.twitter" />
+              </md-field>
+            </div>
+          </div>
         </md-card-content>
 
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
@@ -257,7 +276,6 @@ import {
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
-// import format from "date-fns/format";
 
 // project internal imports
 import { NETWORKS } from "../constants/constants.js";
@@ -273,6 +291,7 @@ export default {
   mixins: [validationMixin],
   components: { VueTimepicker },
   data: () => ({
+    showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
     showGranularityDialog: false,
@@ -286,28 +305,26 @@ export default {
     lastEventInfo: null,
     ethToken: "0",
     form: {
-      title: "testTitle",
-      date: new Date(2020, 10, 2),
+      // ipfs info
+      title: "title",
       location: "Zurich",
+      category: "Music",
+      eventDescription: "test description",
+      color: "#add8e6",
+      date: new Date(2020, 10, 2),
       startTime: {
         HH: "18",
         mm: "00"
       },
-      doorOpening: {
-        HH: "16",
-        mm: "30"
-      },
-      type: "Music",
+      url: "",
+      twitter: "",
       //   eventTags: [],
-      eventDescription: "test description",
+      // blockchain info
       erc20Token: "0x0000000000000000000000000000000000000000",
       idApprover: "0x2bF80bcfA49A7058a053B1F121cFaCEe072C432e",
       idLevel: 1,
-      granularity: 2,
-      color: "#add8e6",
-      email: null
+      granularity: 2
     },
-    eventContractDeployed: false, // todo: set after web3js event catches deployment event
     sending: false,
     lastEvent: null
   }),
@@ -317,7 +334,7 @@ export default {
         // required,
         minLength: minLength(3)
       },
-      type: {
+      category: {
         // required,
       },
       eventDescription: {
@@ -337,9 +354,9 @@ export default {
       granularity: {
         required
       }
-      // email: {
+      // url: {
       //   // required,
-      //   email
+      //   url
       // }
     }
   },
@@ -362,21 +379,7 @@ export default {
         this.form.startTime.HH * 3600 +
         this.form.startTime.mm * 60
       );
-    },
-    doorOpeningTimeUnix() {
-      return (
-        this.dateSeconds +
-        this.form.doorOpening.HH * 3600 +
-        this.form.doorOpening.mm * 60
-      );
     }
-    // fullDate() {
-    //   var add =
-    //     Number(this.form.startTime.HH) * 3600 +
-    //     Number(this.form.startTime.mm) * 60;
-    //   return new Date(this.date + add);
-    // return this.date + add;
-    // }
   },
   methods: {
     getValidationClass(fieldName) {
@@ -392,15 +395,19 @@ export default {
     },
     clearForm() {
       this.$v.$reset();
-      this.form.title = null;
-      this.form.type = null;
+      this.form.title = "";
+      this.form.location = "";
+      this.form.category = "";
+      this.form.eventDescription = "";
+      this.color = "";
+      this.time = 0;
+      this.url = "";
+      this.twitter = "";
       //   this.form.eventTags = null;
+
       this.form.levelNumber = null;
       this.form.idApprover = null;
-      (this.form.location = null),
-        (this.form.granularity = null),
-        (this.form.color = null),
-        (this.form.email = null);
+      this.form.granularity = 4;
     },
     async createEvent() {
       await this.uploadToIpfs();
@@ -432,16 +439,18 @@ export default {
       }
     },
     createIpfsString() {
-      var startDate = new Date(Date.UTC(this.dateSeconds + this.startTime));
-      var doorOpening = new Date(this.dateSeconds + this.form.doorOpening);
       return JSON.stringify({
         version: "1.0",
         event: {
           title: this.form.title,
           location: this.form.location,
-          type: this.form.type,
+          category: this.form.category,
+          description: this.form.eventDescription,
           color: this.form.color,
-          description: this.form.eventDescription
+          time: this.startTimeUnix,
+          duration: "",
+          url: this.form.url,
+          twitter: this.form.twitter
         }
       });
     },
