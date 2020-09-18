@@ -92,4 +92,7 @@ export default {
   max-width: 1440px;
   margin: auto;
 }
+.dialog-text {
+  margin: 0 24px 10px;
+}
 </style>
