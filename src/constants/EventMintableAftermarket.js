@@ -123,6 +123,69 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "supply",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "block",
+                "type": "uint256"
+            }
+        ],
+        "name": "PresaleCreated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "luckyNumber",
+                "type": "uint256"
+            }
+        ],
+        "name": "PresaleJoined",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            }
+        ],
+        "name": "TicketClaimed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": true,
                 "internalType": "uint256",
                 "name": "ticketTypeId",
@@ -148,6 +211,19 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
             }
         ],
         "name": "TicketMetadata",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "TicketPriceRefunded",
         "type": "event"
     },
     {
@@ -231,6 +307,67 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
     {
         "inputs": [
             {
+                "internalType": "uint256",
+                "name": "_type",
+                "type": "uint256"
+            }
+        ],
+        "name": "claim",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes1",
+                "name": "_hashFunction",
+                "type": "bytes1"
+            },
+            {
+                "internalType": "bytes1",
+                "name": "_size",
+                "type": "bytes1"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_digest",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bool",
+                "name": "_isNF",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_price",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_finalizationBlock",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_supply",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_block",
+                "type": "uint256"
+            }
+        ],
+        "name": "createPresaleType",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes1",
                 "name": "_hashFunction",
                 "type": "bytes1"
@@ -275,6 +412,30 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
             }
         ],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "entries",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -623,6 +784,43 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
                 "internalType": "uint256",
                 "name": "_type",
                 "type": "uint256"
+            }
+        ],
+        "name": "joinPresale",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "lotteries",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "supply",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "block",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_type",
+                "type": "uint256"
             },
             {
                 "internalType": "uint256",
@@ -726,6 +924,25 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "nfMintCounter",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "nfNonce",
         "outputs": [
@@ -790,6 +1007,25 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
             }
         ],
         "name": "nfsForSale",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "nonces",
         "outputs": [
             {
                 "internalType": "uint256",

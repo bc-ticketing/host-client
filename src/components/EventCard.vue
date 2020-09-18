@@ -35,7 +35,10 @@ export default {
     goToCreateTicketType: function() {
       this.$router.push({
         name: "NewTicket",
-        params: { address: this.event.address }
+        params: {
+          eventAddress: this.event.address,
+          eventTitle: this.event.metadata.event.title
+        }
       });
     }
   },
@@ -65,9 +68,6 @@ export default {
         : "no description found";
     }
   },
-  // watch: {
-  //   metadata
-  // },
   mounted: function() {}
 };
 </script>

@@ -1,10 +1,7 @@
 <template>
   <div class="events-container">
     <EventCard v-bind:event="event" v-for="event in events" v-bind:key="event.address"></EventCard>
-    <!-- <div v-if="events.length == 0">
-      <h3>No events found for the address</h3>
-      <h4>{{ web3.account }}</h4>
-    </div>-->
+    <h3 v-if="events.length == 0">No events found for your active address: {{ web3.account }}.</h3>
   </div>
 </template>
 

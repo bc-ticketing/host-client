@@ -9,38 +9,187 @@
         <md-card-content>
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('eventTitle')">
-                <label for="event-title">Event Title</label>
+              <md-field :class="getValidationClass('title')">
+                <label for="event-title">Title</label>
                 <md-input
                   name="event-title"
                   id="event-title"
-                  v-model="form.eventTitle"
+                  v-model="form.title"
                   :disabled="sending"
                 />
-                <span
-                  class="md-error"
-                  v-if="!$v.form.eventTitle.required"
-                >The event title is required</span>
-                <span class="md-error" v-else-if="!$v.form.eventTitle.minlength">Invalid event title</span>
+                <span class="md-error" v-if="!$v.form.title.required">The event title is required</span>
+                <span class="md-error" v-else-if="!$v.form.title.minlength">Invalid event title</span>
               </md-field>
             </div>
           </div>
 
-          <div class="date-location-container md-layout md-gutter">
-            <!-- <div class="md-layout-item">
-              <md-datepicker name="date" id="date" v-model="form.rawDate">
-                <label for="date">Date</label>
-              </md-datepicker>
-              <md-input name="date" id="date" v-model="form.date" />
-            </div>-->
-
-            <div class="md-layout-item md-small-size-100">
+          <div class="location-container md-layout md-gutter">
+            <div class="md-layout-item">
               <md-field :class="getValidationClass('location')">
                 <label for="location">Location</label>
                 <md-input name="location" id="location" v-model="form.location" />
               </md-field>
             </div>
           </div>
+
+          <div class="md-layout md-gutter date-container">
+            <div class="md-layout-item">
+              <md-datepicker md-immediately name="date" id="date" v-model="form.date">
+                <label for="date">Date and Start Time</label>
+              </md-datepicker>
+            </div>
+            <div class="md-small-size-100" style="margin: 20px 0">
+              <vue-timepicker v-model="form.startTime" format="HH:mm"></vue-timepicker>
+            </div>
+            <div class="md-small-size-100 info-dialog-button">
+              <md-button
+                class="md-icon-button md-primary"
+                @click="showStartTimeDialog = true"
+                style="margin-right: 16px"
+              >
+                <md-icon>help_outline</md-icon>
+              </md-button>
+            </div>
+          </div>
+
+          <md-dialog :md-active.sync="showStartTimeDialog">
+            <md-dialog-title>Start Time</md-dialog-title>
+            <p
+              class="dialog-text"
+            >Specify the start time of the event here. To define a time for door opening use the finalization block on each ticket type.</p>
+            <md-button class="md-primary" @click="showStartTimeDialog = false">Close</md-button>
+          </md-dialog>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('category')">
+                <label for="category">Category</label>
+                <md-select name="category" id="category" v-model="form.category">
+                  <md-option value="Music">Music</md-option>
+                  <md-option value="Sports">Sports</md-option>
+                  <md-option value="Theatre">Theatre</md-option>
+                </md-select>
+                <span class="md-error">The event category is required</span>
+              </md-field>
+            </div>
+          </div>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100" style="display:flex">
+              <md-field :class="getValidationClass('idApprover')" style="margin-right:24px">
+                <label for="idApprover">ID Approver</label>
+                <md-input name="idApprover" id="idApprover" v-model="form.idApprover" />
+                <span class="md-error">An ID approver is required</span>
+              </md-field>
+              <md-field :class="getValidationClass('idLevel')" style="max-width:150px">
+                <label for="idLevel">Identification level</label>
+                <md-select type="number" id="idLevel" name="idLevel" v-model="form.idLevel">
+                  <md-option value="1">1</md-option>
+                  <md-option value="2">2</md-option>
+                  <md-option value="3">3</md-option>
+                </md-select>
+                <span class="md-error" v-if="!$v.form.idLevel.required">The id level is required</span>
+              </md-field>
+              <div class="info-dialog-button">
+                <md-button
+                  class="md-icon-button md-primary"
+                  @click="showIdentityApproverDialog = true"
+                >
+                  <md-icon>help_outline</md-icon>
+                </md-button>
+              </div>
+            </div>
+          </div>
+
+          <md-dialog :md-active.sync="showIdentityApproverDialog">
+            <md-dialog-title>Identity Approver</md-dialog-title>
+            <p
+              class="dialog-text"
+            >Anyone who wants to buy a ticket needs to have its identity verified by the here specified approver. The level marks the minimum level of verification offered by the given approver.</p>
+            <md-button
+              class="md-primary"
+            >Click here for avaliable information about your set approver, e.g. its level specifications.</md-button>
+            <md-button class="md-primary" @click="showIdentityApproverDialog = false">Close</md-button>
+          </md-dialog>
+
+          <!-- TODO 24.7.2020 Michael: fetch approver levels and add as dropdown options to choose from -->
+          <!-- <div class="md-layout-item md-small-size-100">
+            
+          </div>-->
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100 info-dialog">
+              <md-field :class="getValidationClass('erc20Token')">
+                <label for="erc20Token">Accepted Token For Payment</label>
+                <md-input name="erc20Token" id="erc20Token" v-model="form.erc20Token" />
+                <span
+                  class="md-error"
+                  v-if="!$v.form.erc20Token.required"
+                >The token that is accepted for payment is required</span>
+                <!-- <span
+                  class="md-error"
+                  v-else-if="!$v.form.erc20Token.maxLength"
+                >Invalid event token hash</span>-->
+              </md-field>
+              <div class="info-dialog-button">
+                <md-button class="md-icon-button md-primary" @click="showTokenDialog = true">
+                  <md-icon>help_outline</md-icon>
+                </md-button>
+              </div>
+            </div>
+          </div>
+
+          <md-dialog :md-active.sync="showTokenDialog">
+            <md-dialog-title>Accepted Token</md-dialog-title>
+            <p
+              class="dialog-text"
+            >You can request any ERC20 Token for payment of your tickets. To use ETH, keep the initial placeholder.</p>
+            <md-button class="md-primary" @click="showTokenDialog = false">Close</md-button>
+          </md-dialog>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100 info-dialog">
+              <md-field :class="getValidationClass('eventGranularity')">
+                <label for="event-granularity">Aftermarket Granularity</label>
+                <md-select
+                  type="number"
+                  id="event-granularity"
+                  name="event-granularity"
+                  v-model="form.granularity"
+                >
+                  <md-option value="1">1</md-option>
+                  <md-option value="2">2</md-option>
+                  <md-option value="4">4</md-option>
+                  <md-option value="5">5</md-option>
+                  <md-option value="10">10</md-option>
+                  <md-option value="20">20</md-option>
+                  <md-option value="25">25</md-option>
+                  <md-option value="50">50</md-option>
+                  <md-option value="100">100</md-option>
+                </md-select>
+                <span
+                  class="md-error"
+                  v-if="!$v.form.granularity.required"
+                >The granularity is required</span>
+                <span class="md-error" v-else-if="!$v.form.granularity">Invalid granularity</span>
+              </md-field>
+              <div class="info-dialog-button">
+                <md-button class="md-icon-button md-primary" @click="showGranularityDialog = true">
+                  <md-icon>help_outline</md-icon>
+                </md-button>
+              </div>
+            </div>
+          </div>
+
+          <md-dialog :md-active.sync="showGranularityDialog">
+            <md-dialog-title>Aftermarket Granularity</md-dialog-title>
+            <p class="dialog-text">
+              Ticket holders can resell their ticket for a price lower or equal to the initial buying price. You can define, for how many different prices ticket holders can resell their tickets.
+              E.g. if you choose a granularity of 4, tickets can be resold for 100%, 75%, 50% or 25% of the initial price, if you choose 100, tickets can be resold for 100%, 99%, 98%, ..., or 1%.
+            </p>
+            <p></p>
+            <md-button class="md-primary" @click="showGranularityDialog = false">Close</md-button>
+          </md-dialog>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -59,88 +208,6 @@
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('erc20Token')">
-                <label for="erc20Token">Accepted Token For Payment</label>
-                <md-input name="erc20Token" id="erc20Token" v-model="form.erc20Token" />
-                <span
-                  class="md-error"
-                  v-if="!$v.form.erc20Token.required"
-                >The token that is accepted for payment is required</span>
-                <!-- <span
-                  class="md-error"
-                  v-else-if="!$v.form.erc20Token.maxLength"
-                >Invalid event token hash</span>-->
-              </md-field>
-            </div>
-          </div>
-
-          <div class="md-layout-item md-small-size-100">
-            <md-field :class="getValidationClass('idApprover')">
-              <label for="idApprover">ID Approver</label>
-              <md-input name="idApprover" id="idApprover" v-model="form.idApprover" />
-              <span class="md-error">An ID approver is required</span>
-            </md-field>
-          </div>
-
-          <!-- TODO 24.7.2020 Michael: fetch approver levels and add as dropdown options to choose from -->
-          <div class="md-layout-item md-small-size-100">
-            <md-field :class="getValidationClass('idLevel')">
-              <label for="idLevel">Identification level</label>
-              <md-select type="number" id="idLevel" name="idLevel" v-model="form.idLevel">
-                <md-option value="1">1</md-option>
-                <md-option value="2">2</md-option>
-                <md-option value="3">3</md-option>
-              </md-select>
-              <span class="md-error" v-if="!$v.form.idLevel.required">The id level is required</span>
-            </md-field>
-          </div>
-
-          <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('eventGranularity')">
-                <label for="event-granularity">Granularity</label>
-                <md-select
-                  type="number"
-                  id="event-granularity"
-                  name="event-granularity"
-                  v-model="form.granularity"
-                >
-                  <!-- <md-option></md-option> -->
-                  <md-option value="1">1</md-option>
-                  <md-option value="2">2</md-option>
-                  <md-option value="4">4</md-option>
-                  <md-option value="5">5</md-option>
-                  <md-option value="10">10</md-option>
-                  <md-option value="20">20</md-option>
-                  <md-option value="25">25</md-option>
-                  <md-option value="50">50</md-option>
-                  <md-option value="100">100</md-option>
-                </md-select>
-                <span
-                  class="md-error"
-                  v-if="!$v.form.granularity.required"
-                >The granularity is required</span>
-                <span class="md-error" v-else-if="!$v.form.granularity">Invalid granularity</span>
-              </md-field>
-            </div>
-          </div>
-
-          <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('type')">
-                <label for="event-type">Event Type</label>
-                <md-select name="event-type" id="event-type" v-model="form.type">
-                  <md-option value="Music">Music</md-option>
-                  <md-option value="Sports">Sports</md-option>
-                  <md-option value="Theatre">Theatre</md-option>
-                </md-select>
-                <span class="md-error">The event type is required</span>
-              </md-field>
-            </div>
-          </div>
-
-          <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('color')">
                 <label for="color">Color</label>
                 <md-input name="color" id="color" v-model="form.color" />
@@ -148,18 +215,23 @@
             </div>
           </div>
 
-          <!-- <md-field :class="getValidationClass('email')">
-            <label for="email">Email</label>
-            <md-input
-              type="email"
-              name="email"
-              id="email"
-              autocomplete="email"
-              v-model="form.email"
-            />
-            <span class="md-error" v-if="!$v.form.email.required">The email is required</span>
-            <span class="md-error" v-else-if="!$v.form.email.email">Invalid email</span>
-          </md-field>-->
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('url')">
+                <label for="url">URL</label>
+                <md-input name="url" id="url" v-model="form.url" />
+              </md-field>
+            </div>
+          </div>
+
+          <div class="md-layout md-gutter">
+            <div class="md-layout-item md-small-size-100">
+              <md-field :class="getValidationClass('twitter')">
+                <label for="twitter">Twitter</label>
+                <md-input name="twitter" id="twitter" v-model="form.twitter" />
+              </md-field>
+            </div>
+          </div>
         </md-card-content>
 
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
@@ -202,7 +274,8 @@ import {
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
-// import format from "date-fns/format";
+import VueTimepicker from "vue2-timepicker";
+import "vue2-timepicker/dist/VueTimepicker.css";
 
 // project internal imports
 import { NETWORKS } from "../constants/constants.js";
@@ -216,10 +289,15 @@ import { DAI } from "../constants/ERC20Tokens.js";
 export default {
   name: "NewEventForm",
   mixins: [validationMixin],
+  components: { VueTimepicker },
   data: () => ({
+    showStartTimeDialog: false,
+    showTokenDialog: false,
+    showIdentityApproverDialog: false,
+    showGranularityDialog: false,
     ipfsArgs: null,
     ipfsCid: null,
-    ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
+    ipfsHash: null,
     ipfsData: null,
     ipfsString: null,
     ipfsError: false,
@@ -227,32 +305,36 @@ export default {
     lastEventInfo: null,
     ethToken: "0",
     form: {
-      eventTitle: "testTitle",
-      // rawDate: Date(2020, 10, 1),
+      // ipfs info
+      title: "title",
       location: "Zurich",
-      eventStartTime: null,
-      eventEndTime: null,
-      type: "Music",
-      //   eventTags: [],
+      category: "Music",
       eventDescription: "test description",
-      erc20Token: "0x0000000000000000000000000000000000000000",
-      idApprover: "0x3b7DA1a855C343806117182C058addcB096B0a69",
-      idLevel: 1,
-      granularity: 2,
       color: "#add8e6",
-      email: null
+      date: new Date(2020, 10, 2),
+      startTime: {
+        HH: "18",
+        mm: "00"
+      },
+      url: "",
+      twitter: "",
+      //   eventTags: [],
+      // blockchain info
+      erc20Token: "0x0000000000000000000000000000000000000000",
+      idApprover: "0x2bF80bcfA49A7058a053B1F121cFaCEe072C432e",
+      idLevel: 1,
+      granularity: 2
     },
-    eventContractDeployed: false, // todo: set after web3js event catches deployment event
     sending: false,
     lastEvent: null
   }),
   validations: {
     form: {
-      eventTitle: {
+      title: {
         // required,
         minLength: minLength(3)
       },
-      type: {
+      category: {
         // required,
       },
       eventDescription: {
@@ -272,9 +354,9 @@ export default {
       granularity: {
         required
       }
-      // email: {
+      // url: {
       //   // required,
-      //   email
+      //   url
       // }
     }
   },
@@ -285,12 +367,19 @@ export default {
     eventFactory() {
       return this.$store.state.eventFactory;
     },
-    ipfs() {
-      return this.$store.state.ipfs;
+    ipfsInstance() {
+      return this.$store.state.ipfsInstance;
+    },
+    dateSeconds() {
+      return Number(Date.parse(this.form.date) / 1000);
+    },
+    startTimeUnix() {
+      return (
+        this.dateSeconds +
+        this.form.startTime.HH * 3600 +
+        this.form.startTime.mm * 60
+      );
     }
-    // date() {
-    //   return format(this.form.rawDate, this.$material.locale.dateFormat);
-    // }
   },
   methods: {
     getValidationClass(fieldName) {
@@ -306,15 +395,19 @@ export default {
     },
     clearForm() {
       this.$v.$reset();
-      this.form.eventTitle = null;
-      this.form.type = null;
+      this.form.title = "";
+      this.form.location = "";
+      this.form.category = "";
+      this.form.eventDescription = "";
+      this.color = "";
+      this.time = 0;
+      this.url = "";
+      this.twitter = "";
       //   this.form.eventTags = null;
+
       this.form.levelNumber = null;
       this.form.idApprover = null;
-      (this.form.location = null),
-        (this.form.granularity = null),
-        (this.form.color = null),
-        (this.form.email = null);
+      this.form.granularity = 4;
     },
     async createEvent() {
       await this.uploadToIpfs();
@@ -322,9 +415,8 @@ export default {
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
-      //TODO check if deamon (ipfs companion extension) is running locally. If so use localhost gateway, otherwise use remote http
       try {
-        const response = await this.ipfs.add(this.ipfsString);
+        const response = await this.ipfsInstance.add(this.ipfsString);
         this.ipfsHash = response.path;
         console.log("Uploading to ipfs");
         console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
@@ -334,7 +426,7 @@ export default {
         this.ipfsError = true;
       }
       window.setTimeout(() => {
-        this.lastEvent = `${this.form.eventTitle} ${this.form.description}`;
+        this.lastEvent = `${this.form.title} ${this.form.description}`;
         this.ipfsAdded = true;
         this.sending = false;
         // this.clearForm();
@@ -342,7 +434,7 @@ export default {
     },
     async downloadFromIpfs() {
       console.log("downloading from ipfs...");
-      for await (const chunk of this.ipfs.cat(this.ipfsHash)) {
+      for await (const chunk of this.ipfsInstance.cat(this.ipfsHash)) {
         this.ipfsData = Buffer(chunk, "utf8").toString();
       }
     },
@@ -350,11 +442,15 @@ export default {
       return JSON.stringify({
         version: "1.0",
         event: {
-          title: this.form.eventTitle,
+          title: this.form.title,
           location: this.form.location,
-          type: this.form.type,
+          category: this.form.category,
+          description: this.form.eventDescription,
           color: this.form.color,
-          description: this.form.eventDescription
+          time: this.startTimeUnix,
+          duration: "",
+          url: this.form.url,
+          twitter: this.form.twitter
         }
       });
     },
@@ -362,31 +458,6 @@ export default {
       // check if required input fields are valid and then upload the event form to ipfs
       this.$v.$touch();
       return !this.$v.$invalid;
-    },
-    // async getIpfsNodeInfo() {
-    //   try {
-    //     // Await for ipfs node instance.
-    //     const ipfs = await this.$ipfs;
-    //     // Call ipfs `id` method.
-    //     // Returns the identity of the Peer.
-    //     const { agentVersion, id } = await ipfs.id();
-    //     this.agentVersion = agentVersion;
-    //     this.id = id;
-    //     // Set successful status text.
-    //     this.status = "Connected to IPFS =)";
-    //   } catch (err) {
-    //     // Set error status text.
-    //     this.status = `Error: ${err}`;
-    //   }
-    // },
-    async upload() {
-      try {
-        const ipfs = await this.$ipfs;
-        const add = await ipfs.add("hallo simon.");
-        console.log(add);
-      } catch (err) {
-        console.log(err);
-      }
     },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
@@ -421,8 +492,17 @@ export default {
 </script>
 
 <style>
-.date-location-container {
+.info-dialog {
+  display: flex;
+}
+.info-dialog-button {
+  padding: 17px 0 21px;
+}
+.location-container {
   justify-content: center;
+  display: flex;
+}
+.date-container {
   display: flex;
 }
 </style>
