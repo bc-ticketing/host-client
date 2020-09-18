@@ -5,12 +5,12 @@
         <div class="md-title">Event</div>
       </md-card-header>
       <md-card-content>
-        <div class="md-layout md-gutter">
-          <div class="md-layout-item md-small-size-100">
-            <md-field>
-              <label for="address">Contract address</label>
-              <md-input name="address" id="address" v-model="address" />
-            </md-field>
+        <div class="event-info">
+          <div class="event-title">
+            <p>{{ eventTitle }}</p>
+          </div>
+          <div class="event-address">
+            <p>{{ eventAddress }}</p>
           </div>
         </div>
       </md-card-content>
@@ -23,16 +23,6 @@
         </md-card-header>
 
         <md-card-content>
-          <!-- <div class="contract-address">
-            <md-field>
-              <md-input placeholder="Event Contract Address" v-model="contractAddressTemp" />
-            </md-field>
-            <md-button class="md-primary" @click="setContractAddress">Set Contract Address</md-button>
-            <md-button class="md-primary" @click="setDefaultContractAddress">Set default</md-button>
-          </div>-->
-          <!-- <md-button class="md-primary" @click="getMyLatestEvent">Fetch my latest event</md-button>
-          <md-button class="md-primary" @click="getMyEvents">Fetch all my events</md-button>-->
-
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field>
@@ -136,7 +126,8 @@ import { EVENT_MINTABLE_AFTERMARKET_ABI } from "../constants/EventMintableAfterm
 export default {
   name: "NewTicketForm",
   data: () => ({
-    address: null,
+    eventAddress: null,
+    eventTitle: null,
     contractAddressTemp: null,
     latestEventAddress: null,
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
@@ -147,7 +138,7 @@ export default {
       ticketName: "Standing Area",
       ticketDescription: "ticket description",
       ticketIsNonFungible: "false",
-      ticketPrice: "0.4",
+      ticketPrice: "2",
       ticketFinalizationBlock: 600,
       ticketInitialSupply: 400,
       currentEvent: null
@@ -259,7 +250,8 @@ export default {
     }
   },
   created() {
-    this.address = this.$route.params.address;
+    this.eventAddress = this.$route.params.eventAddress;
+    this.eventTitle = this.$route.params.eventTitle;
   }
 };
 </script>
@@ -270,5 +262,11 @@ export default {
 }
 .contract-address-card {
   margin-bottom: 10px;
+}
+.event-info {
+  display: flex;
+}
+.event-title {
+  margin-right: 15px;
 }
 </style>
