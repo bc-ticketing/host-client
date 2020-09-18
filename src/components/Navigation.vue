@@ -10,7 +10,7 @@
         </div>
         <div class="account-info-container">
           <div class="account-info">
-            <span class="account-address">{{ prettyAddress(accountAddress) }}</span>
+            <span class="account-address">{{ prettyAddress(accountAddress) }} :</span>
             <span class="account-balance">{{ prettyBalance(accountBalance) }} ETH</span>
           </div>
           <div class="account-info-refresh-container">
@@ -137,9 +137,12 @@ export default {
       return this.web3.account ? this.web3.account : "";
     },
     accountBalance() {
-      return this.web3.isInjected
+      return this.web3.balance
         ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
-        : null;
+        : "";
+      // return this.web3.isInjected
+      // ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
+      // : null;
     }
   }
 };
