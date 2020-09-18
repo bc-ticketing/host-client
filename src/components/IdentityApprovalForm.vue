@@ -61,7 +61,7 @@ export default {
       return this.$store.state.web3;
     },
     identityContract() {
-      return this.$store.state.web3.identity;
+      return this.$store.state.identity;
     }
   },
   methods: {
