@@ -86,14 +86,16 @@
             <div class="md-layout-item md-small-size-100">
               <md-field>
                 <label for="ticket-description">Ticket Description</label>
-                <md-input
-                  name="ticket-description"
+                <md-textarea
                   id="ticket-description"
+                  name="ticket-description"
                   v-model="form.ticketDescription"
-                />
+                ></md-textarea>
               </md-field>
             </div>
           </div>
+          <SeatingPlan></SeatingPlan>
+          <!-- todo: seating plan -->
         </md-card-content>
 
         <md-card-actions>
