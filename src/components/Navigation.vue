@@ -46,10 +46,10 @@
               <p class="navigationText">New Event</p>
             </md-list-item>
 
-            <md-list-item @click="navigateTo(`/new-ticket`)">
+            <!-- <md-list-item @click="navigateTo(`/new-ticket`)">
               <md-icon>playlist_add</md-icon>
               <p class="navigationText">New Ticket</p>
-            </md-list-item>
+            </md-list-item>-->
 
             <md-list-item @click="navigateTo(`/modify`)">
               <md-icon>settings</md-icon>
