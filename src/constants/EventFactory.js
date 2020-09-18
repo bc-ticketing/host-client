@@ -1,5 +1,5 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const EVENT_FACTORY_ADDRESS = "0xdBfd07a51ee65b724bCaC4A2C7500b52fA827Bca";
+const EVENT_FACTORY_ADDRESS = "0xcdE59E12603186f68EFEe992f0029A6891f34b31";
 const EVENT_FACTORY_ABI = [
   {
     "inputs": [
