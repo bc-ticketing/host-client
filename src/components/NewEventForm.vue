@@ -76,7 +76,7 @@
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100" style="display:flex">
-              <md-field :class="getValidationClass('idApprover')" style="margin-right:24px">
+              <md-field :class="getValidationClass('idApprover')" style="margin-right: 24px">
                 <label for="idApprover">ID Approver</label>
                 <md-input name="idApprover" id="idApprover" v-model="form.idApprover" />
                 <span class="md-error">An ID approver is required</span>

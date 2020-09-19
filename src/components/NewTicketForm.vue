@@ -32,20 +32,14 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <SeatingPlan v-bind:types="types" v-bind:key="types"></SeatingPlan>
+
+          <!-- <div class="md-layout md-gutter">
             <div class="md-layout-item">
-              <!-- <md-field> -->
-              <!-- <label for="ticket-non-fungible">Is the ticket non-fungible?</label> -->
               <md-radio v-model="form.ticketIsNonFungible" value="true">Non-Fungible</md-radio>
               <md-radio v-model="form.ticketIsNonFungible" value="false">Fungible</md-radio>
-              <!-- <md-input
-                  name="ticket-non-fungible"
-                  id="ticket-non-fungible"
-                  v-model="form.ticketNonFungible"
-              />-->
-              <!-- </md-field> -->
             </div>
-          </div>
+          </div>-->
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -56,7 +50,7 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <!-- <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field>
                 <label for="ticket-initial-supply">Initial Supply</label>
@@ -67,7 +61,7 @@
                 />
               </md-field>
             </div>
-          </div>
+          </div>-->
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
@@ -82,6 +76,14 @@
             </div>
           </div>
 
+          <md-dialog :md-active.sync="showFinalizationBlockDialog">
+            <md-dialog-title>Start Time</md-dialog-title>
+            <p
+              class="dialog-text"
+            >After the here specified block number has been reached, tickets of this type can no longer be bought or resold.</p>
+            <md-button class="md-primary" @click="showFinalizationBlockDialog = false">Close</md-button>
+          </md-dialog>
+
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field>
@@ -94,7 +96,6 @@
               </md-field>
             </div>
           </div>
-          <SeatingPlan></SeatingPlan>
           <!-- todo: seating plan -->
         </md-card-content>
 
@@ -108,6 +109,7 @@
 </template>
 
 <script>
+import SeatingPlan from "../components/SeatingPlan";
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -127,7 +129,12 @@ import { EVENT_MINTABLE_AFTERMARKET_ABI } from "../constants/EventMintableAfterm
 
 export default {
   name: "NewTicketForm",
+  components: {
+    SeatingPlan
+  },
   data: () => ({
+    types: [],
+    showFinalizationBlockDialog: false,
     eventAddress: null,
     eventTitle: null,
     contractAddressTemp: null,
@@ -139,10 +146,10 @@ export default {
     form: {
       ticketName: "Standing Area",
       ticketDescription: "ticket description",
-      ticketIsNonFungible: "false",
+      // ticketIsNonFungible: "false",
       ticketPrice: "2",
       ticketFinalizationBlock: 600,
-      ticketInitialSupply: 400,
+      // ticketInitialSupply: 400,
       currentEvent: null
     },
     ipfsAdded: false,
@@ -156,6 +163,11 @@ export default {
     }
   }),
   methods: {
+    addTicketTypes() {
+      this.$on("saveTicketType", types => {
+        this.saveTicketTypes(types);
+      });
+    },
     async getMyEvents() {
       const eventAddresses = await this.$store.state.eventFactory.methods
         .getEvents()
@@ -176,9 +188,9 @@ export default {
       // this.$v.$reset();
       this.form.ticketName = null;
       this.form.ticketDescription = null;
-      this.form.ticketIsNonFungible = null;
+      // this.form.ticketIsNonFungible = null;
       this.form.ticketFinalizationBlock = null;
-      this.form.ticketInitialSupply = null;
+      // this.form.ticketInitialSupply = null;
     },
     createIpfsString() {
       return JSON.stringify({
@@ -224,9 +236,9 @@ export default {
         this.ipfsArgs = cidToArgs(this.ipfsHash);
       }
       var nf = true;
-      if (this.form.ticketIsNonFungible != "true") {
-        nf = false;
-      }
+      // if (this.form.ticketIsNonFungible) {
+      //   nf = false;
+      // }
       console.log("nf: " + nf);
       let createResponse = await event.methods
         .createType(
@@ -235,8 +247,8 @@ export default {
           this.ipfsArgs.digest,
           nf,
           this.web3.web3Instance.utils.toWei(this.form.ticketPrice),
-          this.form.ticketFinalizationBlock,
-          this.form.ticketInitialSupply
+          this.form.ticketFinalizationBlock
+          // this.form.ticketInitialSupply
         )
         .send({ from: this.web3.account });
 
