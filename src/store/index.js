@@ -6,7 +6,7 @@ import getIpfs from "../util/getIpfs";
 import { argsToCid } from "idetix-utils";
 import { EVENT_FACTORY_ABI, EVENT_FACTORY_ADDRESS } from "../constants/EventFactory";
 import { IDENTITY_ABI, IDENTITY_ADDRESS } from "../constants/Identity";
-import { EVENT_MINTABLE_AFTERMARKET_ABI } from "../constants/EventMintableAftermarket";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../constants/EventMintableAftermarketPresale";
 
 Vue.use(Vuex);
 
@@ -56,13 +56,13 @@ export default new Vuex.Store({
         const e = state.events[contract_address];
         try {
           var ipfsData = null;
-          for await (const chunk of state.ipfsInstance.cat(e.ipfs_hash, {
+          for await (const chunk of state.ipfsInstance.cat(e.ipfsHash, {
             timeout: 2000
           })) {
             ipfsData = Buffer(chunk, "utf8").toString();
           }
           var temp = {
-            ipfsHash: e.ipfs_hash,
+            ipfsHash: e.ipfsHash,
             contractAddress: contract_address,
             metadata: JSON.parse(ipfsData)
           };
@@ -113,7 +113,7 @@ export default new Vuex.Store({
       for (let i = 0; i < allEventAddresses.length; i++) {
         var a = allEventAddresses[i];
         var eventContract = new state.web3.web3Instance.eth.Contract(
-          EVENT_MINTABLE_AFTERMARKET_ABI,
+          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
           a
         );
         var owner = await eventContract.methods.getOwner().call();
@@ -125,21 +125,21 @@ export default new Vuex.Store({
     },
     async loadEvents({ commit }) {
       console.log("loadEvents Action being executed");
-      var ipfs_hashes = {};
+      var ipfsHashes = {};
       for (let i = 0; i < state.eventAddresses.length; i++) {
         var addr = state.eventAddresses[i];
         try {
           const eventContract = new state.web3.web3Instance.eth.Contract(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
+            EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
             addr
           );
           const eventMetadata = await eventContract.getPastEvents("EventMetadata", {
             fromBlock: 1
           });
           var metadataObject = eventMetadata[0].returnValues;
-          ipfs_hashes[addr] = {
+          ipfsHashes[addr] = {
             address: addr,
-            ipfs_hash: argsToCid(
+            ipfsHash: argsToCid(
               metadataObject.hashFunction,
               metadataObject.size,
               metadataObject.digest
@@ -149,7 +149,7 @@ export default new Vuex.Store({
           console.log("could not get metadata for event");
         }
       }
-      commit("setEvents", ipfs_hashes);
+      commit("setEvents", ipfsHashes);
       // following used before
       // const web3 = await getWeb3();
       // const eventAddresses = await web3.eventFactory.methods
@@ -159,7 +159,7 @@ export default new Vuex.Store({
       // var events = [];
       // for (i = 0; i < eventAddresses.length; i++) {
       //   var eventInstance = new web3.web3Instance.eth.Contract(
-      //     EVENT_MINTABLE_AFTERMARKET_ABI,
+      //     EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
       //     eventAddresses[i]
       //   );
       //   console.log(eventInstance);

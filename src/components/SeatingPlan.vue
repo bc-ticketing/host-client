@@ -3,30 +3,14 @@
 <template>
   <div class="seating-plan">
     <div class="md-layout md-gutter">
-      <div class="md-layout-item">
-        <md-radio class="md-primary" v-model="fungible" :value="false">Non-Fungible</md-radio>
-        <md-radio class="md-primary" v-model="fungible" :value="true">Fungible</md-radio>
-        <md-field>
-          <label for="fungible-supply">Amount of Tickets within this Ticket category</label>
-          <md-input
-            name="fungible-supply"
-            id="fungible-supply"
-            v-model="fungibleSupply"
-            :disabled="!fungible"
-          />
-        </md-field>
-      </div>
-    </div>
-
-    <div class="md-layout md-gutter">
       <div class="md-layout-item md-small-size-100 size-container">
         <md-field style="margin-right: 24px">
           <label for="rows">Rows:</label>
-          <md-input type="number" name="rows" id="rows" v-model="rows" />
+          <md-input type="number" min="0" name="rows" id="rows" v-model="rows" />
         </md-field>
         <md-field>
           <label for="cols">Cols:</label>
-          <md-input type="number" name="cols" id="cols" v-model="cols" />
+          <md-input type="number" min="0" name="cols" id="cols" v-model="cols" />
         </md-field>
       </div>
     </div>
@@ -116,21 +100,18 @@ export default {
   name: "SeatingPlan",
   data() {
     return {
+      selectedSeats: [],
+      rows: 12,
+      cols: 12,
       minRowSize: 0,
       maxRowSize: 0,
-      fungibleSupply: 0,
-      ticketPrice: 0,
       blockSelection: false,
+      selection_start: { x: 0, y: 0 },
+      last_selected: { x: 0, y: 0 },
       color: "#B48EAD",
       emptyColor: "#8fbcbb",
       occupiedColor: "#4c566a",
       stageColor: "#d8dee9",
-      selection_start: { x: 0, y: 0 },
-      fungible: false,
-      rows: 12,
-      cols: 12,
-      selected_seats: [],
-      last_selected: { x: 0, y: 0 },
       mouseDown: false,
       seatingObject: {
         rows: 0,
@@ -139,11 +120,7 @@ export default {
       }
     };
   },
-  computed: {
-    isFungible() {
-      return this.fungible == "true";
-    }
-  },
+  props: { occupiedSeats: Array },
   /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
     rows: function(val) {
@@ -280,23 +257,27 @@ export default {
     },
     // TODO Michael: finish implementations with SC calls and IPFS uploads for host client
     save() {
-      let selected_seats = [];
+      // emit to parent type creation to add to list and display TicketTypeCard below
+      // add selectedSeats to occupiedSeats list
+      // empty selectedSeats
+      let selectedSeats = [];
       for (let i = 1; i <= this.cols; i++) {
         for (let j = 1; j <= this.rows; j++) {
           var seat = this.$refs[`seat_${i}_${j}`];
+          // if the seat is selected mark it occupied and add it to the list to emit to the parent.
           if (seat[0].dataset.status == "selected") {
             seat[0].dataset.status = "occupied";
             seat[0].style.backgroundColor = this.occupiedColor;
-            selected_seats.push(`${i}/${j}`);
+            selectedSeats.push(`${i}/${j}`);
           }
 
           //this.last_selected = {x:col, y: row};
         }
       }
-      console.log(JSON.stringify(selected_seats));
-      this.$emit("saveTicketType");
+      console.log(JSON.stringify(selectedSeats));
+      this.$emit("savetickettype", selectedSeats);
       /*
-          selected_seats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
+          selectedSeats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
           for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself
           for F tickets: the host can select how many tickets should be created for the selected standing area and the ticket type. Store on IPFS: list of all indices of the seats (for frontend display on guest client).  
            */

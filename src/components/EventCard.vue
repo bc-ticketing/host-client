@@ -10,11 +10,11 @@
         </md-card-header>
         <md-card-content>
           <div class="content-entry">{{ "Location: " + location }}</div>
-          <div class="content-entry">{{ "Type: " + type }}</div>
+          <div class="content-entry">{{ "Category: " + category }}</div>
           <div class="content-entry">{{ "Description: " + description }}</div>
         </md-card-content>
         <md-card-actions>
-          <md-button class="md-primary" @click="goToCreateTicketType()">Create a new ticket category</md-button>
+          <md-button class="md-primary" @click="goToCreateTicketType()">Create a new ticket type</md-button>
         </md-card-actions>
         <!-- </md-ripple> -->
       </md-card>
@@ -57,10 +57,10 @@ export default {
         ? this.event.metadata.event.location
         : "no location found";
     },
-    type() {
+    category() {
       return this.event.metadata
-        ? this.event.metadata.event.type
-        : "no type found";
+        ? this.event.metadata.event.category
+        : "no category found";
     },
     description() {
       return this.event.metadata
