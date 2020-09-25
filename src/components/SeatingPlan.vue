@@ -6,18 +6,34 @@
       <div class="md-layout-item md-small-size-100 size-container">
         <md-field style="margin-right: 24px">
           <label for="rows">Rows:</label>
-          <md-input type="number" min="0" name="rows" id="rows" v-model="rows" />
+          <md-input
+            type="number"
+            :min="minRowSize"
+            max="800"
+            name="rows"
+            id="rows"
+            v-model="rows"
+          />
         </md-field>
         <md-field>
           <label for="cols">Cols:</label>
-          <md-input type="number" min="0" name="cols" id="cols" v-model="cols" />
+          <md-input
+            type="number"
+            :min="minColSize"
+            max="800"
+            name="cols"
+            id="cols"
+            v-model="cols"
+          />
         </md-field>
       </div>
     </div>
 
     <div class="md-layout md-gutter">
       <div class="md-layout-item md-small-size-100">
-        <md-checkbox class="md-primary" v-model="blockSelection" :value="true">Block Selection</md-checkbox>
+        <md-checkbox class="md-primary" v-model="blockSelection" :value="true"
+          >Block Selection</md-checkbox
+        >
       </div>
     </div>
 
@@ -29,9 +45,9 @@
       @mouseleave="leaveGrid"
       draggable="false"
     >
-      <div class="col" v-for="col in cols" v-bind:key="`col_`+col">
+      <div class="col" v-for="col in cols" v-bind:key="`col_` + col">
         <div
-          :ref="`seat_`+col+`_`+row"
+          :ref="`seat_` + col + `_` + row"
           data-status="free"
           @mousedown="mouseDownOnTile(col, row)"
           @mouseup="mouseUpOnTile(col, row)"
@@ -39,7 +55,7 @@
           @click="selectSeat(col, row)"
           class="seat"
           v-for="row in rows"
-          v-bind:key="`seat_`+row"
+          v-bind:key="`seat_` + row"
         ></div>
       </div>
     </div>
@@ -76,7 +92,9 @@
           <input type="checkbox" v-model="blockSelection" value="true" />
         </div>
     <div class="menu-group">-->
-    <md-button class="md-accent" @click="resetSelection">Reset selection</md-button>
+    <md-button class="md-accent" @click="resetSelection"
+      >Reset selection</md-button
+    >
     <md-button class="md-primary" @click="save">Save category</md-button>
     <!-- </div>
       </div>
@@ -104,7 +122,7 @@ export default {
       rows: 12,
       cols: 12,
       minRowSize: 0,
-      maxRowSize: 0,
+      minColSize: 0,
       blockSelection: false,
       selection_start: { x: 0, y: 0 },
       last_selected: { x: 0, y: 0 },
@@ -130,11 +148,51 @@ export default {
     cols: function(val) {
       this.cols = Number(val);
       this.updateGridSize();
+    },
+    occupiedSeats: function(val) {
+      console.log("occupied seats changed");
+      if (val.length > 0) {
+        this.fetchAndUpdateGrid();
+        window.setTimeout(() => {
+          this.setUsedSeats();
+        }, 500);
+        // this.setUsedSeats();
+      }
     }
   },
   methods: {
+    fetchAndUpdateGrid() {
+      var i;
+      var max_x = this.cols;
+      var max_y = this.rows;
+      for (i = 0; i < this.occupiedSeats.length; i++) {
+        let cords = this.occupiedSeats[i].split("/");
+        if (cords[0] > max_x) {
+          max_x = cords[0];
+        }
+        if (cords[1] > max_y) {
+          max_y = cords[1];
+        }
+      }
+      this.cols = max_x;
+      this.rows = max_y;
+      this.minColSize = max_x;
+      this.minRowSize = max_y;
+    },
+    setUsedSeats() {
+      var i;
+      for (i = 0; i < this.occupiedSeats.length; i++) {
+        let cords = this.occupiedSeats[i].split("/");
+        var seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
+        seat[0].dataset.status = "occupied";
+        seat[0].style.backgroundColor = this.occupiedColor;
+        this.selectedSeats.push(`${cords[0]}/${cords[1]}`);
+        // console.log(cords[0] + "/" + cords[1]);
+      }
+    },
     // Update styles for the grid
     updateGridSize() {
+      console.log("updating grid size " + this.cols + "/" + this.rows);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
@@ -270,7 +328,6 @@ export default {
             seat[0].style.backgroundColor = this.occupiedColor;
             selectedSeats.push(`${i}/${j}`);
           }
-
           //this.last_selected = {x:col, y: row};
         }
       }
@@ -284,8 +341,8 @@ export default {
       //TODO: call SC to create tickets + store metadata on ipfs including ticket mapping
     }
   },
-  created() {},
   mounted() {
+    console.log("mounted called");
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
   }

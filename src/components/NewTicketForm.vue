@@ -169,7 +169,7 @@ export default {
     SeatingPlan
   },
   data: () => ({
-    occupiedSeats: [],
+    occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
     showFinalizationBlockDialog: false,
     eventAddress: null,
@@ -229,13 +229,11 @@ export default {
           })
         );
       }
-      console.log(listOfIpfsStrings);
       return listOfIpfsStrings;
     },
     async uploadToIpfs(listOfIpfsStrings) {
       var i;
       var ipfsHashes = [];
-      console.log(listOfIpfsStrings.length + " type");
       for (i = 0; i < listOfIpfsStrings.length; i++) {
         try {
           let response = await this.ipfsInstance.add(listOfIpfsStrings[i]);
@@ -279,7 +277,6 @@ export default {
         // listOfParameters[i][4] = type.price;
         // listOfParameters[i][5] = type.finalizationBlock;
         // listOfParameters[i][6] = type.supply;
-        console.log(type);
       }
       let parameterArrays = [];
       parameterArrays.push(hashFunctions);
@@ -352,10 +349,24 @@ export default {
         console.log(selectedSeats);
       }
     },
-    fetchOccupiedSeats() {
-      let existingTypesIpfsHashes = this.fetchIpdsHashesOfExistingTypes();
+    async fetchOccupiedSeats() {
+      let existingCids = await this.fetchIpfsHashesOfExistingTypes();
+      console.log(existingCids);
+      var i;
+      let map = [];
+      for (i = 0; i < existingCids.length; i++) {
+        let ipfsData = await this.downloadFromIpfs(existingCids[i]);
+        let typeJson = JSON.parse(ipfsData);
+        let mapping = typeJson.ticket.mapping;
+        var j;
+        for (j = 0; j < mapping.length; j++) {
+          map.push(mapping[j]);
+        }
+      }
+      console.log(map);
+      this.occupiedSeats = map;
     },
-    async fetchIpdsHashesOfExistingTypes() {
+    async fetchIpfsHashesOfExistingTypes() {
       let pastEvents = await this.eventContract.getPastEvents(
         "TicketMetadata",
         {
@@ -363,6 +374,13 @@ export default {
         }
       );
       console.log(pastEvents);
+      let cids = [];
+      var i;
+      for (i = 0; i < pastEvents.length; i++) {
+        let args = pastEvents[i].returnValues;
+        cids.push(argsToCid(args.hashFunction, args.size, args.digest));
+      }
+      return cids;
     },
     // async getMyEvents() {
     //   const eventAddresses = await this.$store.state.eventFactory.methods
@@ -399,10 +417,10 @@ export default {
         }
       });
     },
-    async downloadFromIpfs() {
+    async downloadFromIpfs(cid) {
       console.log("downloading from ipfs...");
-      for await (const chunk of this.ipfs.cat(this.ipfsHash)) {
-        this.ipfsData = Buffer(chunk, "utf8").toString();
+      for await (const chunk of this.ipfsInstance.cat(cid)) {
+        return Buffer(chunk, "utf8").toString();
       }
     },
     isTicketFormComplete() {
