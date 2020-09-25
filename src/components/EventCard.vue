@@ -6,7 +6,7 @@
         <md-card-header>
           <div class="md-title event-card-title">{{ title }}</div>
           <!-- <div class="event-card-date">{{ date }}</div> -->
-          <div class="md-subhead">{{ location}}</div>
+          <div class="md-subhead">{{ location }}</div>
         </md-card-header>
         <md-card-content>
           <div class="content-entry">{{ "Location: " + location }}</div>
@@ -14,7 +14,9 @@
           <div class="content-entry">{{ "Description: " + description }}</div>
         </md-card-content>
         <md-card-actions>
-          <md-button class="md-primary" @click="goToCreateTicketType()">Create a new ticket type</md-button>
+          <md-button class="md-primary" @click="goToCreateTicketType()"
+            >Create a new ticket type</md-button
+          >
         </md-card-actions>
         <!-- </md-ripple> -->
       </md-card>
