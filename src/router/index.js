@@ -28,11 +28,6 @@ const routes = [
     component: NewEvent
   },
   {
-    path: "/tickets",
-    name: "Tickets",
-    component: TicketsOfEvent
-  },
-  {
     path: "/new-ticket",
     name: "NewTicket",
     component: NewTicket

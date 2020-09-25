@@ -17,8 +17,12 @@
                   v-model="form.title"
                   :disabled="sending"
                 />
-                <span class="md-error" v-if="!$v.form.title.required">The event title is required</span>
-                <span class="md-error" v-else-if="!$v.form.title.minlength">Invalid event title</span>
+                <span class="md-error" v-if="!$v.form.title.required"
+                  >The event title is required</span
+                >
+                <span class="md-error" v-else-if="!$v.form.title.minlength"
+                  >Invalid event title</span
+                >
               </md-field>
             </div>
           </div>
@@ -27,19 +31,31 @@
             <div class="md-layout-item">
               <md-field :class="getValidationClass('location')">
                 <label for="location">Location</label>
-                <md-input name="location" id="location" v-model="form.location" />
+                <md-input
+                  name="location"
+                  id="location"
+                  v-model="form.location"
+                />
               </md-field>
             </div>
           </div>
 
           <div class="md-layout md-gutter date-container">
             <div class="md-layout-item">
-              <md-datepicker md-immediately name="date" id="date" v-model="form.date">
+              <md-datepicker
+                md-immediately
+                name="date"
+                id="date"
+                v-model="form.date"
+              >
                 <label for="date">Date and Start Time</label>
               </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
-              <vue-timepicker v-model="form.startTime" format="HH:mm"></vue-timepicker>
+              <vue-timepicker
+                v-model="form.startTime"
+                format="HH:mm"
+              ></vue-timepicker>
             </div>
             <div class="md-small-size-100 info-dialog-button">
               <md-button
@@ -54,41 +70,65 @@
 
           <md-dialog :md-active.sync="showStartTimeDialog">
             <md-dialog-title>Start Time</md-dialog-title>
-            <p
-              class="dialog-text"
-            >Specify the start time of the event here. To define a time for door opening use the finalization block on each ticket type.</p>
-            <md-button class="md-primary" @click="showStartTimeDialog = false">Close</md-button>
+            <p class="dialog-text">
+              Specify the start time of the event here. To define a time for
+              door opening use the finalization block on each ticket type.
+            </p>
+            <md-button class="md-primary" @click="showStartTimeDialog = false"
+              >Close</md-button
+            >
           </md-dialog>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('category')">
                 <label for="category">Category</label>
-                <md-select name="category" id="category" v-model="form.category">
+                <md-select
+                  name="category"
+                  id="category"
+                  v-model="form.category"
+                >
                   <md-option value="Music">Music</md-option>
                   <md-option value="Sports">Sports</md-option>
                   <md-option value="Theatre">Theatre</md-option>
                 </md-select>
-                <span class="md-error">The event category is required</span>
+                <span class="md-error">The event category is required.</span>
               </md-field>
             </div>
           </div>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100" style="display:flex">
-              <md-field :class="getValidationClass('idApprover')" style="margin-right:24px">
+              <md-field
+                :class="getValidationClass('idApprover')"
+                style="margin-right: 24px"
+              >
                 <label for="idApprover">ID Approver</label>
-                <md-input name="idApprover" id="idApprover" v-model="form.idApprover" />
+                <md-input
+                  name="idApprover"
+                  id="idApprover"
+                  v-model="form.idApprover"
+                />
                 <span class="md-error">An ID approver is required</span>
               </md-field>
-              <md-field :class="getValidationClass('idLevel')" style="max-width:150px">
+              <md-field
+                :class="getValidationClass('idLevel')"
+                style="max-width:150px"
+              >
                 <label for="idLevel">Identification level</label>
-                <md-select type="number" id="idLevel" name="idLevel" v-model="form.idLevel">
+                <md-select
+                  type="number"
+                  id="idLevel"
+                  name="idLevel"
+                  v-model="form.idLevel"
+                >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
                   <md-option value="3">3</md-option>
                 </md-select>
-                <span class="md-error" v-if="!$v.form.idLevel.required">The id level is required</span>
+                <span class="md-error" v-if="!$v.form.idLevel.required"
+                  >The id level is required</span
+                >
               </md-field>
               <div class="info-dialog-button">
                 <md-button
@@ -103,13 +143,20 @@
 
           <md-dialog :md-active.sync="showIdentityApproverDialog">
             <md-dialog-title>Identity Approver</md-dialog-title>
-            <p
-              class="dialog-text"
-            >Anyone who wants to buy a ticket needs to have its identity verified by the here specified approver. The level marks the minimum level of verification offered by the given approver.</p>
+            <p class="dialog-text">
+              Anyone who wants to buy a ticket needs to have its identity
+              verified by the here specified approver. The level marks the
+              minimum level of verification offered by the given approver.
+            </p>
+            <md-button class="md-primary"
+              >Click here for avaliable information about your set approver,
+              e.g. its level specifications.</md-button
+            >
             <md-button
               class="md-primary"
-            >Click here for avaliable information about your set approver, e.g. its level specifications.</md-button>
-            <md-button class="md-primary" @click="showIdentityApproverDialog = false">Close</md-button>
+              @click="showIdentityApproverDialog = false"
+              >Close</md-button
+            >
           </md-dialog>
 
           <!-- TODO 24.7.2020 Michael: fetch approver levels and add as dropdown options to choose from -->
@@ -121,18 +168,24 @@
             <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field :class="getValidationClass('erc20Token')">
                 <label for="erc20Token">Accepted Token For Payment</label>
-                <md-input name="erc20Token" id="erc20Token" v-model="form.erc20Token" />
-                <span
-                  class="md-error"
-                  v-if="!$v.form.erc20Token.required"
-                >The token that is accepted for payment is required</span>
+                <md-input
+                  name="erc20Token"
+                  id="erc20Token"
+                  v-model="form.erc20Token"
+                />
+                <span class="md-error" v-if="!$v.form.erc20Token.required"
+                  >The token that is accepted for payment is required</span
+                >
                 <!-- <span
                   class="md-error"
                   v-else-if="!$v.form.erc20Token.maxLength"
                 >Invalid event token hash</span>-->
               </md-field>
               <div class="info-dialog-button">
-                <md-button class="md-icon-button md-primary" @click="showTokenDialog = true">
+                <md-button
+                  class="md-icon-button md-primary"
+                  @click="showTokenDialog = true"
+                >
                   <md-icon>help_outline</md-icon>
                 </md-button>
               </div>
@@ -141,10 +194,13 @@
 
           <md-dialog :md-active.sync="showTokenDialog">
             <md-dialog-title>Accepted Token</md-dialog-title>
-            <p
-              class="dialog-text"
-            >You can request any ERC20 Token for payment of your tickets. To use ETH, keep the initial placeholder.</p>
-            <md-button class="md-primary" @click="showTokenDialog = false">Close</md-button>
+            <p class="dialog-text">
+              You can request any ERC20 Token for payment of your tickets. To
+              use ETH, keep the initial placeholder.
+            </p>
+            <md-button class="md-primary" @click="showTokenDialog = false"
+              >Close</md-button
+            >
           </md-dialog>
 
           <div class="md-layout md-gutter">
@@ -167,14 +223,18 @@
                   <md-option value="50">50</md-option>
                   <md-option value="100">100</md-option>
                 </md-select>
-                <span
-                  class="md-error"
-                  v-if="!$v.form.granularity.required"
-                >The granularity is required</span>
-                <span class="md-error" v-else-if="!$v.form.granularity">Invalid granularity</span>
+                <span class="md-error" v-if="!$v.form.granularity.required"
+                  >The granularity is required</span
+                >
+                <span class="md-error" v-else-if="!$v.form.granularity"
+                  >Invalid granularity</span
+                >
               </md-field>
               <div class="info-dialog-button">
-                <md-button class="md-icon-button md-primary" @click="showGranularityDialog = true">
+                <md-button
+                  class="md-icon-button md-primary"
+                  @click="showGranularityDialog = true"
+                >
                   <md-icon>help_outline</md-icon>
                 </md-button>
               </div>
@@ -184,11 +244,17 @@
           <md-dialog :md-active.sync="showGranularityDialog">
             <md-dialog-title>Aftermarket Granularity</md-dialog-title>
             <p class="dialog-text">
-              Ticket holders can resell their ticket for a price lower or equal to the initial buying price. You can define, for how many different prices ticket holders can resell their tickets.
-              E.g. if you choose a granularity of 4, tickets can be resold for 100%, 75%, 50% or 25% of the initial price, if you choose 100, tickets can be resold for 100%, 99%, 98%, ..., or 1%.
+              Ticket holders can resell their ticket for a price lower or equal
+              to the initial buying price. You can define, for how many
+              different prices ticket holders can resell their tickets. E.g. if
+              you choose a granularity of 4, tickets can be resold for 100%,
+              75%, 50% or 25% of the initial price, if you choose 100, tickets
+              can be resold for 100%, 99%, 98%, ..., or 1%.
             </p>
             <p></p>
-            <md-button class="md-primary" @click="showGranularityDialog = false">Close</md-button>
+            <md-button class="md-primary" @click="showGranularityDialog = false"
+              >Close</md-button
+            >
           </md-dialog>
 
           <div class="md-layout md-gutter">
@@ -237,7 +303,9 @@
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="createEvent">Create Event</md-button>
+          <md-button type="submit" class="md-primary" @click="createEvent"
+            >Create Event</md-button
+          >
         </md-card-actions>
         <!-- <md-card-actions>
           <md-button type="submit" class="md-primary" @click="uploadToIpfs">Uploaod to ipfs</md-button>
@@ -253,12 +321,10 @@
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded">
-        The event {{ lastEvent }} was uploaded to IPFS with
-        success!
+        The event {{ lastEvent }} was uploaded to IPFS with success!
       </md-snackbar>
       <md-snackbar :md-active.sync="eventContractDeployed">
-        The event {{ lastEvent }} was successfully deployed! Contract
-        address:
+        The event {{ lastEvent }} was successfully deployed! Contract address:
       </md-snackbar>
     </form>
   </div>
@@ -302,6 +368,7 @@ export default {
     ipfsString: null,
     ipfsError: false,
     ipfsAdded: false,
+    eventContractDeployed: false,
     lastEventInfo: null,
     ethToken: "0",
     form: {
@@ -479,6 +546,7 @@ export default {
           const ev = { address: event.returnValues[0], cid: this.ipfsHash };
           this.lastEventInfo = ev;
           this.$store.commit("addEventContract", ev);
+          this.eventContractDeployed = true;
           console.log("Contract created");
           console.log(this.lastEventInfo);
         })

@@ -1,4 +1,4 @@
-const EVENT_MINTABLE_AFTERMARKET_ABI = [
+const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     {
         "inputs": [
             {
@@ -368,47 +368,47 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
     {
         "inputs": [
             {
-                "internalType": "bytes1",
-                "name": "_hashFunction",
-                "type": "bytes1"
+                "internalType": "bytes1[]",
+                "name": "_hashFunctions",
+                "type": "bytes1[]"
             },
             {
-                "internalType": "bytes1",
-                "name": "_size",
-                "type": "bytes1"
+                "internalType": "bytes1[]",
+                "name": "_sizes",
+                "type": "bytes1[]"
             },
             {
-                "internalType": "bytes32",
-                "name": "_digest",
-                "type": "bytes32"
+                "internalType": "bytes32[]",
+                "name": "_digests",
+                "type": "bytes32[]"
             },
             {
-                "internalType": "bool",
-                "name": "_isNF",
-                "type": "bool"
+                "internalType": "bool[]",
+                "name": "_isNFs",
+                "type": "bool[]"
             },
             {
-                "internalType": "uint256",
-                "name": "_price",
-                "type": "uint256"
+                "internalType": "uint256[]",
+                "name": "_prices",
+                "type": "uint256[]"
             },
             {
-                "internalType": "uint256",
-                "name": "_finalizationBlock",
-                "type": "uint256"
+                "internalType": "uint256[]",
+                "name": "_finalizationBlocks",
+                "type": "uint256[]"
             },
             {
-                "internalType": "uint256",
-                "name": "_initialSupply",
-                "type": "uint256"
+                "internalType": "uint256[]",
+                "name": "_initialSupplys",
+                "type": "uint256[]"
             }
         ],
-        "name": "createType",
+        "name": "createTypes",
         "outputs": [
             {
-                "internalType": "uint256",
-                "name": "_ticketType",
-                "type": "uint256"
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
             }
         ],
         "stateMutability": "nonpayable",
@@ -640,7 +640,7 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
                         "type": "uint256"
                     }
                 ],
-                "internalType": "struct Aftermarket.QueuedUser",
+                "internalType": "struct IdetixLibrary.QueuedUser",
                 "name": "",
                 "type": "tuple"
             }
@@ -681,7 +681,7 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
                         "type": "uint256"
                     }
                 ],
-                "internalType": "struct Aftermarket.QueuedUser",
+                "internalType": "struct IdetixLibrary.QueuedUser",
                 "name": "",
                 "type": "tuple"
             }
@@ -697,6 +697,25 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
                 "internalType": "uint8",
                 "name": "",
                 "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_type",
+                "type": "uint256"
+            }
+        ],
+        "name": "hasWon",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
             }
         ],
         "stateMutability": "view",
@@ -1214,6 +1233,29 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "_sender",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_receiver",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferValue",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes1",
                 "name": "_hashFunction",
                 "type": "bytes1"
@@ -1305,4 +1347,4 @@ const EVENT_MINTABLE_AFTERMARKET_ABI = [
     }
 ]
 
-export { EVENT_MINTABLE_AFTERMARKET_ABI };
+export { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI };

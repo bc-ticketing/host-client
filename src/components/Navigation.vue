@@ -30,19 +30,19 @@
         <md-list>
           <div class="existing-events">
             <md-list-item @click="navigateTo(`/`)">
-              <md-icon>event_note</md-icon>
+              <md-icon style="margin-right: 28px">event_note</md-icon>
               <p class="navigationText">My Events</p>
             </md-list-item>
 
-            <md-list-item @click="navigateTo(`/tickets`)">
+            <!-- <md-list-item @click="navigateTo(`/tickets`)">
               <md-icon>notes</md-icon>
               <p class="navigationText">Tickets</p>
-            </md-list-item>
+            </md-list-item>-->
           </div>
 
           <div class="modifications-container">
             <md-list-item @click="navigateTo(`/new-event`)">
-              <md-icon>edit</md-icon>
+              <md-icon style="margin-right: 28px">edit</md-icon>
               <p class="navigationText">New Event</p>
             </md-list-item>
 
@@ -51,20 +51,20 @@
               <p class="navigationText">New Ticket</p>
             </md-list-item>-->
 
-            <md-list-item @click="navigateTo(`/modify`)">
+            <!-- <md-list-item @click="navigateTo(`/modify`)">
               <md-icon>settings</md-icon>
               <p class="navigationText">Modify Event</p>
-            </md-list-item>
+            </md-list-item>-->
           </div>
 
           <div class="approver-container">
             <md-list-item @click="navigateTo(`/register`)">
-              <md-icon>verified_user</md-icon>
+              <md-icon style="margin-right: 28px">verified_user</md-icon>
               <p class="navigationText">Approver Registration</p>
             </md-list-item>
 
             <md-list-item @click="navigateTo(`/approve`)">
-              <md-icon>fact_check</md-icon>
+              <md-icon style="margin-right: 28px">fact_check</md-icon>
               <p class="navigationText">Approve Identity</p>
             </md-list-item>
           </div>
@@ -156,12 +156,12 @@ export default {
 .md-list-item-content {
   justify-content: flex-start;
 }
-.existing-events {
+/* .existing-events {
   border-bottom: 1px solid black;
-}
-.modifications-container {
+} */
+/* .modifications-container {
   border-bottom: 1px solid black;
-}
+} */
 .navigation-toolbar {
   justify-content: space-between;
 }
