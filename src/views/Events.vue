@@ -1,11 +1,16 @@
 <template>
   <div class="events-container">
     <EventCard
-      v-bind:event="event"
-      v-for="event in this.$store.state.events"
+      v-for="event in $store.state.events"
       v-bind:key="event.contractAddress"
+      v-bind:event="event"
     ></EventCard>
-    <h3 v-if="events.size == 0">
+    <!-- <EventCard
+      v-for="event in this.$store.state.events"
+      v-bind:event="event"
+      v-bind:key="event.contractAddress"
+    ></EventCard> -->
+    <h3 v-if="this.$store.state.events.size == 0">
       No events found for your active address: {{ web3.account }}.
     </h3>
   </div>

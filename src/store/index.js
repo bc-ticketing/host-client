@@ -40,9 +40,11 @@ export default new Vuex.Store({
     //   console.log("setting event addresses");
     //   state.eventAddresses = addresses;
     // },
-    setEvents(state, events) {
+    updateEventStore(state, events) {
       console.log("setting events");
       state.events = events;
+      console.log(events);
+      console.log(state.events.length);
     }
     // addEventMetadata(state, event) {
     //   console.log("setting event metadata");
@@ -79,16 +81,15 @@ export default new Vuex.Store({
     //     }
     //   }
     // },
+    async registerIpfs({ commit }) {
+      console.log("registerIpfs Action being executed");
+      const ipfsInstance = await getIpfs();
+      commit("setIpfsInstance", ipfsInstance);
+    },
     async registerWeb3({ commit }) {
       console.log("registerWeb3 Action being executed");
       const web3 = await getWeb3();
       commit("updateWeb3", web3);
-    },
-    async registerIpfs({ commit }) {
-      console.log("registerIpfs Action being executed");
-      const ipfsInstance = await getIpfs();
-      console.log("committing result to registerIpfsInstance mutation");
-      commit("setIpfsInstance", ipfsInstance);
     },
     createEventFactory({ commit }) {
       console.log("createEventFactory Action being executed");
@@ -108,29 +109,40 @@ export default new Vuex.Store({
     },
     async loadEvents({ commit }) {
       console.log("loadEvents action being executed");
-      // area: load the owned event addresses
-      let allEventAddresses = await state.eventFactory.methods
+      // load the owned event addresses
+      let eventAddresses = await state.eventFactory.methods
         .getEvents()
         .call();
-      let ownedEvents = [];
+      let events = [];
       // filter the event addresses of the owned events of the current active account
-      for (let i = 0; i < allEventAddresses.length; i++) {
-        let a = allEventAddresses[i];
-        let eventContract = new state.web3.web3Instance.eth.Contract(
-          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-          a
-        );
-        let owner = await eventContract.methods.getOwner().call();
-        if (owner == state.web3.account) {
-          let ipfsHash = eventContract.methods.getIpfs().call();
-          let event = new Event(a, ipfsHash);
-          event.loadIPFSMetadata(state.ipfsInstance);
-          event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          event.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          ownedEvents.push(event);
+      for (let i = 0; i < eventAddresses.length; i++) {
+        let a = eventAddresses[i];
+        try {
+          let event = new Event(a);
+          let owner = await event.getOwner(EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.web3.web3Instance);
+          if (owner == state.web3.account) {
+            await event.loadData(EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance, state.web3.web3Instance);
+            events.push(event);
+          }
+        } catch {
+          console.log("could not get metadata for event " + a + ".");
         }
+        // let eventContract = new state.web3.web3Instance.eth.Contract(
+        //   EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        //   a
+        // );
+        // let owner = await eventContract.methods.getOwner().call();
+        // if (owner == state.web3.account) {
+        //   let ipfsHash = eventContract.methods.getIpfs().call();
+        //   let event = new Event(a, ipfsHash);
+        //   event.loadIPFSMetadata(state.ipfsInstance);
+        //   event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+        //   event.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+        //   ownedEvents.push(event);
+        // }
+        // }
+        commit("updateEventStore", events);
       }
-      commit("setEvents", ownedEvents);
     }
     // async loadEvents({ commit }) {
     //   console.log("loadEvents Action being executed");

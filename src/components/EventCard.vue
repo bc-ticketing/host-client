@@ -47,23 +47,17 @@ export default {
       //todo get event information to display in this card!
     },
     title() {
-      return this.event.metadata
-        ? this.event.metadata.event.title
-        : "no title found";
+      return this.event.title ? this.event.title : "no title found";
     },
     location() {
-      return this.event.metadata
-        ? this.event.metadata.event.location
-        : "no location found";
+      return this.event.location ? this.event.location : "no location found";
     },
     category() {
-      return this.event.metadata
-        ? this.event.metadata.event.category
-        : "no category found";
+      return this.event.category ? this.event.category : "no category found";
     },
     description() {
-      return this.event.metadata
-        ? this.event.metadata.event.description
+      return this.event.description
+        ? this.event.description
         : "no description found";
     }
   },
