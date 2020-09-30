@@ -155,12 +155,12 @@ import {
 import { cidToArgs, argsToCid } from "idetix-utils";
 
 // internal imports
-import { NETWORKS } from "../constants/constants.js";
+import { NETWORKS } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../constants/EventFactory.js";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../constants/EventMintableAftermarketPresale";
+} from "../util/constants/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
 
 export default {
@@ -483,11 +483,5 @@ export default {
 .event-info-type {
   width: 70px;
   margin-right: 20px;
-}
-.info-dialog {
-  display: flex;
-}
-.info-dialog-button {
-  padding: 17px 0 21px;
 }
 </style>

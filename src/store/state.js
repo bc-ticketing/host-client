@@ -7,8 +7,8 @@ let state = {
         balance: null,
         error: null
     },
-    eventAddresses: [],
-    events: {},
+    // eventAddresses: [],
+    events: [],
     eventFactory: null,
     identity: null,
     ipfsInstance: null

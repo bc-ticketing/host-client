@@ -344,14 +344,13 @@ import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 
 // project internal imports
-import { NETWORKS } from "../constants/constants.js";
+import { NETWORKS } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../constants/EventFactory.js";
-import { DAI } from "../constants/ERC20Tokens.js";
-
+} from "../util/constants/EventFactory.js";
+import { DAI } from "../util/constants/ERC20Tokens.js";
 export default {
   name: "NewEventForm",
   mixins: [validationMixin],
@@ -533,7 +532,7 @@ export default {
           args.hashFunction,
           args.size,
           args.digest,
-          this.web3.account,
+          this.form.idApprover,
           this.form.idLevel,
           this.form.erc20Token,
           this.form.granularity
@@ -560,12 +559,6 @@ export default {
 </script>
 
 <style>
-.info-dialog {
-  display: flex;
-}
-.info-dialog-button {
-  padding: 17px 0 21px;
-}
 .location-container {
   justify-content: center;
   display: flex;

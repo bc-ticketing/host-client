@@ -6,8 +6,9 @@
     <md-button
       id="link-tickets"
       class="md-primary"
-      @click="()=>$router.push('ticket')"
-    >Create ticket categories</md-button>
+      @click="() => $router.push('ticket')"
+      >Create ticket categories</md-button
+    >
   </div>
 </template>
 

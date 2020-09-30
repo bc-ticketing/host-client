@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { EVEVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../constants/EventMintableAftermarketPresale";
+import { EVEVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
 import NewTicketForm from "../components/NewTicketForm";
 
 // todo:

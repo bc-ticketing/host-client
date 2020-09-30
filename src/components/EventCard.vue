@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { WEEKDAYS, MONTHS } from "../constants/constants.js";
+import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 
 export default {
   name: "EventCard",
@@ -36,11 +36,8 @@ export default {
   methods: {
     goToCreateTicketType: function() {
       this.$router.push({
-        name: "NewTicket",
-        params: {
-          eventAddress: this.event.address,
-          eventTitle: this.event.metadata.event.title
-        }
+        path: `new-ticket`,
+        query: { eventAddress: this.event.address }
       });
     }
   },

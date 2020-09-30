@@ -26,41 +26,41 @@ export default {
     Navigation
   },
   methods: {
-    loadEventAddresses: async function() {
-      await this.$store.dispatch("loadEventAddresses");
-      this.$root.$emit("loadedEventAddresses");
-    },
-    loadIpfsHashesEvents: async function() {
+    loadEvents: async function() {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
-    },
+    }
+    // loadIpfsHashesEvents: async function() {
+    //   await this.$store.dispatch("loadEvents");
+    //   this.$root.$emit("loadedEvents");
+    // },
     // loadTickets: async function() {
     //   await this.$store.dispatch("loadTickets");
     //   this.$root.$emit("loadedTickets");
     // },
-    loadIpfsEventMetadata: async function() {
-      await this.$store.dispatch("loadIpfsEventMetadata");
-      this.$root.$emit("loadedIpfsEventMetadata");
-    }
+    // loadIpfsEventMetadata: async function() {
+    //   await this.$store.dispatch("loadIpfsEventMetadata");
+    //   this.$root.$emit("loadedIpfsEventMetadata");
+    // }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
-      this.loadEventAddresses();
+      this.loadEvents();
     });
-    this.$root.$on("loadedEventAddresses", async () => {
-      this.loadIpfsHashesEvents();
-      // this.loadTickets();
-    });
-    this.$root.$on("loadedEvents", async () => {
-      this.loadIpfsEventMetadata();
-    });
+    // this.$root.$on("loadedEvents", async () => {
+    //   this.loadIpfsHashesEvents();
+    //   // this.loadTickets();
+    // });
+    // this.$root.$on("loadedEvents", async () => {
+    //   this.loadIpfsEventMetadata();
+    // });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
-    await this.$store.dispatch("createEventFactory");
-    this.$root.$emit("eventFactoryCreated");
     await this.$store.dispatch("createIdentityContract");
     this.$root.$emit("identityContractCreated");
+    await this.$store.dispatch("createEventFactory");
+    this.$root.$emit("eventFactoryCreated");
   },
   computed: {
     web3() {
@@ -83,7 +83,6 @@ export default {
   position: relative;
   border: 1px solid rgba(#000, 0.12);
 }
-
 .md-content {
   padding: 16px;
 }
@@ -91,6 +90,12 @@ export default {
   width: 80%;
   max-width: 1440px;
   margin: auto;
+}
+.info-dialog {
+  display: flex;
+}
+.info-dialog-button {
+  padding: 17px 0 21px;
 }
 .dialog-text {
   margin: 0 24px 10px;
