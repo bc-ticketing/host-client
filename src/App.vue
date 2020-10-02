@@ -29,6 +29,12 @@ export default {
     loadEvents: async function() {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
+    },
+    loadTickets: async function() {
+      await this.$store.dispatch("loadFungibleTickets");
+      await this.$store.dispatch("loadNonFungibleTickets");
+      this.$root.$emit("loadedTickets");
+      console.log(this.$store.state.events[0]);
     }
     // loadIpfsHashesEvents: async function() {
     //   await this.$store.dispatch("loadEvents");
@@ -46,6 +52,9 @@ export default {
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
       this.loadEvents();
+    });
+    this.$root.$on("loadedEvents", async () => {
+      this.loadTickets();
     });
     // this.$root.$on("loadedEvents", async () => {
     //   this.loadIpfsHashesEvents();
