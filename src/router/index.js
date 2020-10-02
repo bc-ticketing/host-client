@@ -2,6 +2,8 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "../views/Home.vue";
 import Events from "../views/Events.vue"
+import Modification from "../views/Modification.vue"
+import Stats from "../views/Stats.vue"
 import NewEvent from "../views/NewEvent.vue"
 import NewTicket from "../views/NewTicket.vue"
 import ApproverRegister from "../views/ApproverRegister.vue"
@@ -19,6 +21,16 @@ const routes = [
     path: "/",
     name: "Events",
     component: Events
+  },
+  {
+    path: "/modification",
+    name: "Modification",
+    component: Modification
+  },
+  {
+    path: "/stats",
+    name: "Stats",
+    component: Stats
   },
   {
     path: "/new-event",
