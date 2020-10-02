@@ -127,21 +127,21 @@ export default new Vuex.Store({
         } catch {
           console.log("could not get metadata for event " + a + ".");
         }
-        // let eventContract = new state.web3.web3Instance.eth.Contract(
-        //   EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-        //   a
-        // );
-        // let owner = await eventContract.methods.getOwner().call();
-        // if (owner == state.web3.account) {
-        //   let ipfsHash = eventContract.methods.getIpfs().call();
-        //   let event = new Event(a, ipfsHash);
-        //   event.loadIPFSMetadata(state.ipfsInstance);
-        //   event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-        //   event.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-        //   ownedEvents.push(event);
-        // }
-        // }
         commit("updateEventStore", events);
+      }
+    },
+    async loadFungibleTickets({ commit }) {
+      console.log("loadFungibleTickets action being executed");
+      for (let i = 0; i < state.events.length; i++) {
+        let e = state.events[i];
+        await e.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+      }
+    },
+    async loadNonFungibleTickets({ commit }) {
+      console.log("loadNonFungibleTickets action being executed");
+      for (let i = 0; i < state.events.length; i++) {
+        let e = state.events[i];
+        await e.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
       }
     }
     // async loadEvents({ commit }) {

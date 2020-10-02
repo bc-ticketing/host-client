@@ -88,7 +88,7 @@ export class Event {
         await ticketType.loadIPFSMetadata(ipfsInstance);
         await ticketType.loadSellOrders(web3Instance, ABI);
         await ticketType.loadBuyOrders(web3Instance, ABI)
-        const granularity = await eventSC.methods.granularity.call();
+        const granularity = await eventSC.methods.granularity().call();
         ticketType.aftermarketGranularity = granularity;
         for (let j = 1; j <= new BigNumber(granularity).toNumber(); j++) {
           let percentage = (100 / new BigNumber(granularity).toNumber()) * j;

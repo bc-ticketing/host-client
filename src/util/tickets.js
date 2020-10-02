@@ -1,5 +1,5 @@
 import { argsToCid, getIdAsBigNumber } from "idetix-utils";
-import { NULL_ADDRESS } from "./constants/constants";
+import { ETH } from "./constants/constants";
 
 const BigNumber = require("bignumber.js");
 
@@ -196,7 +196,7 @@ export class NonFungibleTicket {
     }
 
     isFree() {
-        return this.owner === NULL_ADDRESS;
+        return this.owner === ETH;
     }
 
     hasSellOrder() {

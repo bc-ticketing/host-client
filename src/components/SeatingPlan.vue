@@ -135,10 +135,11 @@ export default {
         rows: 0,
         cols: 0,
         assignedSeats: []
-      }
+      },
+      occupiedSeats: []
     };
   },
-  props: { occupiedSeats: Array },
+  props: { address: String },
   /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
     rows: function(val) {
@@ -167,11 +168,13 @@ export default {
       var max_y = this.rows;
       for (i = 0; i < this.occupiedSeats.length; i++) {
         let cords = this.occupiedSeats[i].split("/");
-        if (cords[0] > max_x) {
-          max_x = cords[0];
+        let row_cord = Number(cords[0]);
+        let col_cord = Number(cords[1]);
+        if (row_cord > max_x) {
+          max_x = row_cord;
         }
-        if (cords[1] > max_y) {
-          max_y = cords[1];
+        if (col_cord > max_y) {
+          max_y = col_cord;
         }
       }
       this.cols = max_x;
@@ -328,7 +331,6 @@ export default {
             seat[0].style.backgroundColor = this.occupiedColor;
             selectedSeats.push(`${i}/${j}`);
           }
-          //this.last_selected = {x:col, y: row};
         }
       }
       console.log(JSON.stringify(selectedSeats));
@@ -342,9 +344,19 @@ export default {
     }
   },
   mounted() {
-    console.log("mounted called");
+    console.log("SeatingPlan mounted called");
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
+    let event = this.$store.state.events.filter(
+      event => event.contractAddress == this.address
+    )[0];
+    this.occupiedSeats = [].concat.apply(
+      [],
+      event.fungibleTickets.map(ticket => ticket.seatMapping)
+    );
+    // nftickettype.tickets.map(ticket => ticket.seatMapping);
+
+    // this.occupiedSeats =
   }
 };
 </script>
