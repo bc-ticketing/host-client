@@ -1,7 +1,7 @@
 <template>
   <div class="event-card-container">
     <div class="event-card-router-container">
-      <md-card md-with-hover>
+      <md-card md-with-hover @click="showDashboard()">
         <!-- <md-ripple> -->
         <md-card-header>
           <div class="md-title event-card-title">{{ title }}</div>
@@ -36,8 +36,14 @@ export default {
   methods: {
     goToCreateTicketType: function() {
       this.$router.push({
-        path: `new-ticket`,
-        query: { eventAddress: this.event.address }
+        name: `NewTicket`,
+        params: { address: this.event.contractAddress, title: this.event.title }
+      });
+    },
+    showDashboard: function() {
+      this.$router.push({
+        name: `Dashboard`,
+        params: { address: this.event.contractAddress }
       });
     }
   },

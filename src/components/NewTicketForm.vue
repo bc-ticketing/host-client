@@ -16,7 +16,7 @@
             <div class="event-info-type">
               <h3>Address:</h3>
             </div>
-            <p>{{ eventAddress }}</p>
+            <p>{{ address }}</p>
           </div>
         </div>
       </md-card-content>
@@ -127,7 +127,7 @@
           </div>
 
           <SeatingPlan
-            v-bind:occupiedSeats="occupiedSeats"
+            v-bind:address="address"
             v-on:savetickettype="saveTicketType"
           ></SeatingPlan>
         </md-card-content>
@@ -171,11 +171,10 @@ export default {
   data: () => ({
     occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
-    showFinalizationBlockDialog: false,
-    eventAddress: null,
+    address: null,
     eventTitle: null,
-    contractAddressTemp: null,
-    latestEventAddress: null,
+    // contractAddressTemp: null,
+    // latestEventAddress: null,
     ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
     ipfsArgs: null,
     ipfsData: null,
@@ -191,12 +190,13 @@ export default {
     ipfsAdded: false,
     ticketTypeCreated: false,
     sending: false,
-    lastTicket: null,
-    temp: {
-      pastEvents: null,
-      latestEvent: null,
-      loadedCid: null
-    }
+    // lastTicket: null,
+    // temp: {
+    //   pastEvents: null,
+    //   latestEvent: null,
+    //   loadedCid: null
+    // },
+    showFinalizationBlockDialog: false
   }),
   methods: {
     async createTypes() {
@@ -223,7 +223,7 @@ export default {
             ticket: {
               title: type.title,
               description: type.description,
-              event: this.eventAddress,
+              event: this.address,
               mapping: map
             }
           })
@@ -290,7 +290,7 @@ export default {
       return parameterArrays;
     },
     async invokeContract(listOfParameters) {
-      let response = await this.eventContract.methods
+      let response = await this.contract.methods
         .createTypes(
           listOfParameters[0],
           listOfParameters[1],
@@ -313,7 +313,7 @@ export default {
     // //   nf = false;
     // // }
     // console.log("nf: " + nf);
-    // let createResponse = await this.eventContract.methods
+    // let createResponse = await this.contract.methods
     //   .createType(
     //     this.ipfsArgs.hashFunction,
     //     this.ipfsArgs.size,
@@ -367,12 +367,9 @@ export default {
       this.occupiedSeats = map;
     },
     async fetchIpfsHashesOfExistingTypes() {
-      let pastEvents = await this.eventContract.getPastEvents(
-        "TicketMetadata",
-        {
-          fromBlock: 1
-        }
-      );
+      let pastEvents = await this.contract.getPastEvents("TicketMetadata", {
+        fromBlock: 1
+      });
       console.log(pastEvents);
       let cids = [];
       var i;
@@ -389,15 +386,15 @@ export default {
     //   console.log(eventAddresses);
     //   return eventAddresses;
     // },
-    async getMyLatestEvent() {
-      const eventAddresses = await this.getMyEvents();
-      this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
-      this.currentEventAddress = this.latestEventAddress;
-      console.log("set latest event to: " + this.latestEventAddress);
-    },
-    setContractAddress() {
-      this.contractAddress = this.contractAddressTemp;
-    },
+    // async getMyLatestEvent() {
+    //   const eventAddresses = await this.getMyEvents();
+    //   this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
+    //   this.currentEventAddress = this.latestEventAddress;
+    //   console.log("set latest event to: " + this.latestEventAddress);
+    // },
+    // setContractAddress() {
+    //   this.contractAddress = this.contractAddressTemp;
+    // },
     clearForm() {
       // this.$v.$reset();
       this.form.title = null;
@@ -412,7 +409,7 @@ export default {
         ticket: {
           title: type.title,
           description: type.description,
-          event: this.eventAddress,
+          event: this.address,
           mapping: type.seats
         }
       });
@@ -445,11 +442,14 @@ export default {
   },
   async created() {
     console.log("ticket type form - created executed");
-    this.eventAddress = this.$route.params.eventAddress;
-    this.eventTitle = this.$route.params.eventTitle;
-    this.eventContract = new this.web3.web3Instance.eth.Contract(
+    console.log(this.$route.params);
+    this.address = this.$route.params.address;
+    console.log(this.address);
+    this.eventTitle = this.$route.params.title;
+    console.log(this.eventTitle);
+    this.contract = new this.web3.web3Instance.eth.Contract(
       EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-      this.eventAddress
+      this.address
     );
     this.fetchOccupiedSeats();
   },
