@@ -1,5 +1,5 @@
 import { argsToCid, getIdAsBigNumber } from "idetix-utils";
-import { ETH } from "./constants/constants";
+import { ETH, DAI } from "./constants/ERC20Tokens";
 
 const BigNumber = require("bignumber.js");
 
@@ -19,7 +19,6 @@ class TicketType {
     numberFreeSeats() {
         return this.supply - this.ticketsSold;
     }
-
 }
 
 export class FungibleTicketType extends TicketType {
