@@ -4,12 +4,8 @@
       v-for="event in $store.state.events"
       v-bind:key="event.contractAddress"
       v-bind:event="event"
+      v-bind:inModificationView="false"
     ></EventCard>
-    <!-- <EventCard
-      v-for="event in this.$store.state.events"
-      v-bind:event="event"
-      v-bind:key="event.contractAddress"
-    ></EventCard> -->
     <h3 v-if="this.$store.state.events.size == 0">
       No events found for your active address: {{ web3.account }}.
     </h3>
@@ -25,34 +21,12 @@ export default {
     EventCard
   },
   data: () => ({}),
-  // methods: {
-  // updateEvents() {
-  //   for (let a in this.$store.state.events) {
-  //     var e = this.$store.state.events[a];
-  //     e.address = a;
-  //     if (e.metadata != undefined) {
-  //       this.events.push(e);
-  //     }
-  //   }
-  // }
-  // },
-  // beforeCreate: async function() {
-  //   this.$root.$on("loadedEvents", () => {
-  //     this.updateEvents();
-  //   });
-  // },
-  // beforeMount: function() {
-  //   this.updateEvents();
-  // },
   computed: {
     web3() {
       return this.$store.state.web3;
     },
     eventFactory() {
       return this.$store.state.eventFactory;
-      // },
-      // events() {
-      //   return this.$store.state.events;
     }
   }
 };

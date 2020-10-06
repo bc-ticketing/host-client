@@ -1,21 +1,37 @@
 <template>
   <div class="event-card-container">
-    <div class="event-card-router-container">
-      <md-card md-with-hover @click="showDashboard()">
-        <!-- <md-ripple> -->
+    <div class="event-card-router-container" @click="openEventOverview()">
+      <md-card md-with-hover>
         <md-card-header>
-          <div class="md-title event-card-title">{{ title }}</div>
-          <!-- <div class="event-card-date">{{ date }}</div> -->
-          <div class="md-subhead">{{ location }}</div>
+          <div v-if="title" class="md-title event-card-title">{{ title }}</div>
+          <div v-if="!title">
+            <h4>
+              Sadly there could no title be found for this event...
+            </h4>
+          </div>
+          <div v-if="date" class="event-card-date">{{ date }}</div>
+          <div v-if="location" class="md-subhead">{{ location }}</div>
         </md-card-header>
         <md-card-content>
-          <div class="content-entry">{{ "Location: " + location }}</div>
-          <div class="content-entry">{{ "Category: " + category }}</div>
-          <div class="content-entry">{{ "Description: " + description }}</div>
+          <div v-if="category" class="content-entry">
+            {{ "Category: " + category }}
+          </div>
+          <div v-if="url" class="content-entry">
+            {{ "Website: " + url }}
+          </div>
+          <div v-if="twitter" class="content-entry">
+            {{ "Twitter: " + twitter }}
+          </div>
+          <div v-if="description" class="content-entry">
+            {{ "Description: " + description }}
+          </div>
         </md-card-content>
         <md-card-actions>
+          <!-- <md-button class="md-primary" @click="openStats()"
+            >See some stats</md-button
+          > -->
           <md-button class="md-primary" @click="goToCreateTicketType()"
-            >Create a new ticket type</md-button
+            >Create ticket</md-button
           >
         </md-card-actions>
         <!-- </md-ripple> -->
@@ -29,10 +45,8 @@ import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 
 export default {
   name: "EventCard",
-  data() {
-    return {};
-  },
-  props: { event: Object },
+  data: () => ({}),
+  props: { event: Object, inModificationView: Boolean },
   methods: {
     goToCreateTicketType: function() {
       this.$router.push({
@@ -40,9 +54,17 @@ export default {
         params: { address: this.event.contractAddress, title: this.event.title }
       });
     },
-    showDashboard: function() {
+    openEventOverview: function() {
+      if (!this.inModificationView) {
+        this.$router.push({
+          path: `modification`,
+          query: { address: this.event.contractAddress }
+        });
+      }
+    },
+    openStats: function() {
       this.$router.push({
-        name: `Dashboard`,
+        name: `Stats`,
         params: { address: this.event.contractAddress }
       });
     }
@@ -61,13 +83,37 @@ export default {
     category() {
       return this.event.category ? this.event.category : "no category found";
     },
+    date() {
+      if (this.event.timestamp) {
+        const date = new Date(this.event.timestamp * 1000);
+        return (
+          WEEKDAYS[date.getDay()] +
+          " " +
+          date.getDay() +
+          ". " +
+          MONTHS[date.getMonth()] +
+          " " +
+          date.getFullYear()
+        );
+      }
+      return "no date found";
+    },
     description() {
       return this.event.description
         ? this.event.description
         : "no description found";
+    },
+    url() {
+      return this.event.url ? this.event.url : "no URL found";
+    },
+    twitter() {
+      return this.event.twitter ? this.event.twitter : "no twitter found";
     }
   },
-  mounted: function() {}
+  created() {
+    console.log("eventcard created executed");
+    console.log(this.event);
+  }
 };
 </script>
 
