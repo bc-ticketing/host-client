@@ -352,7 +352,7 @@ import {
 } from "../util/constants/EventFactory.js";
 import { DAI } from "../util/constants/ERC20Tokens.js";
 export default {
-  name: "NewEventForm",
+  name: "EventForm",
   mixins: [validationMixin],
   components: { VueTimepicker },
   data: () => ({

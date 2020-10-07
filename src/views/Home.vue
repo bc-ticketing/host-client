@@ -2,7 +2,7 @@
   <div class="home">
     <!-- <div class="container-fluid paralleax" ref="parallax"></div> -->
     <div class="container"></div>
-    <NewEventForm />
+    <EventForm />
     <md-button
       id="link-tickets"
       class="md-primary"
@@ -13,12 +13,12 @@
 </template>
 
 <script>
-import NewEventForm from "@/components/NewEventForm.vue";
+import EventForm from "@/components/EventForm.vue";
 
 export default {
   name: "NewEvent",
   components: {
-    NewEventForm
+    EventForm
   }
 };
 </script>
