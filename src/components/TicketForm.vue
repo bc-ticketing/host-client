@@ -1,6 +1,12 @@
 <template>
   <div class="create-ticket-type-container">
-    <md-card class="md-layout-item contract-address-card">
+    <div class="not-found-container" v-show="notFoundMessageVisible">
+      <h3>No event found for address: {{ this.$route.query.address }}.</h3>
+      <md-button class="go-back-button md-primary" @click="routeToEventList()"
+        >Go Back</md-button
+      >
+    </div>
+    <md-card class="md-layout-item contract-address-card" v-if="eventSet">
       <md-card-header>
         <div class="md-title">Event</div>
       </md-card-header>
@@ -16,7 +22,7 @@
             <div class="event-info-type">
               <h3>Address:</h3>
             </div>
-            <p>{{ address }}</p>
+            <p>{{ this.$route.query.address }}</p>
           </div>
         </div>
       </md-card-content>
@@ -127,7 +133,7 @@
           </div>
 
           <SeatingPlan
-            v-bind:address="address"
+            v-bind:address="this.$route.query.address"
             v-on:savetickettype="saveTicketType"
           ></SeatingPlan>
         </md-card-content>
@@ -162,6 +168,7 @@ import {
 } from "../util/constants/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
+import getEvent from "../util/utility";
 
 export default {
   name: "TicketForm",
@@ -169,6 +176,8 @@ export default {
     SeatingPlan
   },
   data: () => ({
+    eventSet: false,
+    notFoundMessageVisible: false,
     occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
     address: null,
@@ -379,22 +388,6 @@ export default {
       }
       return cids;
     },
-    // async getMyEvents() {
-    //   const eventAddresses = await this.$store.state.eventFactory.methods
-    //     .getEvents()
-    //     .call();
-    //   console.log(eventAddresses);
-    //   return eventAddresses;
-    // },
-    // async getMyLatestEvent() {
-    //   const eventAddresses = await this.getMyEvents();
-    //   this.latestEventAddress = eventAddresses[eventAddresses.length - 1];
-    //   this.currentEventAddress = this.latestEventAddress;
-    //   console.log("set latest event to: " + this.latestEventAddress);
-    // },
-    // setContractAddress() {
-    //   this.contractAddress = this.contractAddressTemp;
-    // },
     clearForm() {
       // this.$v.$reset();
       this.form.title = null;
@@ -430,6 +423,24 @@ export default {
           "md-invalid": false //field.$invalid && field.$dirty,
         };
       }
+    },
+    routeToEventList() {
+      this.$router.push({
+        name: `Events`
+      });
+    },
+    setEvent() {
+      this.event = getEvent(this.$route.query.address);
+      if (this.event != null) {
+        this.eventSet = true;
+        console.log("eventset when eventsFullyLoaded " + this.eventSet);
+        this.notFoundMessageVisible = false;
+        this.contract = new this.web3.web3Instance.eth.Contract(
+          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+          this.$route.query.address
+        );
+        this.fetchOccupiedSeats();
+      }
     }
   },
   computed: {
@@ -441,17 +452,19 @@ export default {
     }
   },
   async created() {
-    console.log("ticket type form - created executed");
-    console.log(this.$route.params);
-    this.address = this.$route.params.address;
-    console.log(this.address);
-    this.eventTitle = this.$route.params.title;
-    console.log(this.eventTitle);
-    this.contract = new this.web3.web3Instance.eth.Contract(
-      EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-      this.address
-    );
-    this.fetchOccupiedSeats();
+    setTimeout(() => {
+      console.log("eventset when settimeout" + this.eventSet);
+      if (!this.eventSet) {
+        this.notFoundMessageVisible = true;
+      }
+    }, 5000);
+    console.log("ticket form created executed");
+    this.$root.$on("eventsFullyLoaded", () => {
+      this.setEvent();
+    });
+    if (getEvent(this.$route.query.address) != null) {
+      this.setEvent();
+    }
   },
   validations: {
     form: {

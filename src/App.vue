@@ -34,6 +34,7 @@ export default {
       await this.$store.dispatch("loadFungibleTickets");
       await this.$store.dispatch("loadNonFungibleTickets");
       this.$root.$emit("loadedTickets");
+      this.$root.$emit("eventsFullyLoaded");
       console.log(this.$store.state.events[0]);
     }
     // loadIpfsHashesEvents: async function() {
@@ -55,7 +56,6 @@ export default {
     });
     this.$root.$on("loadedEvents", async () => {
       this.loadTickets();
-      this.$root.$emit("eventsFullyLoaded");
     });
     // this.$root.$on("loadedEvents", async () => {
     //   this.loadIpfsHashesEvents();

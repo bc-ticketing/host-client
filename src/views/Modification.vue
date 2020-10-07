@@ -52,15 +52,12 @@ export default {
       }
     }, 5000);
     console.log("modification view created executed");
-    console.log("eventSet: " + this.eventSet);
     this.$root.$on("eventsFullyLoaded", () => {
       this.event = getEvent(address);
       if (this.event != null) {
         this.eventSet = true;
         this.notFoundMessageVisible = false;
       }
-      console.log("getEvents in mod");
-      console.log("eventSet: " + this.eventSet);
     });
     let address = this.$route.query.address;
     this.event = getEvent(address);

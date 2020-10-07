@@ -110,6 +110,7 @@
 </template>
 
 <script>
+import getEvent from "../util/utility";
 /* This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue. 
     The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
  */
@@ -347,13 +348,23 @@ export default {
     console.log("SeatingPlan mounted called");
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
-    let event = this.$store.state.events.filter(
-      event => event.contractAddress == this.address
-    )[0];
-    this.occupiedSeats = [].concat.apply(
-      [],
-      event.fungibleTickets.map(ticket => ticket.seatMapping)
-    );
+    this.$root.$on("eventsFullyLoaded", () => {
+      let event = getEvent(this.address);
+      if (event != null) {
+        console.log("event not null");
+        this.occupiedSeats = [].concat.apply(
+          [],
+          event.fungibleTickets.map(ticket => ticket.seatMapping)
+        );
+      }
+    });
+    let event = getEvent(this.address);
+    if (event != null) {
+      this.occupiedSeats = [].concat.apply(
+        [],
+        event.fungibleTickets.map(ticket => ticket.seatMapping)
+      );
+    }
     // nftickettype.tickets.map(ticket => ticket.seatMapping);
 
     // this.occupiedSeats =
