@@ -4,7 +4,9 @@
       v-for="event in $store.state.events"
       v-bind:key="event.contractAddress"
       v-bind:event="event"
+      v-bind:inListView="true"
       v-bind:inModificationView="false"
+      v-bind:inStatsView="false"
     ></EventCard>
     <h3 v-if="this.$store.state.events.size == 0">
       No events found for your active address: {{ web3.account }}.

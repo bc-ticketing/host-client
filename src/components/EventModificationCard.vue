@@ -3,7 +3,9 @@
     <EventCard
       v-if="!editMode"
       v-bind:event="event"
+      v-bind:inListView="false"
       v-bind:inModificationView="true"
+      v-bind:inStatsView="false"
     ></EventCard>
 
     <!-- <form novalidate class="md-layout">
