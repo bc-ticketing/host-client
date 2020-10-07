@@ -74,8 +74,8 @@ export default {
   methods: {
     openNewTicketView: function() {
       this.$router.push({
-        name: `NewTicket`,
-        params: { address: this.event.contractAddress, title: this.event.title }
+        path: `new-ticket`,
+        query: { address: this.event.contractAddress }
       });
     },
     openSummaryView: function() {
