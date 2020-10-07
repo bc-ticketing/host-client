@@ -1,6 +1,5 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "../views/Home.vue";
 import Events from "../views/Events.vue"
 import Modification from "../views/Modification.vue"
 import Stats from "../views/Stats.vue"
@@ -12,11 +11,6 @@ import ApproveIdentity from "../views/ApproveIdentity.vue"
 Vue.use(VueRouter);
 
 const routes = [
-  {
-    path: "/home",
-    name: "home",
-    component: Home
-  },
   {
     path: "/",
     name: "Events",
