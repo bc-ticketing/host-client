@@ -1,7 +1,8 @@
 <template>
   <div class="modification-container">
     <EventModificationCard
-      v-bind:key="event.contractAddress"
+      v-if="eventSet"
+      v-bind:key="this.$route.query.address"
       v-bind:event="event"
     ></EventModificationCard>
     <div class="show-hide-tickets-container">
@@ -27,16 +28,25 @@ export default {
   name: "Modification",
   components: { EventModificationCard, TicketModificationCard },
   data: () => ({
-    showTickets: false
+    showTickets: false,
+    eventSet: false
   }),
   created() {
     console.log("modification view created executed");
-    console.log(this.$route.query);
-    console.log(this.$route.query.address);
+    console.log("eventSet: " + this.eventSet);
+    this.$root.$on("eventsFullyLoaded", () => {
+      this.event = getEvent(address);
+      if (this.event != null) {
+        this.eventSet = true;
+      }
+      console.log("getEvents in mod");
+      console.log("eventSet: " + this.eventSet);
+    });
     let address = this.$route.query.address;
-    console.log(address);
     this.event = getEvent(address);
-    console.log(this.event);
+    if (this.event != null) {
+      this.eventSet = true;
+    }
   }
 };
 </script>

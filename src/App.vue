@@ -55,6 +55,7 @@ export default {
     });
     this.$root.$on("loadedEvents", async () => {
       this.loadTickets();
+      this.$root.$emit("eventsFullyLoaded");
     });
     // this.$root.$on("loadedEvents", async () => {
     //   this.loadIpfsHashesEvents();
