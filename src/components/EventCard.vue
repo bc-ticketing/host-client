@@ -1,36 +1,49 @@
 <template>
   <div class="event-card-container">
-    <div class="event-card-router-container" @click="openEventOverview()">
+    <div class="event-card-router-container">
       <md-card md-with-hover>
-        <md-card-header>
-          <div v-if="title" class="md-title event-card-title">{{ title }}</div>
-          <div v-if="!title">
-            <h4>
-              Sadly there could no title be found for this event...
-            </h4>
-          </div>
-          <div v-if="date" class="event-card-date">{{ date }}</div>
-          <div v-if="location" class="md-subhead">{{ location }}</div>
-        </md-card-header>
-        <md-card-content>
-          <div v-if="category" class="content-entry">
-            {{ "Category: " + category }}
-          </div>
-          <div v-if="url" class="content-entry">
-            {{ "Website: " + url }}
-          </div>
-          <div v-if="twitter" class="content-entry">
-            {{ "Twitter: " + twitter }}
-          </div>
-          <div v-if="description" class="content-entry">
-            {{ "Description: " + description }}
-          </div>
-        </md-card-content>
+        <div md-with-hover @click="openStats()">
+          <md-card-header>
+            <div v-if="title" class="md-title event-card-title">
+              {{ title }}
+            </div>
+            <div v-if="!title">
+              <h4>
+                Sadly there could no title be found for this event...
+              </h4>
+            </div>
+            <div v-if="date" class="event-card-date">{{ date }}</div>
+            <div v-if="location" class="md-subhead">{{ location }}</div>
+          </md-card-header>
+          <md-card-content>
+            <div v-if="category" class="content-entry">
+              {{ "Category: " + category }}
+            </div>
+            <div v-if="url" class="content-entry">
+              {{ "Website: " + url }}
+            </div>
+            <div v-if="twitter" class="content-entry">
+              {{ "Twitter: " + twitter }}
+            </div>
+            <div v-if="description" class="content-entry">
+              {{ "Description: " + description }}
+            </div>
+          </md-card-content>
+        </div>
         <md-card-actions>
           <!-- <md-button class="md-primary" @click="openStats()"
             >See some stats</md-button
           > -->
-          <md-button class="md-primary" @click="goToCreateTicketType()"
+          <md-button
+            v-if="inListView || inStatsView"
+            class="md-primary"
+            @click="openModificationView()"
+            >Modify</md-button
+          >
+          <md-button
+            v-if="inListView"
+            class="md-primary"
+            @click="goToCreateTicketType()"
             >Create ticket</md-button
           >
         </md-card-actions>
@@ -46,7 +59,12 @@ import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 export default {
   name: "EventCard",
   data: () => ({}),
-  props: { event: Object, inModificationView: Boolean },
+  props: {
+    event: Object,
+    inListView: Boolean,
+    inModificationView: Boolean,
+    inStatsView: Boolean
+  },
   methods: {
     goToCreateTicketType: function() {
       this.$router.push({
@@ -54,7 +72,7 @@ export default {
         params: { address: this.event.contractAddress, title: this.event.title }
       });
     },
-    openEventOverview: function() {
+    openModificationView: function() {
       if (!this.inModificationView) {
         this.$router.push({
           path: `modification`,
@@ -63,10 +81,12 @@ export default {
       }
     },
     openStats: function() {
-      this.$router.push({
-        name: `Stats`,
-        params: { address: this.event.contractAddress }
-      });
+      if (this.inListView) {
+        this.$router.push({
+          path: `stats`,
+          query: { address: this.event.contractAddress }
+        });
+      }
     }
   },
   computed: {
