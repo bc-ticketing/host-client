@@ -374,6 +374,7 @@ import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
 } from "../util/constants/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
 import { DAI } from "../util/constants/ERC20Tokens.js";
 export default {
   name: "EventForm",
@@ -519,6 +520,11 @@ export default {
       await this.uploadToIpfs();
       await this.deployEventContract();
     },
+    async modifyEvent() {
+      // todo: add checks to compare to current ipfs hash
+      await this.uploadToIpfs();
+      await this.invokeMetadataChange();
+    },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
       try {
@@ -564,6 +570,16 @@ export default {
       // check if required input fields are valid and then upload the event form to ipfs
       this.$v.$touch();
       return !this.$v.$invalid;
+    },
+    async invokeMetadataChange() {
+      const args = cidToArgs(this.ipfsHash);
+      const eventContract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.event.contractAddress
+      );
+      const updateMetadata = await eventContract.methods
+        .updateEventMetadata(args.hashFunction, args.size, args.digest)
+        .send({ from: this.$store.state.web3.account });
     },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);

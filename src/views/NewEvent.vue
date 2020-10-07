@@ -1,10 +1,6 @@
 <template>
   <div class="new-event-container">
-    <EventForm
-      v-bind:event="0"
-      v-bind:inNewMode="true"
-      v-bind:inEditMode="false"
-    />
+    <EventForm v-bind:inNewMode="true" v-bind:inEditMode="false" />
   </div>
 </template>
 
