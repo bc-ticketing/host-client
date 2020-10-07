@@ -1,5 +1,11 @@
 <template>
   <div class="modification-container">
+    <div class="not-found-container" v-show="notFoundMessageVisible">
+      <h3>No event found for address: {{ this.$route.query.address }}.</h3>
+      <md-button class="go-back-button md-primary" @click="routeToEventList()"
+        >Go Back</md-button
+      >
+    </div>
     <EventModificationCard
       v-if="eventSet"
       v-bind:key="this.$route.query.address"
@@ -29,15 +35,29 @@ export default {
   components: { EventModificationCard, TicketModificationCard },
   data: () => ({
     showTickets: false,
-    eventSet: false
+    eventSet: false,
+    notFoundMessageVisible: false
   }),
+  methods: {
+    routeToEventList() {
+      this.$router.push({
+        name: `Events`
+      });
+    }
+  },
   created() {
+    setTimeout(() => {
+      if (!this.eventSet) {
+        this.notFoundMessageVisible = true;
+      }
+    }, 5000);
     console.log("modification view created executed");
     console.log("eventSet: " + this.eventSet);
     this.$root.$on("eventsFullyLoaded", () => {
       this.event = getEvent(address);
       if (this.event != null) {
         this.eventSet = true;
+        this.notFoundMessageVisible = false;
       }
       console.log("getEvents in mod");
       console.log("eventSet: " + this.eventSet);
@@ -59,5 +79,11 @@ export default {
 }
 .show-hide-tickets {
   position: relative;
+}
+.not-found-container {
+  display: flex;
+}
+.go-back-button {
+  float: right;
 }
 </style>

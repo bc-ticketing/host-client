@@ -37,13 +37,19 @@
           <md-button
             v-if="inListView || inStatsView"
             class="md-primary"
-            @click="openModificationView()"
-            >Modify</md-button
+            @click="openSummaryView()"
+            >Overview</md-button
+          >
+          <md-button
+            v-if="inModificationView"
+            class="md-primary"
+            @click="enterEditMode()"
+            >Edit</md-button
           >
           <md-button
             v-if="inListView"
             class="md-primary"
-            @click="goToCreateTicketType()"
+            @click="openNewTicketView()"
             >Create ticket</md-button
           >
         </md-card-actions>
@@ -66,13 +72,13 @@ export default {
     inStatsView: Boolean
   },
   methods: {
-    goToCreateTicketType: function() {
+    openNewTicketView: function() {
       this.$router.push({
         name: `NewTicket`,
         params: { address: this.event.contractAddress, title: this.event.title }
       });
     },
-    openModificationView: function() {
+    openSummaryView: function() {
       if (!this.inModificationView) {
         this.$router.push({
           path: `modification`,
@@ -87,13 +93,12 @@ export default {
           query: { address: this.event.contractAddress }
         });
       }
+    },
+    enterEditMode: function() {
+      this.$emit("setEditMode", true);
     }
   },
   computed: {
-    eventInstance() {
-      return this.event;
-      //todo get event information to display in this card!
-    },
     title() {
       return this.event.title ? this.event.title : "no title found";
     },

@@ -1,12 +1,26 @@
 <template>
   <div class="event-modification-card-container">
-    <EventCard
-      v-if="!editMode"
-      v-bind:event="event"
-      v-bind:inListView="false"
-      v-bind:inModificationView="true"
-      v-bind:inStatsView="false"
-    ></EventCard>
+    <div class="event-card-container">
+      <EventCard
+        @setEditMode="setEditMode"
+        v-if="!editMode"
+        v-bind:event="event"
+        v-bind:inListView="false"
+        v-bind:inModificationView="true"
+        v-bind:inStatsView="false"
+      ></EventCard>
+    </div>
+    <!-- <div class="event-card-container">
+      <EventForm
+        @setEditMode="setEditMode"
+        v-if="!editMode"
+        v-bind:event="event"
+        v-bind:inListView="false"
+        v-bind:inModificationView="true"
+        v-bind:inStatsView="false"
+      ></EventForm>
+    </div> -->
+    <p>hello</p>
 
     <!-- <form novalidate class="md-layout">
       <md-card class="md-layout-item">
@@ -70,7 +84,12 @@ export default {
     title: "hello",
     editMode: false
   }),
-  props: { event: Object }
+  props: { event: Object },
+  methods: {
+    setEditMode(mode) {
+      this.editMode = mode;
+    }
+  }
 };
 </script>
 
