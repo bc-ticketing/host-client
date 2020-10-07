@@ -1,16 +1,16 @@
 <template>
   <div class="new-ticket-container">
-    <NewTicketForm />
+    <TicketForm />
   </div>
 </template>
 
 <script>
-import NewTicketForm from "@/components/NewTicketForm.vue";
+import TicketForm from "@/components/TicketForm.vue";
 
 export default {
   name: "NewTicket",
   components: {
-    NewTicketForm
+    TicketForm
   }
 };
 </script>

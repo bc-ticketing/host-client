@@ -164,7 +164,7 @@ import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventM
 import SeatingPlan from "../components/SeatingPlan";
 
 export default {
-  name: "NewTicketForm",
+  name: "TicketForm",
   components: {
     SeatingPlan
   },
@@ -329,7 +329,7 @@ export default {
     // },
 
     saveTicketType(selectedSeats) {
-      console.log("save ticket executed in NewTicketForm");
+      console.log("save ticket executed in TicketForm");
       let amount = selectedSeats.length;
       if (amount == 0) {
         return;
