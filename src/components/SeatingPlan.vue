@@ -152,7 +152,6 @@ export default {
       this.updateGridSize();
     },
     occupiedSeats: function(val) {
-      console.log("occupied seats changed");
       if (val.length > 0) {
         this.fetchAndUpdateGrid();
         window.setTimeout(() => {
@@ -196,7 +195,6 @@ export default {
     },
     // Update styles for the grid
     updateGridSize() {
-      console.log("updating grid size " + this.cols + "/" + this.rows);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
@@ -328,6 +326,12 @@ export default {
           var seat = this.$refs[`seat_${i}_${j}`];
           // if the seat is selected mark it occupied and add it to the list to emit to the parent.
           if (seat[0].dataset.status == "selected") {
+            if (i > this.minColSize) {
+              this.minColSize = i;
+            }
+            if (j > this.minRowSize) {
+              this.minRowSize = j;
+            }
             seat[0].dataset.status = "occupied";
             seat[0].style.backgroundColor = this.occupiedColor;
             selectedSeats.push(`${i}/${j}`);

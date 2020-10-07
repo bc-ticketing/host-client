@@ -75,7 +75,6 @@ export class Event {
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
-        console.log('loadingticket type: ' + i);
         let ticketType = new FungibleTicketType(this.contractAddress, i);
         const typeIdentifier = getIdAsBigNumber(false, i);
         const ticketMapping = await eventSC.methods

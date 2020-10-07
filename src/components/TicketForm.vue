@@ -16,13 +16,13 @@
             <div class="event-info-type">
               <h3>Title:</h3>
             </div>
-            <p>{{ eventTitle }}</p>
+            <h3>{{ eventTitle }}</h3>
           </div>
           <div class="event-address">
             <div class="event-info-type">
               <h3>Address:</h3>
             </div>
-            <p>{{ this.$route.query.address }}</p>
+            <h3>{{ this.$route.query.address }}</h3>
           </div>
         </div>
       </md-card-content>
@@ -379,7 +379,6 @@ export default {
       let pastEvents = await this.contract.getPastEvents("TicketMetadata", {
         fromBlock: 1
       });
-      console.log(pastEvents);
       let cids = [];
       var i;
       for (i = 0; i < pastEvents.length; i++) {
@@ -433,8 +432,8 @@ export default {
       this.event = getEvent(this.$route.query.address);
       if (this.event != null) {
         this.eventSet = true;
-        console.log("eventset when eventsFullyLoaded " + this.eventSet);
         this.notFoundMessageVisible = false;
+        this.eventTitle = this.event.title;
         this.contract = new this.web3.web3Instance.eth.Contract(
           EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
           this.$route.query.address
@@ -453,7 +452,6 @@ export default {
   },
   async created() {
     setTimeout(() => {
-      console.log("eventset when settimeout" + this.eventSet);
       if (!this.eventSet) {
         this.notFoundMessageVisible = true;
       }
