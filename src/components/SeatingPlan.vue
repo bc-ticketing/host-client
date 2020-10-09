@@ -110,6 +110,7 @@
 </template>
 
 <script>
+import getEvent from "../util/utility";
 /* This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue. 
     The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
  */
@@ -135,10 +136,11 @@ export default {
         rows: 0,
         cols: 0,
         assignedSeats: []
-      }
+      },
+      occupiedSeats: []
     };
   },
-  props: { occupiedSeats: Array },
+  props: { address: String },
   /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
     rows: function(val) {
@@ -150,7 +152,6 @@ export default {
       this.updateGridSize();
     },
     occupiedSeats: function(val) {
-      console.log("occupied seats changed");
       if (val.length > 0) {
         this.fetchAndUpdateGrid();
         window.setTimeout(() => {
@@ -167,11 +168,13 @@ export default {
       var max_y = this.rows;
       for (i = 0; i < this.occupiedSeats.length; i++) {
         let cords = this.occupiedSeats[i].split("/");
-        if (cords[0] > max_x) {
-          max_x = cords[0];
+        let row_cord = Number(cords[0]);
+        let col_cord = Number(cords[1]);
+        if (row_cord > max_x) {
+          max_x = row_cord;
         }
-        if (cords[1] > max_y) {
-          max_y = cords[1];
+        if (col_cord > max_y) {
+          max_y = col_cord;
         }
       }
       this.cols = max_x;
@@ -192,7 +195,6 @@ export default {
     },
     // Update styles for the grid
     updateGridSize() {
-      console.log("updating grid size " + this.cols + "/" + this.rows);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
@@ -324,11 +326,16 @@ export default {
           var seat = this.$refs[`seat_${i}_${j}`];
           // if the seat is selected mark it occupied and add it to the list to emit to the parent.
           if (seat[0].dataset.status == "selected") {
+            if (i > this.minColSize) {
+              this.minColSize = i;
+            }
+            if (j > this.minRowSize) {
+              this.minRowSize = j;
+            }
             seat[0].dataset.status = "occupied";
             seat[0].style.backgroundColor = this.occupiedColor;
             selectedSeats.push(`${i}/${j}`);
           }
-          //this.last_selected = {x:col, y: row};
         }
       }
       console.log(JSON.stringify(selectedSeats));
@@ -342,9 +349,29 @@ export default {
     }
   },
   mounted() {
-    console.log("mounted called");
+    console.log("SeatingPlan mounted called");
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
+    this.$root.$on("eventsFullyLoaded", () => {
+      let event = getEvent(this.address);
+      if (event != null) {
+        console.log("event not null");
+        this.occupiedSeats = [].concat.apply(
+          [],
+          event.fungibleTickets.map(ticket => ticket.seatMapping)
+        );
+      }
+    });
+    let event = getEvent(this.address);
+    if (event != null) {
+      this.occupiedSeats = [].concat.apply(
+        [],
+        event.fungibleTickets.map(ticket => ticket.seatMapping)
+      );
+    }
+    // nftickettype.tickets.map(ticket => ticket.seatMapping);
+
+    // this.occupiedSeats =
   }
 };
 </script>

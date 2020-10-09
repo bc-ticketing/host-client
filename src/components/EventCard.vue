@@ -2,19 +2,56 @@
   <div class="event-card-container">
     <div class="event-card-router-container">
       <md-card md-with-hover>
-        <!-- <md-ripple> -->
-        <md-card-header>
-          <div class="md-title event-card-title">{{ title }}</div>
-          <!-- <div class="event-card-date">{{ date }}</div> -->
-          <div class="md-subhead">{{ location}}</div>
-        </md-card-header>
-        <md-card-content>
-          <div class="content-entry">{{ "Location: " + location }}</div>
-          <div class="content-entry">{{ "Category: " + category }}</div>
-          <div class="content-entry">{{ "Description: " + description }}</div>
-        </md-card-content>
+        <div md-with-hover @click="openStats()">
+          <md-card-header>
+            <div v-if="title" class="md-title event-card-title">
+              {{ title }}
+            </div>
+            <div v-if="!title">
+              <h4>
+                Sadly there could no title be found for this event...
+              </h4>
+            </div>
+            <div v-if="date" class="event-card-date">{{ date }}</div>
+            <div v-if="location" class="md-subhead">{{ location }}</div>
+          </md-card-header>
+          <md-card-content>
+            <div v-if="category" class="content-entry">
+              {{ "Category: " + category }}
+            </div>
+            <div v-if="url" class="content-entry">
+              {{ "Website: " + url }}
+            </div>
+            <div v-if="twitter" class="content-entry">
+              {{ "Twitter: " + twitter }}
+            </div>
+            <div v-if="description" class="content-entry">
+              {{ "Description: " + description }}
+            </div>
+          </md-card-content>
+        </div>
         <md-card-actions>
-          <md-button class="md-primary" @click="goToCreateTicketType()">Create a new ticket type</md-button>
+          <!-- <md-button class="md-primary" @click="openStats()"
+            >See some stats</md-button
+          > -->
+          <md-button
+            v-if="inListView || inStatsView"
+            class="md-primary"
+            @click="openSummaryView()"
+            >Overview</md-button
+          >
+          <md-button
+            v-if="inModificationView"
+            class="md-primary"
+            @click="enterEditMode()"
+            >Edit</md-button
+          >
+          <md-button
+            v-if="inListView"
+            class="md-primary"
+            @click="openNewTicketView()"
+            >Create ticket</md-button
+          >
         </md-card-actions>
         <!-- </md-ripple> -->
       </md-card>
@@ -23,52 +60,85 @@
 </template>
 
 <script>
-import { WEEKDAYS, MONTHS } from "../constants/constants.js";
+import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 
 export default {
   name: "EventCard",
-  data() {
-    return {};
+  data: () => ({}),
+  props: {
+    event: Object,
+    inListView: Boolean,
+    inModificationView: Boolean,
+    inStatsView: Boolean
   },
-  props: { event: Object },
   methods: {
-    goToCreateTicketType: function() {
+    openNewTicketView: function() {
       this.$router.push({
-        name: "NewTicket",
-        params: {
-          eventAddress: this.event.address,
-          eventTitle: this.event.metadata.event.title
-        }
+        path: `new-ticket`,
+        query: { address: this.event.contractAddress }
       });
+    },
+    openSummaryView: function() {
+      if (!this.inModificationView) {
+        this.$router.push({
+          path: `modification`,
+          query: { address: this.event.contractAddress }
+        });
+      }
+    },
+    openStats: function() {
+      if (this.inListView) {
+        this.$router.push({
+          path: `stats`,
+          query: { address: this.event.contractAddress }
+        });
+      }
+    },
+    enterEditMode: function() {
+      this.$emit("setEditMode", true);
     }
   },
   computed: {
-    eventInstance() {
-      return this.event;
-      //todo get event information to display in this card!
-    },
     title() {
-      return this.event.metadata
-        ? this.event.metadata.event.title
-        : "no title found";
+      return this.event.title ? this.event.title : "no title found";
     },
     location() {
-      return this.event.metadata
-        ? this.event.metadata.event.location
-        : "no location found";
+      return this.event.location ? this.event.location : "no location found";
     },
     category() {
-      return this.event.metadata
-        ? this.event.metadata.event.category
-        : "no category found";
+      return this.event.category ? this.event.category : "no category found";
+    },
+    date() {
+      if (this.event.timestamp) {
+        const date = new Date(this.event.timestamp * 1000);
+        return (
+          WEEKDAYS[date.getDay()] +
+          " " +
+          date.getDay() +
+          ". " +
+          MONTHS[date.getMonth()] +
+          " " +
+          date.getFullYear()
+        );
+      }
+      return "no date found";
     },
     description() {
-      return this.event.metadata
-        ? this.event.metadata.event.description
+      return this.event.description
+        ? this.event.description
         : "no description found";
+    },
+    url() {
+      return this.event.url ? this.event.url : "no URL found";
+    },
+    twitter() {
+      return this.event.twitter ? this.event.twitter : "no twitter found";
     }
   },
-  mounted: function() {}
+  created() {
+    console.log("eventcard created executed");
+    console.log(this.event);
+  }
 };
 </script>
 

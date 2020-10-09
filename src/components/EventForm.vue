@@ -7,7 +7,7 @@
         </md-card-header>
 
         <md-card-content>
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('title')">
                 <label for="event-title">Title</label>
@@ -27,7 +27,10 @@
             </div>
           </div>
 
-          <div class="location-container md-layout md-gutter">
+          <div
+            class="location-container md-layout md-gutter"
+            v-if="inEditMode || inNewMode"
+          >
             <div class="md-layout-item">
               <md-field :class="getValidationClass('location')">
                 <label for="location">Location</label>
@@ -40,7 +43,10 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter date-container">
+          <div
+            class="md-layout md-gutter date-container"
+            v-if="inEditMode || inNewMode"
+          >
             <div class="md-layout-item">
               <md-datepicker
                 md-immediately
@@ -79,7 +85,7 @@
             >
           </md-dialog>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('category')">
                 <label for="category">Category</label>
@@ -97,7 +103,7 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100" style="display:flex">
               <md-field
                 :class="getValidationClass('idApprover')"
@@ -164,7 +170,7 @@
             
           </div>-->
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field :class="getValidationClass('erc20Token')">
                 <label for="erc20Token">Accepted Token For Payment</label>
@@ -203,7 +209,7 @@
             >
           </md-dialog>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field :class="getValidationClass('eventGranularity')">
                 <label for="event-granularity">Aftermarket Granularity</label>
@@ -257,7 +263,7 @@
             >
           </md-dialog>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass(`eventDescription`)">
                 <label for="eventDescription">Description</label>
@@ -272,7 +278,7 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('color')">
                 <label for="color">Color</label>
@@ -290,7 +296,7 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
+          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('twitter')">
                 <label for="twitter">Twitter</label>
@@ -303,7 +309,25 @@
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="createEvent"
+          <md-button
+            v-if="inEditMode"
+            type="submit"
+            class="md-accent"
+            @click="leaveEditMode"
+            >Cancel</md-button
+          >
+          <md-button
+            v-if="inEditMode"
+            type="submit"
+            class="md-primary"
+            @click="modifyEvent"
+            >Submit changes</md-button
+          >
+          <md-button
+            v-if="inNewMode"
+            type="submit"
+            class="md-primary"
+            @click="createEvent"
             >Create Event</md-button
           >
         </md-card-actions>
@@ -344,18 +368,23 @@ import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 
 // project internal imports
-import { NETWORKS } from "../constants/constants.js";
+import { NETWORKS } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../constants/EventFactory.js";
-import { DAI } from "../constants/ERC20Tokens.js";
-
+} from "../util/constants/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+import { DAI } from "../util/constants/ERC20Tokens.js";
 export default {
-  name: "NewEventForm",
+  name: "EventForm",
   mixins: [validationMixin],
   components: { VueTimepicker },
+  props: {
+    event: Object,
+    inEditMode: Boolean,
+    inNewMode: Boolean
+  },
   data: () => ({
     showStartTimeDialog: false,
     showTokenDialog: false,
@@ -448,7 +477,18 @@ export default {
       );
     }
   },
+  created() {
+    if (this.inEditMode) {
+      this.fillFormFromEvent();
+    }
+  },
   methods: {
+    fillFormFromEvent() {
+      this.form.title = this.event.title;
+    },
+    leaveEditMode: function() {
+      this.$emit("setEditMode", false);
+    },
     getValidationClass(fieldName) {
       return {
         "md-invalid": false
@@ -479,6 +519,11 @@ export default {
     async createEvent() {
       await this.uploadToIpfs();
       await this.deployEventContract();
+    },
+    async modifyEvent() {
+      // todo: add checks to compare to current ipfs hash
+      await this.uploadToIpfs();
+      await this.invokeMetadataChange();
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
@@ -526,6 +571,16 @@ export default {
       this.$v.$touch();
       return !this.$v.$invalid;
     },
+    async invokeMetadataChange() {
+      const args = cidToArgs(this.ipfsHash);
+      const eventContract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.event.contractAddress
+      );
+      const updateMetadata = await eventContract.methods
+        .updateEventMetadata(args.hashFunction, args.size, args.digest)
+        .send({ from: this.$store.state.web3.account });
+    },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
       const createEvent = await this.eventFactory.methods
@@ -560,12 +615,6 @@ export default {
 </script>
 
 <style>
-.info-dialog {
-  display: flex;
-}
-.info-dialog-button {
-  padding: 17px 0 21px;
-}
 .location-container {
   justify-content: center;
   display: flex;

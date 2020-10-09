@@ -3,15 +3,19 @@
     <div class="md-layout-column">
       <md-toolbar class="md-primary navigation-toolbar">
         <div class="navigation-title">
-          <md-button class="md-icon-button" @click="showNavigation = true">
+          <md-button class="md-icon-button" @click="showSidebar = true">
             <md-icon>menu</md-icon>
           </md-button>
           <span class="md-title">Idetix Host</span>
         </div>
         <div class="account-info-container">
           <div class="account-info">
-            <span class="account-address">{{ prettyAddress(accountAddress) }} :</span>
-            <span class="account-balance">{{ prettyBalance(accountBalance) }} ETH</span>
+            <span class="account-address"
+              >{{ prettyAddress(accountAddress) }} :</span
+            >
+            <span class="account-balance"
+              >{{ prettyBalance(accountBalance) }} ETH</span
+            >
           </div>
           <div class="account-info-refresh-container">
             <md-icon>account_balance</md-icon>
@@ -22,7 +26,7 @@
         </div>
       </md-toolbar>
 
-      <md-drawer :md-active.sync="showNavigation" md-swipeable>
+      <md-drawer :md-active.sync="showSidebar" md-swipeable>
         <md-toolbar class="md-transparent" md-elevation="0">
           <span class="md-title">Idetix</span>
         </md-toolbar>
@@ -75,21 +79,21 @@
 </template>
 
 <script>
-import { EVENT_FACTORY_ADDRESS } from "../constants/EventFactory";
+import { EVENT_FACTORY_ADDRESS } from "../util/constants/EventFactory";
 export default {
   name: "Navigation",
   data() {
     return {
-      showNavigation: false
+      showSidebar: false
     };
   },
   methods: {
-    toggleNavigation() {
-      this.showNavigation = !this.showNavigation;
+    toggleSidebar() {
+      this.showSidebar = !this.showSidebar;
     },
     navigateTo(route) {
       this.$router.push(route);
-      this.showNavigation = false;
+      this.showSidebar = false;
     },
     reloadWeb3AndEvents() {
       this.$root.$on("reloadedWeb3", async () => {
@@ -102,11 +106,10 @@ export default {
       this.$root.$emit("reloadedWeb3");
     },
     async reloadEvents() {
-      await this.$store.dispatch("loadEventAddresses");
       await this.$store.dispatch("loadEvents");
     },
     // async reloadEvents() {
-    //   await this.$store.dispatch("loadEventAddresses");
+    //   await this.$store.dispatch("loadEvents");
     //   await this.$store.dispatch("loadEvents");
     // },
     prettyAddress(address) {

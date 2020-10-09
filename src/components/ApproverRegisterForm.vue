@@ -1,6 +1,10 @@
 <template>
   <div class="approver-register-form-container">
-    <form novalidate class="md-layout" @submit.prevent="isApproverRegisterFormComplete">
+    <form
+      novalidate
+      class="md-layout"
+      @submit.prevent="isApproverRegisterFormComplete"
+    >
       <md-card class="md-layout-item">
         <md-card-header>
           <div class="md-title">Approver Registration</div>
@@ -11,7 +15,11 @@
             <div class="md-layout-item md-small-size-100">
               <md-field>
                 <label for="event-title">Approver Title</label>
-                <md-input name="approver-title" id="approver-title" v-model="form.approverTitle" />
+                <md-input
+                  name="approver-title"
+                  id="approver-title"
+                  v-model="form.approverTitle"
+                />
               </md-field>
             </div>
           </div>
@@ -47,62 +55,108 @@
           <md-dialog :md-active.sync="showNumberOfLevelsDialog">
             <md-dialog-title>Security Levels</md-dialog-title>
             <p class="dialog-text">
-              Choose the number of levels that you want to provide for identity verification.
-              The higher the level the more secure should the verification process be.
-              Consider, that for an event that requires e.g. your level 2 verification, anyone
-              with a level 2 or higher verification from you can buy a ticket for this event.
-              So a higher level always comes with permission for your lower specified levels.
+              Choose the number of levels that you want to provide for identity
+              verification. The higher the level the more secure should the
+              verification process be. Consider, that for an event that requires
+              e.g. your level 2 verification, anyone with a level 2 or higher
+              verification from you can buy a ticket for this event. So a higher
+              level always comes with permission for your lower specified
+              levels.
             </p>
             <p></p>
-            <md-button class="md-primary" @click="showNumberOfLevelsDialog = false">Close</md-button>
+            <md-button
+              class="md-primary"
+              @click="showNumberOfLevelsDialog = false"
+              >Close</md-button
+            >
           </md-dialog>
 
           <div class="md-layout-item md-small-size-100">
             <md-field>
               <label for="firstLevel">First Level - Lowest Level</label>
-              <md-input name="firstLevel" id="firstLevel" v-model="form.firstLevel" />
+              <md-input
+                name="firstLevel"
+                id="firstLevel"
+                v-model="form.firstLevel"
+              />
             </md-field>
           </div>
 
-          <div v-if="form.numberOfLevels >= 2" class="md-layout-item md-small-size-100">
+          <div
+            v-if="form.numberOfLevels >= 2"
+            class="md-layout-item md-small-size-100"
+          >
             <md-field>
               <label for="secondLevel">Second Level</label>
-              <md-input name="secondLevel" id="secondLevel" v-model="form.secondLevel" />
+              <md-input
+                name="secondLevel"
+                id="secondLevel"
+                v-model="form.secondLevel"
+              />
             </md-field>
           </div>
 
-          <div v-if="form.numberOfLevels >= 3" class="md-layout-item md-small-size-100">
+          <div
+            v-if="form.numberOfLevels >= 3"
+            class="md-layout-item md-small-size-100"
+          >
             <md-field>
               <label for="thirdLevel">Third Level</label>
-              <md-input name="thirdLevel" id="thirdLevel" v-model="form.thirdLevel" />
+              <md-input
+                name="thirdLevel"
+                id="thirdLevel"
+                v-model="form.thirdLevel"
+              />
             </md-field>
           </div>
 
-          <div v-if="form.numberOfLevels >= 4" class="md-layout-item md-small-size-100">
+          <div
+            v-if="form.numberOfLevels >= 4"
+            class="md-layout-item md-small-size-100"
+          >
             <md-field>
               <label for="fourthLevel">Fourth Level</label>
-              <md-input name="fourthLevel" id="fourthLevel" v-model="form.fourthLevel" />
+              <md-input
+                name="fourthLevel"
+                id="fourthLevel"
+                v-model="form.fourthLevel"
+              />
             </md-field>
           </div>
 
-          <div v-if="form.numberOfLevels >= 5" class="md-layout-item md-small-size-100">
+          <div
+            v-if="form.numberOfLevels >= 5"
+            class="md-layout-item md-small-size-100"
+          >
             <md-field>
               <label for="fifthLevel">Fifth Level</label>
-              <md-input name="fifthLevel" id="fifthLevel" v-model="form.fifthLevel" />
+              <md-input
+                name="fifthLevel"
+                id="fifthLevel"
+                v-model="form.fifthLevel"
+              />
             </md-field>
           </div>
 
           <div class="md-layout-item md-small-size-100">
             <md-field>
               <label for="approver-url">URL</label>
-              <md-input name="approver-url" id="approver-url" v-model="form.approverURL" />
+              <md-input
+                name="approver-url"
+                id="approver-url"
+                v-model="form.approverURL"
+              />
             </md-field>
           </div>
 
           <div class="md-layout-item md-small-size-100">
             <md-field>
               <label for="twitter">Twitter</label>
-              <md-input name="twitter" id="twitter" v-model="form.approverTwitter" />
+              <md-input
+                name="twitter"
+                id="twitter"
+                v-model="form.approverTwitter"
+              />
             </md-field>
           </div>
         </md-card-content>
@@ -116,7 +170,8 @@
             type="submit"
             class="md-primary"
             @click="registerAsApprover"
-          >Register as approver</md-button>
+            >Register as approver</md-button
+          >
         </md-card-actions>
       </md-card>
     </form>
@@ -133,7 +188,7 @@ import {
 } from "vuelidate/lib/validators";
 
 // project internal imports
-import { NETWORKS } from "../constants/constants.js";
+import { NETWORKS } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 
 export default {

@@ -1,16 +1,16 @@
 <template>
   <div class="new-event-container">
-    <NewEventForm />
+    <EventForm v-bind:inNewMode="true" v-bind:inEditMode="false" />
   </div>
 </template>
 
 <script>
-import NewEventForm from "@/components/NewEventForm.vue";
+import EventForm from "@/components/EventForm.vue";
 
 export default {
   name: "NewEvent",
   components: {
-    NewEventForm
+    EventForm
   }
 };
 </script>

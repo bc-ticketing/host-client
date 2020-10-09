@@ -5,8 +5,8 @@
 </template>
 
 <script>
-import { EVEVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../constants/EventMintableAftermarketPresale";
-import NewTicketForm from "../components/NewTicketForm";
+import { EVEVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+import TicketForm from "../components/TicketForm";
 
 // todo:
 //  get event information from ipfs and parse into eventcard - similar to guest-client
