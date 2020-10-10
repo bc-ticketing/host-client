@@ -1,5 +1,3 @@
-// todo: set supply to nr of boxes when non-fungible is active
-// todo: 
 <template>
   <div class="seating-plan">
     <div class="md-layout md-gutter">
@@ -34,6 +32,7 @@
         <md-checkbox class="md-primary" v-model="blockSelection" :value="true"
           >Block Selection</md-checkbox
         >
+        <md-checkbox v-model="unselect" :value="true">Unselect</md-checkbox>
       </div>
     </div>
 
@@ -52,7 +51,6 @@
           @mousedown="mouseDownOnTile(col, row)"
           @mouseup="mouseUpOnTile(col, row)"
           @mouseenter="mouseEnter(col, row)"
-          @click="selectSeat(col, row)"
           class="seat"
           v-for="row in rows"
           v-bind:key="`seat_` + row"
@@ -111,24 +109,28 @@
 
 <script>
 import getEvent from "../util/utility";
-/* This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue. 
-    The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
- */
+// This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue.
+// The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
 
+// occupied: This seat is already included in another ticket type
+// free:     This seat is not linked to any ticket type yet
+// selected: This seat is selected. When save category is clicked,
+//             a ticket type containing this seat is saved in the
+//             parent TicketForm.
 export default {
   name: "SeatingPlan",
   data() {
     return {
-      selectedSeats: [],
       rows: 12,
       cols: 12,
       minRowSize: 0,
       minColSize: 0,
       blockSelection: false,
+      unselect: false,
       selection_start: { x: 0, y: 0 },
       last_selected: { x: 0, y: 0 },
       color: "#B48EAD",
-      emptyColor: "#8fbcbb",
+      freeColor: "#8fbcbb",
       occupiedColor: "#4c566a",
       stageColor: "#d8dee9",
       mouseDown: false,
@@ -137,7 +139,8 @@ export default {
         cols: 0,
         assignedSeats: []
       },
-      occupiedSeats: []
+      fungibleOccupiedSeats: [],
+      nonFungibleOccupiedSeats: []
     };
   },
   props: { address: String },
@@ -151,13 +154,20 @@ export default {
       this.cols = Number(val);
       this.updateGridSize();
     },
-    occupiedSeats: function(val) {
+    fungibleOccupiedSeats: function(val) {
       if (val.length > 0) {
         this.fetchAndUpdateGrid();
         window.setTimeout(() => {
-          this.setUsedSeats();
+          this.setFungibleOccupiedSeats();
         }, 500);
-        // this.setUsedSeats();
+      }
+    },
+    nonFungibleOccupiedSeats: function(val) {
+      if (val.length > 0) {
+        this.fetchAndUpdateGrid();
+        window.setTimeout(() => {
+          this.setNonFungibleOccupiedSeats();
+        }, 500);
       }
     }
   },
@@ -166,8 +176,19 @@ export default {
       var i;
       var max_x = this.cols;
       var max_y = this.rows;
-      for (i = 0; i < this.occupiedSeats.length; i++) {
-        let cords = this.occupiedSeats[i].split("/");
+      for (i = 0; i < this.nonFungibleOccupiedSeats.length; i++) {
+        let cords = this.nonFungibleOccupiedSeats[i].split("/");
+        let row_cord = Number(cords[0]);
+        let col_cord = Number(cords[1]);
+        if (row_cord > max_x) {
+          max_x = row_cord;
+        }
+        if (col_cord > max_y) {
+          max_y = col_cord;
+        }
+      }
+      for (i = 0; i < this.fungibleOccupiedSeats.length; i++) {
+        let cords = this.fungibleOccupiedSeats[i].split("/");
         let row_cord = Number(cords[0]);
         let col_cord = Number(cords[1]);
         if (row_cord > max_x) {
@@ -182,17 +203,27 @@ export default {
       this.minColSize = max_x;
       this.minRowSize = max_y;
     },
-    setUsedSeats() {
-      var i;
-      for (i = 0; i < this.occupiedSeats.length; i++) {
-        let cords = this.occupiedSeats[i].split("/");
+
+    // set status of non-fungible seats already occupied in another ticket type
+    setNonFungibleOccupiedSeats() {
+      for (let i = 0; i < this.nonFungibleOccupiedSeats.length; i++) {
+        let cords = this.nonFungibleOccupiedSeats[i].split("/");
         var seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
         seat[0].dataset.status = "occupied";
         seat[0].style.backgroundColor = this.occupiedColor;
-        this.selectedSeats.push(`${cords[0]}/${cords[1]}`);
-        // console.log(cords[0] + "/" + cords[1]);
       }
     },
+
+    // set status of fungible seats already occupied in another ticket type
+    setFungibleOccupiedSeats() {
+      for (let i = 0; i < this.fungibleOccupiedSeats.length; i++) {
+        let cords = this.fungibleOccupiedSeats[i].split("/");
+        let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
+        seat[0].dataset.status = "occupied";
+        seat[0].style.backgroundColor = this.occupiedColor;
+      }
+    },
+
     // Update styles for the grid
     updateGridSize() {
       this.$refs[
@@ -211,6 +242,7 @@ export default {
     },
     // mouse down handler for when we are not on a tile
     mouseDownOnTile(col, row) {
+      console.log("mouseDownTriggered");
       this.mouseDown = true;
       if (this.blockSelection) {
         this.selection_start = { x: col, y: row };
@@ -220,6 +252,7 @@ export default {
     },
     // mouse release handler, check if we are doing block selection to select all tiles within the rectangle spaned by the starting and the releasing point
     mouseUpOnTile(col, row) {
+      console.log("mouseUpTriggered");
       this.mouseDown = false;
       if (this.blockSelection) {
         let start_x =
@@ -238,6 +271,7 @@ export default {
     },
     // select a tile if we hover it while holding the mouse trigger
     mouseEnter(col, row) {
+      console.log("mouseEnterTriggered");
       if (this.mouseDown) {
         if (this.blockSelection) {
           let start_x =
@@ -259,15 +293,31 @@ export default {
         }
       }
     },
+    nonBlockSelect(col, row) {
+      console.log("nonBlockTriggered");
+      if (!this.blockSelection) {
+        console.log("nonBlock - selectSeat triggered");
+        this.selectSeat(col, row);
+      }
+    },
     // mark a specific seat for the ticket type
     selectSeat(col, row) {
+      // console.log("selectSeat triggered");
       var seat = this.$refs[`seat_${col}_${row}`];
       if (seat[0].dataset.status != "occupied") {
-        seat[0].dataset.status = "selected";
-        if (this.fungible) {
-          seat[0].classList.add("fungible");
+        if (this.unselect) {
+          seat[0].dataset.status = "free";
+          seat[0].style.backgroundColor = this.freeColor;
+          if (seat[0].classList.contains("fungible")) {
+            seat[0].classList.remove("fungible");
+          }
+        } else {
+          seat[0].dataset.status = "selected";
+          if (this.fungible) {
+            seat[0].classList.add("fungible");
+          }
+          seat[0].style.backgroundColor = this.color;
         }
-        seat[0].style.backgroundColor = this.color;
       }
 
       this.last_selected = { x: col, y: row };
@@ -310,7 +360,7 @@ export default {
           var seat = this.$refs[`seat_${i}_${j}`];
           if (this.getSeatStatus(i, j) != "occupied") {
             seat[0].dataset.status = "free";
-            seat[0].style.backgroundColor = this.emptyColor;
+            seat[0].style.backgroundColor = this.freeColor;
           }
         }
       }
@@ -356,7 +406,11 @@ export default {
       let event = getEvent(this.address);
       if (event != null) {
         console.log("event not null");
-        this.occupiedSeats = [].concat.apply(
+        this.nonFungibleOccupiedSeats = [].concat.apply(
+          [],
+          event.nonFungibleTickets.map(ticket => ticket.seatMapping)
+        );
+        this.fungibleOccupiedSeats = [].concat.apply(
           [],
           event.fungibleTickets.map(ticket => ticket.seatMapping)
         );
@@ -364,14 +418,16 @@ export default {
     });
     let event = getEvent(this.address);
     if (event != null) {
-      this.occupiedSeats = [].concat.apply(
+      console.log("event not null");
+      this.nonFungibleOccupiedSeats = [].concat.apply(
+        [],
+        event.nonFungibleTickets.map(ticket => ticket.seatMapping)
+      );
+      this.fungibleOccupiedSeats = [].concat.apply(
         [],
         event.fungibleTickets.map(ticket => ticket.seatMapping)
       );
     }
-    // nftickettype.tickets.map(ticket => ticket.seatMapping);
-
-    // this.occupiedSeats =
   }
 };
 </script>
