@@ -189,11 +189,11 @@
           <SeatingPlan
             v-bind:address="this.$route.query.address"
             v-on:savetickettype="saveTicketType"
+            v-on:updateamountofselected="updateAmountOfSelected"
           ></SeatingPlan>
         </md-card-content>
 
         <md-card-actions>
-          <!-- <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button> -->
           <md-button type="submit" class="md-primary" @click="createTypes"
             >Create tickets</md-button
           >
@@ -237,6 +237,7 @@ export default {
     eventSet: false,
     notFoundMessageVisible: false,
     withPresale: false,
+    amountOfSelectedSeats: 0,
     showFinalizationTimeDialog: false,
     showPresaleDialog: false,
     occupiedSeats: [], // list of seats already used in a type on the blockchain
@@ -461,6 +462,12 @@ export default {
         }
         console.log(seats);
       }
+    },
+
+    updateAmountOfSelected(amount) {
+      console.log(amount);
+      this.amountOfSelectedSeats = amount;
+      console.log(this.amountOfSelectedSeats);
     },
 
     getTypeAsNonPresale(seats) {

@@ -121,6 +121,7 @@ export default {
   name: "SeatingPlan",
   data() {
     return {
+      selected: [],
       rows: 12,
       cols: 12,
       minRowSize: 0,
@@ -153,6 +154,9 @@ export default {
     cols: function(val) {
       this.cols = Number(val);
       this.updateGridSize();
+    },
+    selected: function() {
+      this.$emit("updateamountofselected", this.selected.length);
     },
     fungibleOccupiedSeats: function(val) {
       if (val.length > 0) {
@@ -242,7 +246,7 @@ export default {
     },
     // mouse down handler for when we are not on a tile
     mouseDownOnTile(col, row) {
-      console.log("mouseDownTriggered");
+      // console.log("mouseDownTriggered");
       this.mouseDown = true;
       if (this.blockSelection) {
         this.selection_start = { x: col, y: row };
@@ -252,7 +256,7 @@ export default {
     },
     // mouse release handler, check if we are doing block selection to select all tiles within the rectangle spaned by the starting and the releasing point
     mouseUpOnTile(col, row) {
-      console.log("mouseUpTriggered");
+      // console.log("mouseUpTriggered");
       this.mouseDown = false;
       if (this.blockSelection) {
         let start_x =
@@ -271,7 +275,7 @@ export default {
     },
     // select a tile if we hover it while holding the mouse trigger
     mouseEnter(col, row) {
-      console.log("mouseEnterTriggered");
+      // console.log("mouseEnterTriggered");
       if (this.mouseDown) {
         if (this.blockSelection) {
           let start_x =
@@ -294,7 +298,7 @@ export default {
       }
     },
     nonBlockSelect(col, row) {
-      console.log("nonBlockTriggered");
+      // console.log("nonBlockTriggered");
       if (!this.blockSelection) {
         console.log("nonBlock - selectSeat triggered");
         this.selectSeat(col, row);
@@ -302,21 +306,26 @@ export default {
     },
     // mark a specific seat for the ticket type
     selectSeat(col, row) {
-      // console.log("selectSeat triggered");
+      console.log("selectSeat triggered");
       var seat = this.$refs[`seat_${col}_${row}`];
-      if (seat[0].dataset.status != "occupied") {
+      let status = seat[0].dataset.status;
+      if (status != "occupied") {
         if (this.unselect) {
-          seat[0].dataset.status = "free";
-          seat[0].style.backgroundColor = this.freeColor;
-          if (seat[0].classList.contains("fungible")) {
-            seat[0].classList.remove("fungible");
+          if (status == "selected") {
+            if (this.selected.includes(`seat_${col}_${row}`)) {
+              console.log("was selected");
+              this.selected.pop(`seat_${col}_${row}`);
+            }
+            seat[0].dataset.status = "free";
+            seat[0].style.backgroundColor = this.freeColor;
           }
-        } else {
+        } else if (status == "free") {
           seat[0].dataset.status = "selected";
-          if (this.fungible) {
-            seat[0].classList.add("fungible");
-          }
+          this.selected.push(`seat_${col}_${row}`);
           seat[0].style.backgroundColor = this.color;
+          // if (this.fungible) {
+          //   seat[0].classList.add("fungible");
+          // }
         }
       }
 
