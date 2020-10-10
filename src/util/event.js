@@ -8,7 +8,7 @@ const BigNumber = require("bignumber.js");
 
 export class Event {
   constructor(contractAddress) {
-    console.log('creating event')
+    console.log("creating event");
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
@@ -16,26 +16,21 @@ export class Event {
     this.title = "";
     this.img_url = "";
     this.ipfsHash = "";
+    this.granularity = 1;
   }
 
   async getOwner(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.contractAddress
-    );
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     return await eventSC.methods.getOwner().call();
   }
 
   async loadData(ABI, ipfsInstance, web3Instance) {
     await this.fetchIPFSHash(ABI, web3Instance);
-    await this.loadIPFSMetadata(ipfsInstance)
+    await this.loadIPFSMetadata(ipfsInstance);
   }
 
   async fetchIPFSHash(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.contractAddress
-    );
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
       fromBlock: 1,
     });
@@ -69,7 +64,7 @@ export class Event {
   }
 
   async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
-    console.log('loading fungible tickets')
+    console.log("loading fungible tickets");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
@@ -86,11 +81,13 @@ export class Event {
         await ticketType.fetchIpfsHash(web3Instance, ABI);
         await ticketType.loadIPFSMetadata(ipfsInstance);
         await ticketType.loadSellOrders(web3Instance, ABI);
-        await ticketType.loadBuyOrders(web3Instance, ABI)
-        const granularity = await eventSC.methods.granularity().call();
-        ticketType.aftermarketGranularity = granularity;
-        for (let j = 1; j <= new BigNumber(granularity).toNumber(); j++) {
-          let percentage = (100 / new BigNumber(granularity).toNumber()) * j;
+        await ticketType.loadBuyOrders(web3Instance, ABI);
+        this.granularity = await eventSC.methods.granularity().call();
+
+        ticketType.aftermarketGranularity = this.granularity;
+        for (let j = 1; j <= new BigNumber(this.granularity).toNumber(); j++) {
+          let percentage =
+            (100 / new BigNumber(this.granularity).toNumber()) * j;
           const queue = eventSC.methods.sellingQueue(ticketType, percentage);
           const numberSellingOrders = queue.numberTickets;
           if (numberSellingOrders > 0) {
@@ -101,12 +98,13 @@ export class Event {
             //ticketMapping.sellOrders[String(percentage)] = numberSellingOrders
           }
         }
-
+        console.log(ticketType);
         //ticketMapping.ticketTypeNr = i;
         //const queues = eventSC.methods.buyingQueue().call();
         this.fungibleTickets.push(ticketType);
       }
     }
+    console.log("tickets fetched");
   }
 
   async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
