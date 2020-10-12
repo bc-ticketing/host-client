@@ -121,7 +121,7 @@ export default {
   name: "SeatingPlan",
   data() {
     return {
-      selected: [],
+      amountSelected: 0,
       rows: 12,
       cols: 12,
       minRowSize: 0,
@@ -155,8 +155,8 @@ export default {
       this.cols = Number(val);
       this.updateGridSize();
     },
-    selected: function() {
-      this.$emit("updateamountofselected", this.selected.length);
+    amountSelected: function() {
+      this.$emit("updateamountofselected", this.amountSelected);
     },
     fungibleOccupiedSeats: function(val) {
       if (val.length > 0) {
@@ -312,16 +312,13 @@ export default {
       if (status != "occupied") {
         if (this.unselect) {
           if (status == "selected") {
-            if (this.selected.includes(`seat_${col}_${row}`)) {
-              console.log("was selected");
-              this.selected.pop(`seat_${col}_${row}`);
-            }
+            this.amountSelected -= 1;
             seat[0].dataset.status = "free";
             seat[0].style.backgroundColor = this.freeColor;
           }
         } else if (status == "free") {
+          this.amountSelected += 1;
           seat[0].dataset.status = "selected";
-          this.selected.push(`seat_${col}_${row}`);
           seat[0].style.backgroundColor = this.color;
           // if (this.fungible) {
           //   seat[0].classList.add("fungible");

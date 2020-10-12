@@ -54,17 +54,31 @@
                 >Fungible</md-radio
               >
               <md-field v-if="!form.isNF">
-                <label for="supply"
+                <label for="fungibleSupply"
                   >Amount of Tickets within this Ticket category</label
                 >
                 <md-input
                   type="number"
                   min="0"
                   max="100000"
-                  name="supply"
-                  id="supply"
-                  v-model="form.supply"
+                  name="fungibleSupply"
+                  id="fungibleSupply"
+                  v-model="form.fungibleSupply"
                   :disabled="form.isNF"
+                  v-if="!form.isNF"
+                />
+                <span class="md-error">The supply is required.</span>
+              </md-field>
+              <md-field v-if="form.isNF">
+                <label for="nonFungibleSupply"
+                  >Amount of Tickets within this Ticket category</label
+                >
+                <md-input
+                  type="number"
+                  name="nonFungibleSupply"
+                  id="nonFungibleSupply"
+                  v-model="amountOfSelectedSeats"
+                  disabled
                 />
                 <span class="md-error">The supply is required.</span>
               </md-field>
@@ -225,7 +239,7 @@ import {
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
 import getEvent from "../util/utility";
-import AVERAGE_BLOCKTIME from "../util/constants/constants";
+import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
 
 export default {
   name: "TicketForm",
@@ -258,7 +272,7 @@ export default {
         HH: "10",
         mm: "00"
       },
-      supply: 400
+      fungibleSupply: 400
     },
     sending: false
   }),
@@ -393,6 +407,9 @@ export default {
         isNFs.push(type.isNF);
         prices.push(type.price);
         finalizationTimes.push(type.finalizationTime);
+        if (this.isNF) {
+          //todo save amount of tickets
+        }
         supplies.push(type.supply);
         presaleBlocks.push(type.presaleBlock);
       }
@@ -465,9 +482,7 @@ export default {
     },
 
     updateAmountOfSelected(amount) {
-      console.log(amount);
       this.amountOfSelectedSeats = amount;
-      console.log(this.amountOfSelectedSeats);
     },
 
     getTypeAsNonPresale(seats) {
@@ -498,7 +513,7 @@ export default {
         finalizationTime: this.finalizationTimeUnix,
         description: this.form.description,
         seats: seats,
-        presaleBlock: this.presaleBlock
+        presaleBlock: this.computePresaleBlock()
       };
     },
 
@@ -589,9 +604,21 @@ export default {
       let d = new Date();
       d.setMonth(d.getMonth() + n);
       return d;
+    },
+    computePresaleBlock() {
+      return (
+        this.getCurrentBlockNumber() +
+        (this.presaleTimeUnix - new Date().getTime() / 1000) / AVERAGE_BLOCKTIME
+      );
+    },
+    getCurrentBlockNumber() {
+      return this.$store.state.web3.web3Instance.eth.getBlockNumber();
     }
   },
   computed: {
+    nonFungibleSupply() {
+      return this.amountOfSelectedSeats;
+    },
     finalizationDateInSeconds() {
       return Number(Date.parse(this.finalizationTime_Date) / 1000);
     },
@@ -610,12 +637,6 @@ export default {
         this.presaleDateInSeconds +
         this.form.presale_time.HH * 3600 +
         this.form.presale_time.mm * 60
-      );
-    },
-    presaleBlock() {
-      return (
-        this.$store.state.web3.web3Instance.eth.getBlockNumber() +
-        (this.presaleTimeUnix - new Date().getTime() / 1000) / AVERAGE_BLOCKTIME
       );
     },
     web3() {
