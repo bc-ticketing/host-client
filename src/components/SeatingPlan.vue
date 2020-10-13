@@ -36,6 +36,14 @@
       </div>
     </div>
 
+    <div class="md-layout md-gutter">
+      <div class="md-layout-item md-small-size-100">
+        <md-button class="md-primary" @click="increaseColorIndex"
+          >Change color</md-button
+        >
+      </div>
+    </div>
+
     <div
       class="seating-container"
       :ref="`cont`"
@@ -108,7 +116,7 @@
 </template>
 
 <script>
-import getEvent from "../util/utility";
+import getEvent, { COLOR_ARRAY } from "../util/utility";
 // This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue.
 // The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
 
@@ -130,7 +138,7 @@ export default {
       unselect: false,
       selection_start: { x: 0, y: 0 },
       last_selected: { x: 0, y: 0 },
-      color: "#B48EAD",
+      colorIndex: 0,
       freeColor: "#8fbcbb",
       occupiedColor: "#4c566a",
       stageColor: "#d8dee9",
@@ -144,7 +152,7 @@ export default {
       nonFungibleOccupiedSeats: []
     };
   },
-  props: { address: String },
+  props: { address: String, isNF: Boolean },
   /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
     rows: function(val) {
@@ -158,22 +166,34 @@ export default {
     amountSelected: function() {
       this.$emit("updateamountofselected", this.amountSelected);
     },
-    fungibleOccupiedSeats: function(val) {
-      if (val.length > 0) {
-        this.fetchAndUpdateGrid();
-        window.setTimeout(() => {
-          this.setFungibleOccupiedSeats();
-        }, 500);
-      }
-    },
-    nonFungibleOccupiedSeats: function(val) {
-      if (val.length > 0) {
-        this.fetchAndUpdateGrid();
-        window.setTimeout(() => {
-          this.setNonFungibleOccupiedSeats();
-        }, 500);
+    colorIndex: function() {
+      for (let i = 1; i <= this.rows; i++) {
+        for (let j = 1; j <= this.cols; j++) {
+          console.log(i + " " + j);
+          let seat = this.$refs[`seat_${j}_${i}`];
+          console.log(seat);
+          if (seat[0].dataset.status == "selected") {
+            seat[0].style.backgroundColor = this.color;
+          }
+        }
       }
     }
+    // fungibleOccupiedSeats: function(val) {
+    //   if (val.length > 0) {
+    //     this.fetchAndUpdateGrid();
+    //     window.setTimeout(() => {
+    //       this.setFungibleOccupiedSeats();
+    //     }, 500);
+    //   }
+    // },
+    // nonFungibleOccupiedSeats: function(val) {
+    //   if (val.length > 0) {
+    //     this.fetchAndUpdateGrid();
+    //     window.setTimeout(() => {
+    //       this.setNonFungibleOccupiedSeats();
+    //     }, 500);
+    //   }
+    // }
   },
   methods: {
     fetchAndUpdateGrid() {
@@ -206,6 +226,42 @@ export default {
       this.rows = max_y;
       this.minColSize = max_x;
       this.minRowSize = max_y;
+    },
+
+    setOccupiedSeats(event) {
+      let existingNfTickets = event.nonFungibleTickets;
+      for (let i = 0; i < existingNfTickets.length; i++) {
+        let nfTicket = existingNfTickets[i];
+        console.log(nfTicket);
+        let c = nfTicket.color;
+        for (let s = 0; s < nfTicket.seatMapping.length; s++) {
+          let cords = nfTicket.seatMapping[s].split("/");
+          let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
+          seat[0].dataset.status = "occupied";
+          if (c == "" || c == null) {
+            seat[0].style.backgroundColor = this.occupiedColor;
+          } else {
+            seat[0].style.backgroundColor = c;
+          }
+        }
+      }
+      let existingFungibleTickets = event.fungibleTickets;
+      for (let i = 0; i < existingFungibleTickets.length; i++) {
+        let fungibleTicket = existingFungibleTickets[i];
+        console.log(fungibleTicket);
+        let c = fungibleTicket.color;
+        for (let s = 0; s < fungibleTicket.seatMapping.length; s++) {
+          let cords = fungibleTicket.seatMapping[s].split("/");
+          let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
+          seat[0].dataset.status = "occupied";
+          if (c == "" || c == null) {
+            seat[0].style.backgroundColor = this.occupiedColor;
+          } else {
+            seat[0].style.backgroundColor = c;
+          }
+          seat[0].classList.add("fungible");
+        }
+      }
     },
 
     // set status of non-fungible seats already occupied in another ticket type
@@ -315,6 +371,7 @@ export default {
             this.amountSelected -= 1;
             seat[0].dataset.status = "free";
             seat[0].style.backgroundColor = this.freeColor;
+            seat[0].classList.remove("fungible");
           }
         } else if (status == "free") {
           this.amountSelected += 1;
@@ -325,7 +382,6 @@ export default {
           // }
         }
       }
-
       this.last_selected = { x: col, y: row };
     },
     // mark a specific seat for temporary selection in the block selection
@@ -371,7 +427,6 @@ export default {
         }
       }
     },
-    // TODO Michael: finish implementations with SC calls and IPFS uploads for host client
     save() {
       // emit to parent type creation to add to list and display TicketTypeCard below
       // add selectedSeats to occupiedSeats list
@@ -389,19 +444,36 @@ export default {
               this.minRowSize = j;
             }
             seat[0].dataset.status = "occupied";
-            seat[0].style.backgroundColor = this.occupiedColor;
+            seat[0].style.backgroundColor = this.color;
+            if (!this.isNF) {
+              seat[0].classList.add("fungible");
+            }
             selectedSeats.push(`${i}/${j}`);
           }
         }
       }
       console.log(JSON.stringify(selectedSeats));
-      this.$emit("savetickettype", selectedSeats);
+      this.$emit("savetickettype", selectedSeats, this.color);
+      this.increaseColorIndex();
+      this.amountSelected = 0;
       /*
           selectedSeats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
           for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself
           for F tickets: the host can select how many tickets should be created for the selected standing area and the ticket type. Store on IPFS: list of all indices of the seats (for frontend display on guest client).  
            */
       //TODO: call SC to create tickets + store metadata on ipfs including ticket mapping
+    },
+    increaseColorIndex() {
+      if (this.colorIndex == COLOR_ARRAY.length - 1) {
+        this.colorIndex = 0;
+      } else {
+        this.colorIndex += 1;
+      }
+    }
+  },
+  computed: {
+    color() {
+      return COLOR_ARRAY[this.colorIndex];
     }
   },
   mounted() {
@@ -411,28 +483,29 @@ export default {
     this.$root.$on("eventsFullyLoaded", () => {
       let event = getEvent(this.address);
       if (event != null) {
-        console.log("event not null");
-        this.nonFungibleOccupiedSeats = [].concat.apply(
-          [],
-          event.nonFungibleTickets.map(ticket => ticket.seatMapping)
-        );
-        this.fungibleOccupiedSeats = [].concat.apply(
-          [],
-          event.fungibleTickets.map(ticket => ticket.seatMapping)
-        );
+        this.setOccupiedSeats(event);
+        //   this.nonFungibleOccupiedSeats = [].concat.apply(
+        //     [],
+        //     event.nonFungibleTickets.map(ticket => ticket.seatMapping)
+        //   );
+        // this.fungibleOccupiedSeats = [].concat.apply(
+        //   [],
+        //   event.fungibleTickets.map(ticket => ticket.seatMapping)
+        // );
       }
     });
     let event = getEvent(this.address);
     if (event != null) {
-      console.log("event not null");
-      this.nonFungibleOccupiedSeats = [].concat.apply(
-        [],
-        event.nonFungibleTickets.map(ticket => ticket.seatMapping)
-      );
-      this.fungibleOccupiedSeats = [].concat.apply(
-        [],
-        event.fungibleTickets.map(ticket => ticket.seatMapping)
-      );
+      this.setOccupiedSeats(event);
+      // console.log("event not null");
+      // this.nonFungibleOccupiedSeats = [].concat.apply(
+      //   [],
+      //   event.nonFungibleTickets.map(ticket => ticket.seatMapping)
+      // );
+      // this.fungibleOccupiedSeats = [].concat.apply(
+      //   [],
+      //   event.fungibleTickets.map(ticket => ticket.seatMapping)
+      // );
     }
   }
 };
@@ -463,23 +536,21 @@ export default {
 }
 .seating-container {
   width: max-content;
-
   display: grid;
-  grid-gap: 2px;
 }
 .seat {
-  margin-bottom: 2px;
   background-color: #8fbcbb;
+  border: 1px solid #ffffff;
   height: 100%;
   width: 20px;
 }
 .seat.fungible {
-  transform: scale(1.06);
+  border: none;
 }
 .legend .seat {
   display: inline-block;
   margin-right: 1rem;
-  margin-bottom: 2px;
+  /* margin-bottom: 2px; */
   background-color: #8fbcbb;
   height: 20px;
   width: 20px;

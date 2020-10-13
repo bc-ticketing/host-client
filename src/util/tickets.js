@@ -63,6 +63,7 @@ export class FungibleTicketType extends TicketType {
         this.description = metadata.ticket.description;
         this.seatMapping = metadata.ticket.mapping;
         this.title = metadata.ticket.title;
+        this.color = metadata.ticket.color;
     }
 
     async fetchIpfsHash(web3Instance, ABI) {
@@ -150,10 +151,8 @@ export class NonFungibleTicketType extends TicketType {
         const metadata = JSON.parse(ipfsData);
         this.description = metadata.ticket.description;
         this.seatMapping = metadata.ticket.mapping;
-
         this.title = metadata.ticket.title;
-        console.log(this.tickets.length);
-        console.log(metadata.ticket.mapping.length);
+        this.color = metadata.ticket.color;
         metadata.ticket.mapping.forEach((mapping, index) => {
             if (index >= this.tickets.length) { return; }
             this.tickets[index].seatMapping = mapping;

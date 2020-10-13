@@ -174,10 +174,14 @@
             <md-dialog-title>Presale</md-dialog-title>
             <p class="dialog-text">
               When choosing this option, guests can register in a presale for a
-              ticket. This presale is closed after the time specified here and a
-              lottery is executed. If there are more supply than demand, every
-              guest may buy a ticket. If there is more demand than supply, the
-              lottery decides who may buy a ticket.<br /><br />
+              ticket. The ticket price is paid upfront, when registering for its
+              presale. The presale is closed after the time specified here and
+              at that time a lottery is executed. If there is more supply than
+              demand, every guest that registered in the presale can retrieve a
+              ticket. If there is more demand than supply, the lottery decides
+              who can retrieve a ticket. The registered guests that did not win
+              in the lottery can simply recollect the ticket price they paid for
+              the presale.<br /><br />
               <b>Note:</b> The time specified here is not definite. The average
               blocktime of the Ethereum blockchain is used to calculate the most
               likely blocknumber at this time. The hash of that specific block
@@ -202,6 +206,7 @@
           </div>
           <SeatingPlan
             v-bind:address="this.$route.query.address"
+            v-bind:isNF="this.form.isNF"
             v-on:savetickettype="saveTicketType"
             v-on:updateamountofselected="updateAmountOfSelected"
           ></SeatingPlan>
@@ -326,6 +331,8 @@ export default {
             ticket: {
               title: type.title,
               description: type.description,
+              color: type.color,
+              // image: type.imageIpfsHash,
               event: this.address,
               mapping: map
             }
@@ -407,9 +414,6 @@ export default {
         isNFs.push(type.isNF);
         prices.push(type.price);
         finalizationTimes.push(type.finalizationTime);
-        if (this.isNF) {
-          //todo save amount of tickets
-        }
         supplies.push(type.supply);
         presaleBlocks.push(type.presaleBlock);
       }
@@ -467,17 +471,18 @@ export default {
     // It takes the seats selected in the SeatingPlan and
     // the inputs in this form and saves it to either savedTypes
     // or savedPresaleTypes.
-    saveTicketType(seats) {
+    saveTicketType(seats, color) {
       console.log("save ticket executed in TicketForm");
       if (seats.length == 0) {
         return;
       } else {
         if (this.withPresale) {
-          this.savedPresaleTypes.push(this.getTypeAsPresale(seats));
+          this.savedPresaleTypes.push(this.getTypeAsPresale(seats, color));
+          console.log(this.getTypeAsPresale(seats, color));
         } else {
-          this.savedTypes.push(this.getTypeAsNonPresale(seats));
+          this.savedTypes.push(this.getTypeAsNonPresale(seats, color));
+          console.log(this.getTypeAsNonPresale(seats, color));
         }
-        console.log(seats);
       }
     },
 
@@ -485,35 +490,37 @@ export default {
       this.amountOfSelectedSeats = amount;
     },
 
-    getTypeAsNonPresale(seats) {
-      let amount = seats.length;
-      if (!this.form.isNF) {
-        amount = this.form.supply;
+    getSupply() {
+      let supply = this.form.fungibleSupply;
+      if (this.form.isNF) {
+        supply = this.nonFungibleSupply;
       }
-      return {
-        title: this.form.title,
-        isNF: this.form.isNF,
-        supply: amount,
-        price: this.form.price,
-        finalizationTime: this.finalizationTimeUnix,
-        description: this.form.description,
-        seats: seats
-      };
+      return supply;
     },
-    getTypeAsPresale(seats) {
-      let amount = seats.length;
-      if (!this.form.isNF) {
-        amount = this.form.supply;
-      }
+
+    getTypeAsNonPresale(seats, color) {
       return {
         title: this.form.title,
         isNF: this.form.isNF,
-        supply: amount,
+        supply: this.getSupply(),
         price: this.form.price,
         finalizationTime: this.finalizationTimeUnix,
         description: this.form.description,
         seats: seats,
-        presaleBlock: this.computePresaleBlock()
+        color: color
+      };
+    },
+    getTypeAsPresale(seats, color) {
+      return {
+        title: this.form.title,
+        isNF: this.form.isNF,
+        supply: this.getSupply(),
+        price: this.form.price,
+        finalizationTime: this.finalizationTimeUnix,
+        description: this.form.description,
+        seats: seats,
+        presaleBlock: this.computePresaleBlock(),
+        color: color
       };
     },
 
@@ -608,11 +615,14 @@ export default {
     computePresaleBlock() {
       return (
         this.getCurrentBlockNumber() +
-        (this.presaleTimeUnix - new Date().getTime() / 1000) / AVERAGE_BLOCKTIME
+        Math.floor(
+          (this.presaleTimeUnix - new Date().getTime() / 1000) /
+            AVERAGE_BLOCKTIME
+        )
       );
     },
-    getCurrentBlockNumber() {
-      return this.$store.state.web3.web3Instance.eth.getBlockNumber();
+    async getCurrentBlockNumber() {
+      return await this.$store.state.web3.web3Instance.eth.getBlockNumber();
     }
   },
   computed: {
@@ -644,6 +654,9 @@ export default {
     },
     ipfsInstance() {
       return this.$store.state.ipfsInstance;
+    },
+    allSavedTypes() {
+      return this.savedTypes.concat(this.savedPresaleTypes);
     }
   },
   async created() {
