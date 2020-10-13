@@ -420,9 +420,10 @@ export default {
       for (let i = 1; i <= this.cols; i++) {
         for (let j = 1; j <= this.rows; j++) {
           var seat = this.$refs[`seat_${i}_${j}`];
-          if (this.getSeatStatus(i, j) != "occupied") {
+          if (this.getSeatStatus(i, j) == "selected") {
             seat[0].dataset.status = "free";
             seat[0].style.backgroundColor = this.freeColor;
+            this.amountSelected = 0;
           }
         }
       }
