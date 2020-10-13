@@ -35,20 +35,7 @@ export default {
       await this.$store.dispatch("loadNonFungibleTickets");
       this.$root.$emit("loadedTickets");
       this.$root.$emit("eventsFullyLoaded");
-      console.log(this.$store.state.events[0]);
     }
-    // loadIpfsHashesEvents: async function() {
-    //   await this.$store.dispatch("loadEvents");
-    //   this.$root.$emit("loadedEvents");
-    // },
-    // loadTickets: async function() {
-    //   await this.$store.dispatch("loadTickets");
-    //   this.$root.$emit("loadedTickets");
-    // },
-    // loadIpfsEventMetadata: async function() {
-    //   await this.$store.dispatch("loadIpfsEventMetadata");
-    //   this.$root.$emit("loadedIpfsEventMetadata");
-    // }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
@@ -57,13 +44,6 @@ export default {
     this.$root.$on("loadedEvents", async () => {
       this.loadTickets();
     });
-    // this.$root.$on("loadedEvents", async () => {
-    //   this.loadIpfsHashesEvents();
-    //   // this.loadTickets();
-    // });
-    // this.$root.$on("loadedEvents", async () => {
-    //   this.loadIpfsEventMetadata();
-    // });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");

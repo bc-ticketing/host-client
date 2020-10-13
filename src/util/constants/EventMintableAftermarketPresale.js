@@ -54,6 +54,124 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
         "anonymous": false,
         "inputs": [
             {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "BuyOrderFungibleFilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "_ids",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8[]",
+                "name": "percentage",
+                "type": "uint8[]"
+            }
+        ],
+        "name": "BuyOrderNonFungibleFilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "BuyOrderPlaced",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "BuyOrderWithdrawn",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": false,
                 "internalType": "bytes1",
                 "name": "hashFunction",
@@ -169,6 +287,199 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "SellOrderFungibleFilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "SellOrderFungiblePlaced",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "SellOrderFungibleWithdrawn",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "_ids",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8[]",
+                "name": "percentage",
+                "type": "uint8[]"
+            }
+        ],
+        "name": "SellOrderNonFungibleFilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "_ids",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8[]",
+                "name": "percentage",
+                "type": "uint8[]"
+            }
+        ],
+        "name": "SellOrderNonFungiblePlaced",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "_id",
+                "type": "uint256"
+            }
+        ],
+        "name": "SellOrderNonFungibleWithdrawn",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "ticketType",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "percentage",
+                "type": "uint8"
+            }
+        ],
+        "name": "SellOrderWithdrawn",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "user",
                 "type": "address"
             },
@@ -249,6 +560,37 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
             }
         ],
         "name": "TicketTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "receiver",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "erc20contract",
+                "type": "address"
+            }
+        ],
+        "name": "ValueTransferred",
         "type": "event"
     },
     {
@@ -346,7 +688,7 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
             },
             {
                 "internalType": "uint256",
-                "name": "_finalizationBlock",
+                "name": "_finalizationTime",
                 "type": "uint256"
             },
             {
@@ -394,7 +736,7 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
             },
             {
                 "internalType": "uint256[]",
-                "name": "_finalizationBlocks",
+                "name": "_finalizationTimes",
                 "type": "uint256[]"
             },
             {
@@ -495,9 +837,9 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
                 "type": "uint256[]"
             },
             {
-                "internalType": "uint8",
-                "name": "_percentage",
-                "type": "uint8"
+                "internalType": "uint8[]",
+                "name": "_percentages",
+                "type": "uint8[]"
             }
         ],
         "name": "fillBuyOrderNonFungibles",
@@ -1151,7 +1493,7 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
             },
             {
                 "internalType": "uint256",
-                "name": "finalizationBlock",
+                "name": "finalizationTime",
                 "type": "uint256"
             },
             {

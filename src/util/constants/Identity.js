@@ -1,5 +1,5 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const IDENTITY_ADDRESS = "0x45106c3e433c7eC159cfCe06F668eC64C60C0687";
+const IDENTITY_ADDRESS = "0x68bB3B61635C932a4c1711Ea1B398BFb9F1c1874";
 const IDENTITY_ABI = [
   {
     "inputs": [

@@ -7,7 +7,6 @@ let state = {
         balance: null,
         error: null
     },
-    // eventAddresses: [],
     events: [],
     eventFactory: null,
     identity: null,

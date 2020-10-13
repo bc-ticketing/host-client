@@ -32,3 +32,5 @@ export const MONTHS = {
   "10": "Nov",
   "11": "Dec",
 }; // --> OFF
+
+export const AVERAGE_BLOCKTIME = 15;

@@ -52,7 +52,7 @@
                 md-immediately
                 name="date"
                 id="date"
-                v-model="form.date"
+                v-model="date"
               >
                 <label for="date">Date and Start Time</label>
               </md-datepicker>
@@ -331,17 +331,6 @@
             >Create Event</md-button
           >
         </md-card-actions>
-        <!-- <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="uploadToIpfs">Uploaod to ipfs</md-button>
-          <md-button type="submit" class="md-primary" @click="downloadFromIpfs">Download from ipfs</md-button>
-        </md-card-actions>
-        <md-card-actions>
-          <md-button
-            type="submit"
-            class="md-primary"
-            @click="deployEventContract"
-          >Deploy event contract</md-button>
-        </md-card-actions>-->
       </md-card>
 
       <md-snackbar :md-active.sync="ipfsAdded">
@@ -407,7 +396,6 @@ export default {
       category: "Music",
       eventDescription: "test description",
       color: "#add8e6",
-      date: new Date(2020, 10, 2),
       startTime: {
         HH: "18",
         mm: "00"
@@ -467,7 +455,7 @@ export default {
       return this.$store.state.ipfsInstance;
     },
     dateSeconds() {
-      return Number(Date.parse(this.form.date) / 1000);
+      return Number(Date.parse(this.date) / 1000);
     },
     startTimeUnix() {
       return (
@@ -478,11 +466,17 @@ export default {
     }
   },
   created() {
+    this.date = this.getDateAfterMonths(8);
     if (this.inEditMode) {
       this.fillFormFromEvent();
     }
   },
   methods: {
+    getDateAfterMonths(n) {
+      let d = new Date();
+      d.setMonth(d.getMonth() + n);
+      return d;
+    },
     fillFormFromEvent() {
       this.form.title = this.event.title;
     },
