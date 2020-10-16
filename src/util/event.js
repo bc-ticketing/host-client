@@ -298,7 +298,7 @@ export class Event {
     this.twitter.url = metadata.event.twitter;
     this.website.url = metadata.event.url;
     this.timestamp = metadata.event.time;
-    this.color = metadata.event.color;
+    this.seatColor = metadata.event.color;
     this.timestamp = metadata.event.time;
     this.parseTimeStamp();
   }

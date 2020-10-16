@@ -182,6 +182,7 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
     ticket.description = metadata.ticket.description;
     ticket.seatMapping = metadata.ticket.mapping;
     ticket.title = metadata.ticket.title;
+    ticket.seatColor = metadata.ticket.color;
     if (ticket.isNf) {
         metadata.ticket.mapping.forEach((mapping, index) => {
             if (index >= ticket.tickets.length) {
@@ -363,6 +364,7 @@ export class FungibleTicketType {
         this.buyOrders = [];
         this.seatMapping = [];
         this.isNf = false;
+        this.seatColor = "";
     }
 }
 /**
@@ -384,6 +386,7 @@ export class NonFungibleTicketType {
         this.buyOrders = [];
         this.tickets = [];
         this.isNf = true;
+        this.seatColor = "";
     }
 }
 
