@@ -362,8 +362,8 @@ import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../util/constants/EventFactory.js";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+} from "../util/abi/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { DAI } from "../util/constants/ERC20Tokens.js";
 export default {
   name: "EventForm",

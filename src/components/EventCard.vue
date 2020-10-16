@@ -17,16 +17,36 @@
           </md-card-header>
           <md-card-content>
             <div v-if="category" class="content-entry">
-              {{ "Category: " + category }}
+              <b>Category: </b>{{ category }}
             </div>
-            <div v-if="url" class="content-entry">
-              {{ "Website: " + url }}
+            <div v-if="website" class="content-entry">
+              <b>Website: </b>{{ website.url }}
+              <span class="danger"
+                ><md-icon class="danger" v-if="website.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="website.verification == true"
+                  >done</md-icon
+                ></span
+              >
             </div>
             <div v-if="twitter" class="content-entry">
-              {{ "Twitter: " + twitter }}
+              <b>Twitter: </b>{{ twitter.url }}
+              <span class="danger"
+                ><md-icon class="danger" v-if="twitter.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="twitter.verification == true"
+                  >done</md-icon
+                ></span
+              >
             </div>
             <div v-if="description" class="content-entry">
-              {{ "Description: " + description }}
+              <b>Description: </b>{{ description }}
             </div>
           </md-card-content>
         </div>
@@ -128,8 +148,8 @@ export default {
         ? this.event.description
         : "no description found";
     },
-    url() {
-      return this.event.url ? this.event.url : "no URL found";
+    website() {
+      return this.event.website ? this.event.website : "no website found";
     },
     twitter() {
       return this.event.twitter ? this.event.twitter : "no twitter found";

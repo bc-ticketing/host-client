@@ -240,8 +240,8 @@ import { NETWORKS } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../util/constants/EventFactory.js";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+} from "../util/abi/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
 import getEvent from "../util/utility";
 import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
