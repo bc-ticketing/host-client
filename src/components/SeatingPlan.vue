@@ -116,7 +116,8 @@
 </template>
 
 <script>
-import getEvent, { COLOR_ARRAY } from "../util/utility";
+import { COLOR_ARRAY } from "../util/utility";
+import idb from "../util/db/idb";
 // This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue.
 // The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
 
@@ -169,9 +170,9 @@ export default {
     colorIndex: function() {
       for (let i = 1; i <= this.rows; i++) {
         for (let j = 1; j <= this.cols; j++) {
-          console.log(i + " " + j);
+          // console.log(i + " " + j);
           let seat = this.$refs[`seat_${j}_${i}`];
-          console.log(seat);
+          // console.log(seat);
           if (seat[0].dataset.status == "selected") {
             seat[0].style.backgroundColor = this.color;
           }
@@ -229,11 +230,14 @@ export default {
     },
 
     setOccupiedSeats(event) {
+      // console.log(event);
       let existingNfTickets = event.nonFungibleTickets;
+      // console.log(existingNfTickets);
       for (let i = 0; i < existingNfTickets.length; i++) {
         let nfTicket = existingNfTickets[i];
-        console.log(nfTicket);
-        let c = nfTicket.color;
+        // console.log(nfTicket);
+        let c = nfTicket.seatColor;
+        // console.log(c);
         for (let s = 0; s < nfTicket.seatMapping.length; s++) {
           let cords = nfTicket.seatMapping[s].split("/");
           let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
@@ -246,10 +250,11 @@ export default {
         }
       }
       let existingFungibleTickets = event.fungibleTickets;
+      // console.log(existingFungibleTickets);
       for (let i = 0; i < existingFungibleTickets.length; i++) {
         let fungibleTicket = existingFungibleTickets[i];
-        console.log(fungibleTicket);
-        let c = fungibleTicket.color;
+        // console.log(fungibleTicket);
+        let c = fungibleTicket.seatColor;
         for (let s = 0; s < fungibleTicket.seatMapping.length; s++) {
           let cords = fungibleTicket.seatMapping[s].split("/");
           let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
@@ -356,13 +361,13 @@ export default {
     nonBlockSelect(col, row) {
       // console.log("nonBlockTriggered");
       if (!this.blockSelection) {
-        console.log("nonBlock - selectSeat triggered");
+        // console.log("nonBlock - selectSeat triggered");
         this.selectSeat(col, row);
       }
     },
     // mark a specific seat for the ticket type
     selectSeat(col, row) {
-      console.log("selectSeat triggered");
+      // console.log("selectSeat triggered");
       var seat = this.$refs[`seat_${col}_${row}`];
       let status = seat[0].dataset.status;
       if (status != "occupied") {
@@ -453,7 +458,7 @@ export default {
           }
         }
       }
-      console.log(JSON.stringify(selectedSeats));
+      // console.log(JSON.stringify(selectedSeats));
       this.$emit("savetickettype", selectedSeats, this.color);
       this.increaseColorIndex();
       this.amountSelected = 0;
@@ -477,12 +482,12 @@ export default {
       return COLOR_ARRAY[this.colorIndex];
     }
   },
-  mounted() {
-    console.log("SeatingPlan mounted called");
+  async mounted() {
+    // console.log("SeatingPlan mounted called");
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
-    this.$root.$on("eventsFullyLoaded", () => {
-      let event = getEvent(this.address);
+    this.$root.$on("eventsFullyLoaded", async () => {
+      let event = await idb.getEvent(this.address);
       if (event != null) {
         this.setOccupiedSeats(event);
         //   this.nonFungibleOccupiedSeats = [].concat.apply(
@@ -495,7 +500,8 @@ export default {
         // );
       }
     });
-    let event = getEvent(this.address);
+    let event = await idb.getEvent(this.address);
+    // console.log(event);
     if (event != null) {
       this.setOccupiedSeats(event);
       // console.log("event not null");

@@ -3,13 +3,19 @@ let state = {
         isInjected: false,
         web3Instance: null,
         networkId: null,
+        eth: null,
         account: null,
         balance: null,
-        error: null
+        error: null,
+        currentBlock: null
     },
+    eventAddresses: [],
     events: [],
     eventFactory: null,
     identity: null,
-    ipfsInstance: null
-}
-export default state
+    approvers: [],
+    ipfsInstance: null,
+    lastFetchedBlock: 1
+};
+
+export default state;

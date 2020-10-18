@@ -1,12 +1,12 @@
 <template>
   <div class="create-ticket-type-container">
-    <div class="not-found-container" v-show="notFoundMessageVisible">
+    <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
       <h3>No event found for address: {{ this.$route.query.address }}.</h3>
       <md-button class="go-back-button md-primary" @click="routeToEventList()"
         >Go Back</md-button
       >
-    </div>
-    <md-card class="md-layout-item contract-address-card" v-if="eventSet">
+    </div> -->
+    <!-- <md-card class="md-layout-item contract-address-card" v-if="eventSet">
       <md-card-header>
         <div class="md-title">Event</div>
       </md-card-header>
@@ -26,7 +26,7 @@
           </div>
         </div>
       </md-card-content>
-    </md-card>
+    </md-card> -->
 
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
       <md-card class="md-layout-item new-ticket-form">
@@ -240,11 +240,11 @@ import { NETWORKS } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../util/constants/EventFactory.js";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+} from "../util/abi/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
-import getEvent from "../util/utility";
 import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
+import idb from "../util/db/idb";
 
 export default {
   name: "TicketForm",
@@ -257,6 +257,7 @@ export default {
     notFoundMessageVisible: false,
     withPresale: false,
     amountOfSelectedSeats: 0,
+    finalizationTime_Date: null,
     showFinalizationTimeDialog: false,
     showPresaleDialog: false,
     occupiedSeats: [], // list of seats already used in a type on the blockchain
@@ -594,19 +595,20 @@ export default {
         name: `Events`
       });
     },
-    setEvent() {
-      this.event = getEvent(this.$route.query.address);
-      if (this.event != null) {
-        this.eventSet = true;
-        this.notFoundMessageVisible = false;
-        this.eventTitle = this.event.title;
-        this.contract = new this.web3.web3Instance.eth.Contract(
-          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-          this.$route.query.address
-        );
-        this.fetchOccupiedSeats();
-      }
-    },
+    // async setEvent() {
+    //   this.event = await idb.getEvent(this.$route.query.address);
+    //   if (this.event != null) {
+    //     this.eventSet = true;
+    //     this.notFoundMessageVisible = false;
+    //     console.log(this.event);
+    //     this.eventTitle = this.event.title;
+    //     this.contract = new this.web3.web3Instance.eth.Contract(
+    //       EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+    //       this.$route.query.address
+    //     );
+    //     // this.fetchOccupiedSeats();
+    //   }
+    // },
     getDateAfterMonths(n) {
       let d = new Date();
       d.setMonth(d.getMonth() + n);
@@ -660,18 +662,20 @@ export default {
     }
   },
   async created() {
-    setTimeout(() => {
-      if (!this.eventSet) {
-        this.notFoundMessageVisible = true;
-      }
-    }, 5000);
     console.log("ticket form created executed");
-    this.$root.$on("eventsFullyLoaded", () => {
-      this.setEvent();
+    this.$root.$on("web3Injected", () => {
+      this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.$route.query.address
+      );
     });
-    if (getEvent(this.$route.query.address) != null) {
-      this.setEvent();
+    if (this.$store.state.web3.web3Instance) {
+      this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.$route.query.address
+      );
     }
+    let event = await idb.getEvent(this.$route.query.address);
     this.finalizationTime_Date = this.getDateAfterMonths(8);
     this.presale_date = this.getDateAfterMonths(2);
   },
