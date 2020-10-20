@@ -22,6 +22,7 @@ export default new Vuex.Store({
       state.web3.networkId = web3.networkId;
       state.web3.account = web3.account;
       state.web3.balance = parseInt(web3.balance, 10);
+      state.web3.currentBlock = web3.currentBlock;
     },
     setEventFactory(state, factory) {
       state.eventFactory = factory;
