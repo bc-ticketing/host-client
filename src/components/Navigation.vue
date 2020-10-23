@@ -37,11 +37,6 @@
               <md-icon style="margin-right: 28px">event_note</md-icon>
               <p class="navigationText">My Events</p>
             </md-list-item>
-
-            <!-- <md-list-item @click="navigateTo(`/tickets`)">
-              <md-icon>notes</md-icon>
-              <p class="navigationText">Tickets</p>
-            </md-list-item>-->
           </div>
 
           <div class="modifications-container">
@@ -49,16 +44,6 @@
               <md-icon style="margin-right: 28px">edit</md-icon>
               <p class="navigationText">New Event</p>
             </md-list-item>
-
-            <!-- <md-list-item @click="navigateTo(`/new-ticket`)">
-              <md-icon>playlist_add</md-icon>
-              <p class="navigationText">New Ticket</p>
-            </md-list-item>-->
-
-            <!-- <md-list-item @click="navigateTo(`/modify`)">
-              <md-icon>settings</md-icon>
-              <p class="navigationText">Modify Event</p>
-            </md-list-item>-->
           </div>
 
           <div class="approver-container">
@@ -79,7 +64,7 @@
 </template>
 
 <script>
-import { EVENT_FACTORY_ADDRESS } from "../util/constants/EventFactory";
+import { EVENT_FACTORY_ADDRESS } from "../util/abi/EventFactory";
 export default {
   name: "Navigation",
   data() {
@@ -96,22 +81,18 @@ export default {
       this.showSidebar = false;
     },
     reloadWeb3AndEvents() {
-      this.$root.$on("reloadedWeb3", async () => {
+      this.$root.$on("updatedWeb3", async () => {
         this.reloadEvents();
       });
       this.reloadWeb3();
     },
     async reloadWeb3() {
-      await this.$store.dispatch("registerWeb3");
-      this.$root.$emit("reloadedWeb3");
+      await this.$store.dispatch("updateWeb3");
+      this.$root.$emit("updatedWeb3");
     },
     async reloadEvents() {
       await this.$store.dispatch("loadEvents");
     },
-    // async reloadEvents() {
-    //   await this.$store.dispatch("loadEvents");
-    //   await this.$store.dispatch("loadEvents");
-    // },
     prettyAddress(address) {
       const start = address.substring(0, 4);
       const end = address.substring(address.length - 4, address.length);
@@ -143,9 +124,6 @@ export default {
       return this.web3.balance
         ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
         : "";
-      // return this.web3.isInjected
-      // ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
-      // : null;
     }
   }
 };
@@ -159,12 +137,6 @@ export default {
 .md-list-item-content {
   justify-content: flex-start;
 }
-/* .existing-events {
-  border-bottom: 1px solid black;
-} */
-/* .modifications-container {
-  border-bottom: 1px solid black;
-} */
 .navigation-toolbar {
   justify-content: space-between;
 }

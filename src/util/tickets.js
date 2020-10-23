@@ -1,237 +1,407 @@
+/*
+ * This file contains data classes for all ticket types and utility functions for state alterations. All functions that interact with the blockchain for buying/selling tickets are contained here as well as helper functions to get infos from ticket objects
+ */
 import { argsToCid, getIdAsBigNumber } from "idetix-utils";
-import { ETH, DAI } from "./constants/ERC20Tokens";
+import {
+    NULL_ADDRESS,
+    MESSAGE_TRANSACTION_DENIED,
+    MESSAGE_TICKET_BOUGHT,
+    MESSAGE_DEFAULT_ERROR,
+    MESSAGE_MAX_TICKETS_ALLOWED,
+    MESSAGE_SELLORDER_PLACED,
+    MESSAGE_SELLORDER_WITHDRAWN
+} from "./constants/constants";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "./../util/abi/EventMintableAftermarketPresale";
 
 const BigNumber = require("bignumber.js");
 
-class TicketType {
-  constructor(eventContractAddress, typeId) {
-    this.eventContractAddress = eventContractAddress;
-    this.typeId = typeId;
-    this.price = 0;
-    this.supply = 0;
-    this.ticketsSold = 0;
-    this.aftermarketGranularity = 0;
-    this.title = "";
-    this.description = "";
-    this.color = "";
-    this.ipfsHash = "";
-    this.typeIdAsBigNumberString = "";
-  }
-  numberFreeSeats() {
-    return this.supply - this.ticketsSold;
-  }
+/**
+ * Returns the number of available seats for a ticket Type
+ * @param {TicketType} ticket
+ */
+export function numberFreeSeats(ticket) {
+    return ticket.supply - ticket.ticketsSold;
 }
 
-export class FungibleTicketType extends TicketType {
-  constructor(eventContractAddress, typeId) {
-    super(eventContractAddress, typeId);
-    this.sellOrders = {};
-    this.buyOrders = {};
-    this.seatMapping = [];
-    this.isNf = false;
-  }
-
-  async buy(amount, web3Instance, ABI, account) {
-    console.log(`buying ticket \n
-        from account: ${account}\n
-        ticketType: ${this.typeId} \n
-        full ticket id: ${this.getFullTicketId()}\n
-        amount: ${amount}\n
-        price per ticket: ${this.price}\n
-        total price: ${amount * this.price}\n
-        price in wei: ${amount * web3Instance.utils.toWei(this.price)}`);
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.eventContractAddress
-    );
-    const result = await eventSC.methods
-      .mintFungible(this.getFullTicketId(), amount)
-      .send({
-        from: account,
-        value: amount * web3Instance.utils.toWei(this.price),
-      });
-    console.log(result);
-  }
-
-  getFullTicketId() {
-    return getIdAsBigNumber(false, this.typeId).toFixed();
-  }
-
-  async loadIPFSMetadata(ipfsInstance) {
-    if (this.ipfsHash === "") {
-      return;
-    }
-    var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
-    }
-    const metadata = JSON.parse(ipfsData);
-    this.description = metadata.ticket.description;
-    this.seatMapping = metadata.ticket.mapping;
-    this.title = metadata.ticket.title;
-  }
-
-  async fetchIpfsHash(web3Instance, ABI) {
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.eventContractAddress
-    );
-    const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-      filter: { ticketTypeId: this.getFullTicketId() },
-      fromBlock: 1,
+export function getNumBuyOrdersByPercent(ticket, percentage) {
+    let total = 0;
+    ticket.buyOrders.forEach(o => {
+        if (Number(o.percentage) === Number(percentage)) {
+            total += Number(o.quantity);
+        }
     });
-    if (ticketMetadata.length < 1) {
-      return;
-    }
-    var metadataObject = ticketMetadata[0].returnValues;
-    const ipfsHash = argsToCid(
-      metadataObject.hashFunction,
-      metadataObject.size,
-      metadataObject.digest
-    );
-    this.ipfsHash = ipfsHash;
-  }
-
-  async loadSellOrders(web3Instance, ABI) {
-    const aftermarket = new web3Instance.eth.Contract(
-      ABI,
-      this.contractAddress
-    );
-    for (let i = this.aftermarketGranularity; i >= 1; i--) {
-      const percentage = (100 / this.aftermarketGranularity) * i;
-      const sellingQueue = await aftermarket.methods
-        .sellingQueue(this.getFullTicketId(), percentage)
-        .call();
-      const numSellOrders = sellingQueue.numberTickets;
-      if (numSellOrders > 0) {
-        this.sellOrders[percentage] = numSellOrders;
-      }
-    }
-  }
-
-  async loadBuyOrders(web3Instance, ABI) {
-    const aftermarket = new web3Instance.eth.Contract(
-      ABI,
-      this.contractAddress
-    );
-    for (let i = this.aftermarketGranularity; i >= 1; i--) {
-      const percentage = (100 / this.aftermarketGranularity) * i;
-      const buyingQueue = await aftermarket.methods
-        .buyingQueue(this.getFullTicketId(), percentage)
-        .call();
-      const numBuyingOrders = buyingQueue.numberTickets;
-      if (numBuyingOrders > 0) {
-        this.buyOrders[percentage] = numBuyingOrders;
-      }
-    }
-  }
+    return total;
 }
 
-export class NonFungibleTicketType extends TicketType {
-  constructor(eventContractAddress, typeId) {
-    super(eventContractAddress, typeId);
-    this.tickets = [];
-    this.isNf = true;
-  }
-
-  getFullTicketId() {
-    return getIdAsBigNumber(true, this.typeId).toFixed();
-  }
-
-  async fetchIpfsHash(web3Instance, ABI) {
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.eventContractAddress
-    );
-    const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-      filter: { ticketTypeId: this.getFullTicketId() },
-      fromBlock: 1,
+export function getNumSellOrdersByPercent(ticket, percentage) {
+    let total = 0;
+    ticket.sellOrders.forEach(o => {
+        if (Number(o.percentage) === percentage) {
+            total += Number(o.quantity);
+        }
     });
-    if (ticketMetadata.length < 1) {
-      return;
+    return total;
+}
+
+export function getAllSellOferingsNfTicketType(ticketType) {
+    let offers = [];
+    for (const ticket of ticketType.tickets) {
+        if (ticket.sellOrder.address) {
+        offers.push({
+            percentage: ticket.sellOrder.percentage,
+            ticketId: ticket.ticketId,
+            seller: ticket.sellOrder.address});
+        }
     }
-    var metadataObject = ticketMetadata[0].returnValues;
-    const ipfsHash = argsToCid(
-      metadataObject.hashFunction,
-      metadataObject.size,
-      metadataObject.digest
+    return offers;
+}
+
+/**
+ * Fetches the buy orders for a Fungible ticketType and stores it in the object
+ * @param {FungibleTicketType} ticket
+ * @param {web3Instance} web3Instance
+ * @param {SC_ABI} ABI
+ */
+export async function loadBuyOrders(ticket, web3Instance, ABI) {
+    const aftermarket = new web3Instance.eth.Contract(
+        ABI,
+        ticket.eventContractAddress
     );
-    this.ipfsHash = ipfsHash;
-  }
-
-  async loadIPFSMetadata(ipfsInstance) {
-    if (this.ipfsHash === "") {
-      return;
+    for (let i = ticket.aftermarketGranularity; i >= 1; i--) {
+        const percentage = (100 / ticket.aftermarketGranularity) * i;
+        const buyingQueue = await aftermarket.methods
+            .buyingQueue(getFullTicketTypeId(false, ticket.typeId), percentage)
+            .call();
+        const numBuyingOrders = buyingQueue.numberTickets;
+        if (numBuyingOrders > 0) {
+            ticket.buyOrders[percentage] = numBuyingOrders;
+        }
     }
-    var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
-    }
-    const metadata = JSON.parse(ipfsData);
-    this.description = metadata.ticket.description;
-    this.seatMapping = metadata.ticket.mapping;
+    return ticket;
+}
 
-    this.title = metadata.ticket.title;
-    console.log(this.tickets.length);
-    console.log(metadata.ticket.mapping.length);
-    metadata.ticket.mapping.forEach((mapping, index) => {
-      if (index >= this.tickets.length) {
+/**
+ * Fetches the sell orders for a Fungible ticketType and stores it in the object
+ * @param {FungibleTicketType} ticket
+ * @param {web3Instance} web3Instance
+ * @param {SC_ABI} ABI
+ */
+export async function loadSellOrders(ticket, web3Instance, ABI) {
+    const aftermarket = new web3Instance.eth.Contract(
+        ABI,
+        ticket.eventContractAddress
+    );
+    for (let i = ticket.aftermarketGranularity; i >= 1; i--) {
+        const percentage = (100 / ticket.aftermarketGranularity) * i;
+        const sellingQueue = await aftermarket.methods
+            .sellingQueue(getFullTicketTypeId(false, ticket.typeId), percentage)
+            .call();
+        const numSellOrders = sellingQueue.numberTickets;
+        if (numSellOrders > 0) {
+            ticket.sellOrders[percentage] = numSellOrders;
+        }
+    }
+    return ticket;
+}
+
+/**
+ * Returns true if the NFTicket or FTicketType has sell orders
+ * @param {Ticket} ticket
+ */
+export function hasSellOrder(ticket) {
+    if (!ticket.isNf) {
+        return ticket.sellOrders.length != 0;
+    } else {
+        return ticket.sellOrder.address != undefined;
+    }
+}
+
+/**
+ * Checks for the highest available buy order for a ticketType or NF Ticket
+ * @param {FungibleTicketType} ticket
+ * @returns highestBuyOrder or 0 if none
+ */
+export function getHighestBuyOrder(ticket) {
+    const sorted = ticket.buyOrders.sort((a, b) => {
+        a.percentage - b.percentage;
+    });
+    console.log(sorted);
+    return sorted.length > 0 ? sorted[0] : {};
+}
+
+/**
+ * Checks for the lowst available sell order for a ticketType or NF Ticket
+ * @param {FungibleTicketType} ticket
+ * @returns lowestSellOrder or 0 if none
+ */
+export function getLowestSellOrder(ticket) {
+    if (ticket.isNf) {
+        return ticket.sellOrder;
+    }
+    const sorted = ticket.sellOrders.sort((a, b) => {
+        a.percentage - b.percentage;
+    });
+    return sorted.length > 0 ? sorted[0] : {};
+}
+
+function decodeError(e) {
+    if (e.code === 4001) {
+        return {
+        message: MESSAGE_TRANSACTION_DENIED,
+        status: -1
+        };
+    } else if (e.code === -32603) {
+        return {
+            message: MESSAGE_MAX_TICKETS_ALLOWED,
+            status: -1
+        };
+    }
+    return {
+        message: MESSAGE_DEFAULT_ERROR,
+        status: -1
+    };
+}
+
+/*
+/**
+ * loads Metadata stored on IPFS for a ticketType
+ * @param {TicketType} ticket
+ * @param {ipfsInstance} ipfsInstance
+ */
+export async function loadIPFSMetadata(ticket, ipfsInstance) {
+    if (ticket.ipfsHash === "") {
         return;
-      }
-      this.tickets[index].seatMapping = mapping;
-    }, this);
-  }
+    }
+    var ipfsData = null;
+    for await (const chunk of ipfsInstance.cat(ticket.ipfsHash, {
+        timeout: 2000
+    })) {
+        ipfsData = Buffer(chunk, "utf8").toString();
+    }
+    const metadata = JSON.parse(ipfsData);
+    ticket.description = metadata.ticket.description;
+    ticket.seatMapping = metadata.ticket.mapping;
+    ticket.title = metadata.ticket.title;
+    ticket.seatColor = metadata.ticket.color;
+    if (ticket.isNf) {
+        metadata.ticket.mapping.forEach((mapping, index) => {
+            if (index >= ticket.tickets.length) {
+                return;
+            }
+            ticket.tickets[index].seatMapping = mapping;
+        });
+    }
+    return ticket;
 }
 
-export class NonFungibleTicket {
-  constructor(ticketType, ticketId) {
-    this.ticketType = ticketType;
-    this.ticketTypeId = ticketType.typeId;
-    this.ticketId = ticketId;
-    this.buyOrder = undefined;
-    this.sellOrder = undefined;
-    this.seatMapping = undefined;
-    this.owner = undefined;
-    this.isNf = true;
-  }
-
-  async buy(web3Instance, ABI, account) {
-    console.log(`buying ticket \n
-        from account: ${account}\n
-        ticketType: ${this.ticketTypeId} \n
-        ticketId: ${this.ticketId}\n
-        full ticket id: ${this.getFullTicketId()}\n
-        price: ${this.price}\n
-        price in wei: ${web3Instance.utils.toWei(
-          String(this.ticketType.price)
-        )}`);
+/**
+ * Fetches the IPFS hash on the blockchain for a ticket Type
+ * @param {TicketType} ticket
+ */
+export async function fetchIpfsHash(ticket, web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.ticketType.eventContractAddress
+        ABI,
+        ticket.eventContractAddress
     );
-    const result = await eventSC.methods
-      .mintNonFungibles([this.getFullTicketId()])
-      .send({
-        from: account,
-        value: web3Instance.utils.toWei(String(this.ticketType.price)),
-      });
-    console.log(result);
-  }
+    const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
+        filter: {
+        ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId)
+        },
+        fromBlock: 1
+    });
+    if (ticketMetadata.length < 1) {
+        return;
+    }
+    var metadataObject = ticketMetadata[0].returnValues;
+    const ipfsHash = argsToCid(
+        metadataObject.hashFunction,
+        metadataObject.size,
+        metadataObject.digest
+    );
+    ticket.ipfsHash = ipfsHash;
+    return ticket;
+}
 
-  getFullTicketId() {
-    // return nonFungibleBaseId.plus(this.ticketTypeId).plus(this.ticketId)
-    return getIdAsBigNumber(true, this.ticketTypeId, this.ticketId).toFixed();
-  }
+/**
+ * Calculates the full Ticket Type Identifier
+ * @param {isNf} Boolean,
+ * @param {typeId} Number,
+ * @returns {Identifier} String
+ */
+export function getFullTicketTypeId(isNf, typeId) {
+    return getIdAsBigNumber(isNf, typeId).toFixed();
+}
 
-  isFree() {
-    return this.owner === ETH;
-  }
+/**
+ * Calculates the full Ticket Identifier for a NF Ticket
+ * @param {ticketId} Number,
+ * @param {ticketTypeId} Number
+ * @returns {Identifier} String
+ */
+export function getFullTicketId(ticketId, ticketTypeId) {
+    return getIdAsBigNumber(true, ticketTypeId, ticketId).toFixed();
+}
 
-  hasSellOrder() {
-    return new BigNumber(this.sellOrder.userAddress).isZero() ? false : true;
-  }
+/**
+ * Checks if a NF ticket is free
+ * @param {NonFungibleTicket} ticket
+ * @returns {Boolean} isFree
+ */
+export function isFree(ticket) {
+    return ticket.owner === NULL_ADDRESS;
+}
+
+export function addBuyOrders(
+    ticketType,
+    percentage,
+    quantity,
+    address,
+    ticketId = 0
+) {
+    if (ticketId == 0) {
+        ticketType.buyOrders.push({
+        address: address,
+        percentage: percentage,
+        quantity: quantity
+        });
+    } else {
+        let ticket = ticketType.tickets.find(t => t.ticketId == ticketId);
+        ticket.buyOrders.push({
+            address: address,
+            percentage: percentage,
+            quantity: quantity
+        });
+    }
+}
+
+export function addSellOrders(
+    ticketType,
+    percentage,
+    quantity,
+    address,
+    ticketId = 0
+) {
+    if (ticketId == 0) {
+        console.log('adding sell order');
+        ticketType.sellOrders.push({
+        address: address,
+        percentage: percentage,
+        quantity: quantity
+        });
+    } else {
+        let ticket = ticketType.tickets.find(t => t.ticketId === ticketId);
+        ticket.sellOrder = {
+            address: address,
+            percentage: percentage
+        };
+    }
+}
+
+export function removeBuyOrders(
+    ticketType,
+    percentage,
+    quantity,
+    address,
+    ticketId = 0
+) {
+    if (ticketId == 0) {
+        let order = ticketType.buyOrders.find(
+            o => o.address === address && o.percentage === percentage
+        );
+        order.quantity = Math.min(0, order.quantity - quantity);
+    } else {
+        let ticket = ticketType.tickets.find(t => t.ticketId === ticketId);
+        let order = ticket.buyOrders.find(
+            o => o.address === address && o.percentage === percentage
+        );
+        order.quantity = Math.min(0, order.quantity - quantity);
+    }
+}
+
+export function removeSellOrders(
+    ticketType,
+    percentage,
+    quantity,
+    address,
+    ticketId = 0
+) {
+    if (ticketId == 0) {
+        let order = ticketType.sellOrders.find(
+            o => o.address === address && Number(o.percentage) == Number(percentage)
+        );
+        if (!order) {
+            return;
+        }
+        if (Number(quantity) >= Number(order.quantity)) {
+            ticketType.sellOrders = ticketType.sellOrders.filter(
+                o => o.address !== address && Number(o.percentage) != Number(percentage)
+            );
+        } else {
+            order.quantity = Math.min(0, Number(order.quantity) - Number(quantity));
+        }
+    } else {
+        let ticket = ticketType.tickets.find(t => t.ticketId == ticketId);
+        ticket.sellOrder = 0;
+    }
+}
+
+/**
+ * Data Class for Fungible Ticket types
+ */
+export class FungibleTicketType {
+    constructor(eventContractAddress, typeId) {
+        this.eventContractAddress = eventContractAddress;
+        this.typeId = typeId;
+        this.price = 0;
+        this.supply = 0;
+        this.ticketsSold = 0;
+        this.aftermarketGranularity = 0;
+        this.title = "";
+        this.description = "";
+        this.color = "";
+        this.ipfsHash = "";
+        this.sellOrders = [];
+        this.buyOrders = [];
+        this.seatMapping = [];
+        this.isNf = false;
+        this.seatColor = "";
+    }
+}
+/**
+ * Data Class for Nonfungible Ticket Types
+ */
+export class NonFungibleTicketType {
+    constructor(eventContractAddress, typeId) {
+        this.eventContractAddress = eventContractAddress;
+        this.typeId = typeId;
+        this.price = 0;
+        this.supply = 0;
+        this.ticketsSold = 0;
+        this.aftermarketGranularity = 0;
+        this.title = "";
+        this.description = "";
+        this.color = "";
+        this.ipfsHash = "";
+        this.sellOrders = [];
+        this.buyOrders = [];
+        this.tickets = [];
+        this.isNf = true;
+        this.seatColor = "";
+    }
+}
+
+/**
+ * Data Class for Nonfungible Tickets
+ */
+export class NonFungibleTicket {
+    constructor(eventContractAddress, ticketTypeId, ticketId) {
+        this.eventContractAddress = eventContractAddress;
+        this.ticketTypeId = ticketTypeId;
+        this.ticketId = ticketId;
+        this.buyOrders = [];
+        this.sellOrder = {};
+        this.seatMapping = undefined;
+        this.owner = undefined;
+        this.isNf = true;
+    }
 }

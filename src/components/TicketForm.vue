@@ -1,12 +1,12 @@
 <template>
   <div class="create-ticket-type-container">
-    <div class="not-found-container" v-show="notFoundMessageVisible">
+    <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
       <h3>No event found for address: {{ this.$route.query.address }}.</h3>
       <md-button class="go-back-button md-primary" @click="routeToEventList()"
         >Go Back</md-button
       >
-    </div>
-    <md-card class="md-layout-item contract-address-card" v-if="eventSet">
+    </div> -->
+    <!-- <md-card class="md-layout-item contract-address-card" v-if="eventSet">
       <md-card-header>
         <div class="md-title">Event</div>
       </md-card-header>
@@ -26,7 +26,7 @@
           </div>
         </div>
       </md-card-content>
-    </md-card>
+    </md-card> -->
 
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
       <md-card class="md-layout-item new-ticket-form">
@@ -53,18 +53,32 @@
               <md-radio class="md-primary" v-model="form.isNF" :value="false"
                 >Fungible</md-radio
               >
-              <md-field>
-                <label for="supply"
+              <md-field v-if="!form.isNF">
+                <label for="fungibleSupply"
                   >Amount of Tickets within this Ticket category</label
                 >
                 <md-input
                   type="number"
                   min="0"
                   max="100000"
-                  name="supply"
-                  id="supply"
-                  v-model="form.supply"
+                  name="fungibleSupply"
+                  id="fungibleSupply"
+                  v-model="form.fungibleSupply"
                   :disabled="form.isNF"
+                  v-if="!form.isNF"
+                />
+                <span class="md-error">The supply is required.</span>
+              </md-field>
+              <md-field v-if="form.isNF">
+                <label for="nonFungibleSupply"
+                  >Amount of Tickets within this Ticket category</label
+                >
+                <md-input
+                  type="number"
+                  name="nonFungibleSupply"
+                  id="nonFungibleSupply"
+                  v-model="amountOfSelectedSeats"
+                  disabled
                 />
                 <span class="md-error">The supply is required.</span>
               </md-field>
@@ -81,40 +95,99 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100 info-dialog">
-              <md-field :class="getValidationClass('finalizationBlock')">
-                <label for="finalization-block">Finalization Block</label>
-                <md-input
-                  name="finalization-block"
-                  id="finalization-block"
-                  v-model="form.finalizationBlock"
-                />
-                <span class="md-error"
-                  >The finalization block is required.</span
-                >
-              </md-field>
-              <div class="md-small-size-100 info-dialog-button">
-                <md-button
-                  class="md-icon-button md-primary"
-                  @click="showFinalizationBlockDialog = true"
-                  style="margin-right: 16px"
-                >
-                  <md-icon>help_outline</md-icon>
-                </md-button>
-              </div>
+          <div class="md-layout md-gutter date-container">
+            <div class="md-layout-item">
+              <md-datepicker
+                md-immediately
+                name="date"
+                id="date"
+                v-model="finalizationTime_Date"
+              >
+                <label for="date">Finalization Time</label>
+              </md-datepicker>
+            </div>
+            <div class="md-small-size-100" style="margin: 20px 0">
+              <vue-timepicker
+                v-model="form.finalizationTime_Time"
+                format="HH:mm"
+              ></vue-timepicker>
+            </div>
+            <div class="md-small-size-100 info-dialog-button">
+              <md-button
+                class="md-icon-button md-primary"
+                @click="showFinalizationTimeDialog = true"
+                style="margin-right: 16px"
+              >
+                <md-icon>help_outline</md-icon>
+              </md-button>
             </div>
           </div>
 
-          <md-dialog :md-active.sync="showFinalizationBlockDialog">
-            <md-dialog-title>Start Time</md-dialog-title>
+          <md-dialog :md-active.sync="showFinalizationTimeDialog">
+            <md-dialog-title>Finalization Time</md-dialog-title>
             <p class="dialog-text">
-              After the here specified block number has been reached, tickets of
-              this type can no longer be bought or resold.
+              After the first block with a timestamp higher than the
+              finalization is mined, the aftermarket is closed.
             </p>
             <md-button
               class="md-primary"
-              @click="showFinalizationBlockDialog = false"
+              @click="showFinalizationTimeDialog = false"
+              >Close</md-button
+            >
+          </md-dialog>
+
+          <div class="md-layout-item md-gutter presale-checkbox">
+            <md-checkbox class="md-primary" v-model="withPresale"
+              >Presale Lottery</md-checkbox
+            >
+          </div>
+
+          <div class="md-layout md-gutter date-container" v-if="withPresale">
+            <div class="md-layout-item">
+              <md-datepicker
+                md-immediately
+                name="presale_date"
+                id="presale_date"
+                v-model="presale_date"
+              >
+                <label for="date">Presale Closing Time</label>
+              </md-datepicker>
+            </div>
+            <div class="md-small-size-100" style="margin: 20px 0">
+              <vue-timepicker
+                v-model="form.presale_time"
+                format="HH:mm"
+              ></vue-timepicker>
+            </div>
+            <div class="md-small-size-100 info-dialog-button">
+              <md-button
+                class="md-icon-button md-primary"
+                @click="showPresaleDialog = true"
+                style="margin-right: 16px"
+              >
+                <md-icon>help_outline</md-icon>
+              </md-button>
+            </div>
+          </div>
+
+          <md-dialog :md-active.sync="showPresaleDialog">
+            <md-dialog-title>Presale</md-dialog-title>
+            <p class="dialog-text">
+              When choosing this option, guests can register in a presale for a
+              ticket. The ticket price is paid upfront, when registering for its
+              presale. The presale is closed after the time specified here and
+              at that time a lottery is executed. If there is more supply than
+              demand, every guest that registered in the presale can retrieve a
+              ticket. If there is more demand than supply, the lottery decides
+              who can retrieve a ticket. The registered guests that did not win
+              in the lottery can simply recollect the ticket price they paid for
+              the presale.<br /><br />
+              <b>Note:</b> The time specified here is not definite. The average
+              blocktime of the Ethereum blockchain is used to calculate the most
+              likely blocknumber at this time. The hash of that specific block
+              is then used as the random number that decides the lottery.
+            </p>
+            <md-button class="md-primary" @click="showPresaleDialog = false"
               >Close</md-button
             >
           </md-dialog>
@@ -131,17 +204,17 @@
               </md-field>
             </div>
           </div>
-
           <SeatingPlan
             v-bind:address="this.$route.query.address"
+            v-bind:isNF="this.form.isNF"
             v-on:savetickettype="saveTicketType"
+            v-on:updateamountofselected="updateAmountOfSelected"
           ></SeatingPlan>
         </md-card-content>
 
         <md-card-actions>
-          <!-- <md-button type="submit" class="md-primary" @click="uploadToIpfs">Upload to ipfs</md-button> -->
           <md-button type="submit" class="md-primary" @click="createTypes"
-            >Create ticket types</md-button
+            >Create tickets</md-button
           >
         </md-card-actions>
       </md-card>
@@ -159,93 +232,123 @@ import {
   maxLength
 } from "vuelidate/lib/validators";
 import { cidToArgs, argsToCid } from "idetix-utils";
+import VueTimepicker from "vue2-timepicker";
+import "vue2-timepicker/dist/VueTimepicker.css";
 
 // internal imports
 import { NETWORKS } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
-} from "../util/constants/EventFactory.js";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+} from "../util/abi/EventFactory.js";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import SeatingPlan from "../components/SeatingPlan";
-import getEvent from "../util/utility";
+import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
+import idb from "../util/db/idb";
 
 export default {
   name: "TicketForm",
   components: {
-    SeatingPlan
+    SeatingPlan,
+    VueTimepicker
   },
   data: () => ({
     eventSet: false,
     notFoundMessageVisible: false,
+    withPresale: false,
+    amountOfSelectedSeats: 0,
+    finalizationTime_Date: null,
+    showFinalizationTimeDialog: false,
+    showPresaleDialog: false,
     occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
+    savedPresaleTypes: [],
     address: null,
     eventTitle: null,
-    // contractAddressTemp: null,
-    // latestEventAddress: null,
-    ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
-    ipfsArgs: null,
-    ipfsData: null,
-    ipfsString: null,
     form: {
       title: "Standing Area",
       description: "ticket description",
       isNF: false,
       price: "2",
-      finalizationBlock: 600,
-      supply: 400
+      finalizationTime_Time: {
+        HH: "10",
+        mm: "00"
+      },
+      presale_time: {
+        HH: "10",
+        mm: "00"
+      },
+      fungibleSupply: 400
     },
-    ipfsAdded: false,
-    ticketTypeCreated: false,
-    sending: false,
-    // lastTicket: null,
-    // temp: {
-    //   pastEvents: null,
-    //   latestEvent: null,
-    //   loadedCid: null
-    // },
-    showFinalizationBlockDialog: false
+    sending: false
   }),
   methods: {
     async createTypes() {
-      let ipfsHashes = await this.uploadToIpfs(this.prepareIpfsStrings());
-      console.log("ipfsHashes " + ipfsHashes);
-      let response = await this.invokeContract(
-        this.prepareContractInvocationParameters(ipfsHashes)
+      if (this.savedTypes.length > 0) {
+        console.log("create non presale types");
+        this.createNonPresaleTypes();
+      }
+      if (this.savedPresaleTypes.length > 0) {
+        console.log("create presale types");
+        this.createPresaleTypes();
+      }
+    },
+    async createPresaleTypes() {
+      let ipfsHashes = await this.uploadToIpfs(this.createIpfsStrings(true));
+      console.log("presale ipfs hashes: " + ipfsHashes);
+      let response = await this.invokeCreatePresaleTypes(
+        this.prepareInvocationParametersPresale(ipfsHashes)
       );
       console.log(response);
     },
+    async createNonPresaleTypes() {
+      let ipfsHashes = await this.uploadToIpfs(this.createIpfsStrings(false));
+      console.log("non presale ipfs hashes: " + ipfsHashes);
+      let response = await this.invokeCreateTypes(
+        this.prepareInvocationParameters(ipfsHashes)
+      );
+      console.log(response);
+    },
+
     // Creates json strings for each type and returns them in an ordered array.
-    prepareIpfsStrings() {
-      let listOfIpfsStrings = [];
+    // Takes a boolean presale, whether the list of non presale or presale types
+    // should be used.
+    createIpfsStrings(presale) {
+      let types = this.savedTypes;
+      if (presale) {
+        types = this.savedPresaleTypes;
+      }
+      let ipfsStrings = [];
       var i, j;
-      for (i = 0; i < this.savedTypes.length; i++) {
-        let type = this.savedTypes[i];
+      for (i = 0; i < types.length; i++) {
+        let type = types[i];
         let map = [];
         for (j = 0; j < type.seats.length; j++) {
           map.push(type.seats[j]);
         }
-        listOfIpfsStrings.push(
+        ipfsStrings.push(
           JSON.stringify({
             version: "1.0",
             ticket: {
               title: type.title,
               description: type.description,
+              color: type.color,
+              // image: type.imageIpfsHash,
               event: this.address,
               mapping: map
             }
           })
         );
       }
-      return listOfIpfsStrings;
+      return ipfsStrings;
     },
-    async uploadToIpfs(listOfIpfsStrings) {
+
+    async uploadToIpfs(metadataList) {
       var i;
       var ipfsHashes = [];
-      for (i = 0; i < listOfIpfsStrings.length; i++) {
+      for (i = 0; i < metadataList.length; i++) {
         try {
-          let response = await this.ipfsInstance.add(listOfIpfsStrings[i]);
+          let response = await this.ipfsInstance.add(metadataList[i]);
           console.log("Uploading to ipfs");
           console.log("http://ipfs.io/ipfs/" + response.path);
           ipfsHashes.push(response.path);
@@ -259,13 +362,17 @@ export default {
       }
       return ipfsHashes;
     },
-    prepareContractInvocationParameters(ipfsHashes) {
+
+    // Takes the necessary parameter of the saved ticket types that
+    // dont have a presale and rearanges them in correct form for
+    // the invocation.
+    prepareInvocationParameters(ipfsHashes) {
       let hashFunctions = [];
       let sizes = [];
       let digests = [];
       let isNFs = [];
       let prices = [];
-      let finalizationBlocks = [];
+      let finalizationTimes = [];
       let supplies = [];
       var i;
       for (i = 0; i < this.savedTypes.length; i++) {
@@ -276,16 +383,8 @@ export default {
         digests.push(args.digest);
         isNFs.push(type.isNF);
         prices.push(type.price);
-        finalizationBlocks.push(type.finalizationBlock);
+        finalizationTimes.push(type.finalizationTime);
         supplies.push(type.supply);
-
-        // listOfParameters[i][0] = args.hashFunction;
-        // listOfParameters[i][1] = args.size;
-        // listOfParameters[i][2] = args.digest;
-        // listOfParameters[i][3] = type.isNF;
-        // listOfParameters[i][4] = type.price;
-        // listOfParameters[i][5] = type.finalizationBlock;
-        // listOfParameters[i][6] = type.supply;
       }
       let parameterArrays = [];
       parameterArrays.push(hashFunctions);
@@ -293,71 +392,139 @@ export default {
       parameterArrays.push(digests);
       parameterArrays.push(isNFs);
       parameterArrays.push(prices);
-      parameterArrays.push(finalizationBlocks);
+      parameterArrays.push(finalizationTimes);
       parameterArrays.push(supplies);
-      console.log(parameterArrays);
       return parameterArrays;
     },
-    async invokeContract(listOfParameters) {
+    prepareInvocationParametersPresale(ipfsHashes) {
+      let hashFunctions = [];
+      let sizes = [];
+      let digests = [];
+      let isNFs = [];
+      let prices = [];
+      let finalizationTimes = [];
+      let supplies = [];
+      let presaleBlocks = [];
+      var i;
+      for (i = 0; i < this.savedPresaleTypes.length; i++) {
+        let type = this.savedPresaleTypes[i];
+        let args = cidToArgs(ipfsHashes[i]);
+        hashFunctions.push(args.hashFunction);
+        sizes.push(args.size);
+        digests.push(args.digest);
+        isNFs.push(type.isNF);
+        prices.push(type.price);
+        finalizationTimes.push(type.finalizationTime);
+        supplies.push(type.supply);
+        presaleBlocks.push(type.presaleBlock);
+      }
+      let invocParams = [];
+      invocParams.push(hashFunctions);
+      invocParams.push(sizes);
+      invocParams.push(digests);
+      invocParams.push(isNFs);
+      invocParams.push(prices);
+      invocParams.push(finalizationTimes);
+      invocParams.push(supplies);
+      invocParams.push(presaleBlocks);
+      return invocParams;
+    },
+
+    // Invokes the method createPresaleTypes
+    async invokeCreatePresaleTypes(params) {
+      console.log(params);
       let response = await this.contract.methods
-        .createTypes(
-          listOfParameters[0],
-          listOfParameters[1],
-          listOfParameters[2],
-          listOfParameters[3],
-          listOfParameters[4],
-          listOfParameters[5],
-          listOfParameters[6]
+        .createPresaleTypes(
+          params[0], // hash function
+          params[1], // size
+          params[2], // digest
+          params[3], // is non fungible
+          params[4], // price
+          params[5], // finalization time
+          params[6], // supply
+          params[7] // presale block
         )
         .send({ from: this.$store.state.web3.account });
-      console.log("invoked function createTypes");
+      console.log("createPresaleTypes invocation executed");
       return response;
     },
-    // await this.uploadToIpfs();
-    // if (this.ipfsArgs === null) {
-    //   this.ipfsArgs = cidToArgs(this.ipfsHash);
-    // }
-    // var nf = true;
-    // // if (this.form.ticketIsNonFungible) {
-    // //   nf = false;
-    // // }
-    // console.log("nf: " + nf);
-    // let createResponse = await this.contract.methods
-    //   .createType(
-    //     this.ipfsArgs.hashFunction,
-    //     this.ipfsArgs.size,
-    //     this.ipfsArgs.digest,
-    //     nf,
-    //     this.web3.web3Instance.utils.toWei(this.form.price),
-    //     this.form.finalizationBlock
-    //     // this.form.ticketInitialSupply
-    //   )
-    //   .send({ from: this.web3.account });
 
-    // console.log(createResponse);
-    // },
+    // Invokes the method createTypes
+    async invokeCreateTypes(params) {
+      console.log("invokeCreateTypes");
+      console.log(params);
+      let response = await this.contract.methods
+        .createTypes(
+          params[0], // hash function
+          params[1], // size
+          params[2], // digest
+          params[3], // is non-fungible
+          params[4], // price
+          params[5], // finalization time
+          params[6] // presale block
+        )
+        .send({ from: this.$store.state.web3.account });
+      console.log("createTypes invocation executed");
+      return response;
+    },
 
-    saveTicketType(selectedSeats) {
+    // This method is called in the SeatingPlan component.
+    // It takes the seats selected in the SeatingPlan and
+    // the inputs in this form and saves it to either savedTypes
+    // or savedPresaleTypes.
+    saveTicketType(seats, color) {
       console.log("save ticket executed in TicketForm");
-      let amount = selectedSeats.length;
-      if (amount == 0) {
+      if (seats.length == 0) {
         return;
       } else {
-        if (!this.form.isNF) {
-          amount = this.form.supply;
+        if (this.withPresale) {
+          this.savedPresaleTypes.push(this.getTypeAsPresale(seats, color));
+          console.log(this.getTypeAsPresale(seats, color));
+        } else {
+          this.savedTypes.push(this.getTypeAsNonPresale(seats, color));
+          console.log(this.getTypeAsNonPresale(seats, color));
         }
-        this.savedTypes.push({
-          title: this.form.title,
-          isNF: this.form.isNF,
-          supply: amount,
-          price: this.form.price,
-          finalizationBlock: this.form.finalizationBlock,
-          description: this.form.description,
-          seats: selectedSeats
-        });
-        console.log(selectedSeats);
       }
     },
+
+    updateAmountOfSelected(amount) {
+      this.amountOfSelectedSeats = amount;
+    },
+
+    getSupply() {
+      let supply = this.form.fungibleSupply;
+      if (this.form.isNF) {
+        supply = this.nonFungibleSupply;
+      }
+      return supply;
+    },
+
+    getTypeAsNonPresale(seats, color) {
+      return {
+        title: this.form.title,
+        isNF: this.form.isNF,
+        supply: this.getSupply(),
+        price: this.form.price,
+        finalizationTime: this.finalizationTimeUnix,
+        description: this.form.description,
+        seats: seats,
+        color: color
+      };
+    },
+    getTypeAsPresale(seats, color) {
+      return {
+        title: this.form.title,
+        isNF: this.form.isNF,
+        supply: this.getSupply(),
+        price: this.form.price,
+        finalizationTime: this.finalizationTimeUnix,
+        description: this.form.description,
+        seats: seats,
+        presaleBlock: this.computePresaleBlock(),
+        color: color
+      };
+    },
+
     async fetchOccupiedSeats() {
       let existingCids = await this.fetchIpfsHashesOfExistingTypes();
       console.log(existingCids);
@@ -392,7 +559,7 @@ export default {
       this.form.title = null;
       this.form.description = null;
       // this.form.ticketIsNonFungible = null;
-      this.form.finalizationBlock = null;
+      // this.form.finalizationTime = null;
       // this.form.ticketInitialSupply = null;
     },
     createIpfsString(type) {
@@ -428,50 +595,98 @@ export default {
         name: `Events`
       });
     },
-    setEvent() {
-      this.event = getEvent(this.$route.query.address);
-      if (this.event != null) {
-        this.eventSet = true;
-        this.notFoundMessageVisible = false;
-        this.eventTitle = this.event.title;
-        this.contract = new this.web3.web3Instance.eth.Contract(
-          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-          this.$route.query.address
-        );
-        this.fetchOccupiedSeats();
-      }
+    // async setEvent() {
+    //   this.event = await idb.getEvent(this.$route.query.address);
+    //   if (this.event != null) {
+    //     this.eventSet = true;
+    //     this.notFoundMessageVisible = false;
+    //     console.log(this.event);
+    //     this.eventTitle = this.event.title;
+    //     this.contract = new this.web3.web3Instance.eth.Contract(
+    //       EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+    //       this.$route.query.address
+    //     );
+    //     // this.fetchOccupiedSeats();
+    //   }
+    // },
+    getDateAfterMonths(n) {
+      let d = new Date();
+      d.setMonth(d.getMonth() + n);
+      return d;
+    },
+    computePresaleBlock() {
+      return (
+        this.getCurrentBlockNumber() +
+        Math.floor(
+          (this.presaleTimeUnix - new Date().getTime() / 1000) /
+            AVERAGE_BLOCKTIME
+        )
+      );
+    },
+    async getCurrentBlockNumber() {
+      return await this.$store.state.web3.web3Instance.eth.getBlockNumber();
     }
   },
   computed: {
+    nonFungibleSupply() {
+      return this.amountOfSelectedSeats;
+    },
+    finalizationDateInSeconds() {
+      return Number(Date.parse(this.finalizationTime_Date) / 1000);
+    },
+    finalizationTimeUnix() {
+      return (
+        this.finalizationDateInSeconds +
+        this.form.finalizationTime_Time.HH * 3600 +
+        this.form.finalizationTime_Time.mm * 60
+      );
+    },
+    presaleDateInSeconds() {
+      return Number(Date.parse(this.presale_date) / 1000);
+    },
+    presaleTimeUnix() {
+      return (
+        this.presaleDateInSeconds +
+        this.form.presale_time.HH * 3600 +
+        this.form.presale_time.mm * 60
+      );
+    },
     web3() {
       return this.$store.state.web3;
     },
     ipfsInstance() {
       return this.$store.state.ipfsInstance;
+    },
+    allSavedTypes() {
+      return this.savedTypes.concat(this.savedPresaleTypes);
     }
   },
   async created() {
-    setTimeout(() => {
-      if (!this.eventSet) {
-        this.notFoundMessageVisible = true;
-      }
-    }, 5000);
     console.log("ticket form created executed");
-    this.$root.$on("eventsFullyLoaded", () => {
-      this.setEvent();
+    this.$root.$on("web3Injected", () => {
+      this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.$route.query.address
+      );
     });
-    if (getEvent(this.$route.query.address) != null) {
-      this.setEvent();
+    if (this.$store.state.web3.web3Instance) {
+      this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+        this.$route.query.address
+      );
     }
+    let event = await idb.getEvent(this.$route.query.address);
+    this.finalizationTime_Date = this.getDateAfterMonths(8);
+    this.presale_date = this.getDateAfterMonths(2);
   },
   validations: {
     form: {
       title: {
         // required,
         minLength: minLength(3)
-      },
-      finalizationBlock: {
-        required
+        // },
+        // finalizationTime: {
+        //   required
       }
     }
   }
@@ -494,5 +709,11 @@ export default {
 .event-info-type {
   width: 70px;
   margin-right: 20px;
+}
+.date-container {
+  display: flex;
+}
+.presale-checkbox {
+  display: flex;
 }
 </style>
