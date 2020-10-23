@@ -1,33 +1,5 @@
 <template>
   <div class="create-ticket-type-container">
-    <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
-      <h3>No event found for address: {{ this.$route.query.address }}.</h3>
-      <md-button class="go-back-button md-primary" @click="routeToEventList()"
-        >Go Back</md-button
-      >
-    </div> -->
-    <!-- <md-card class="md-layout-item contract-address-card" v-if="eventSet">
-      <md-card-header>
-        <div class="md-title">Event</div>
-      </md-card-header>
-      <md-card-content>
-        <div class="event-info">
-          <div class="event-title">
-            <div class="event-info-type">
-              <h3>Title:</h3>
-            </div>
-            <h3>{{ eventTitle }}</h3>
-          </div>
-          <div class="event-address">
-            <div class="event-info-type">
-              <h3>Address:</h3>
-            </div>
-            <h3>{{ this.$route.query.address }}</h3>
-          </div>
-        </div>
-      </md-card-content>
-    </md-card> -->
-
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
       <md-card class="md-layout-item new-ticket-form">
         <md-card-header>
@@ -234,6 +206,7 @@ import {
 import { cidToArgs, argsToCid } from "idetix-utils";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
+const BigNumber = require("bignumber.js");
 
 // internal imports
 import { NETWORKS } from "../util/constants/constants.js";
@@ -242,9 +215,12 @@ import {
   EVENT_FACTORY_ADDRESS
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
+import { ERC20_ABI } from "../util/abi/ERC20";
 import SeatingPlan from "../components/SeatingPlan";
 import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
 import idb from "../util/db/idb";
+import getDecimals from "../util/utility.js";
+import { ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 
 export default {
   name: "TicketForm",
@@ -253,8 +229,8 @@ export default {
     VueTimepicker
   },
   data: () => ({
-    eventSet: false,
-    notFoundMessageVisible: false,
+    contract: null,
+    currencyDecimals: null,
     withPresale: false,
     amountOfSelectedSeats: 0,
     finalizationTime_Date: null,
@@ -263,8 +239,6 @@ export default {
     occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
     savedPresaleTypes: [],
-    address: null,
-    eventTitle: null,
     form: {
       title: "Standing Area",
       description: "ticket description",
@@ -334,7 +308,7 @@ export default {
               description: type.description,
               color: type.color,
               // image: type.imageIpfsHash,
-              event: this.address,
+              event: this.$route.query.address,
               mapping: map
             }
           })
@@ -445,6 +419,7 @@ export default {
           params[7] // presale block
         )
         .send({ from: this.$store.state.web3.account });
+      this.savedPresaleTypes = [];
       console.log("createPresaleTypes invocation executed");
       return response;
     },
@@ -464,6 +439,7 @@ export default {
           params[6] // presale block
         )
         .send({ from: this.$store.state.web3.account });
+      this.savedTypes = [];
       console.log("createTypes invocation executed");
       return response;
     },
@@ -504,7 +480,7 @@ export default {
         title: this.form.title,
         isNF: this.form.isNF,
         supply: this.getSupply(),
-        price: this.form.price,
+        price: this.fractionPrice,
         finalizationTime: this.finalizationTimeUnix,
         description: this.form.description,
         seats: seats,
@@ -516,7 +492,7 @@ export default {
         title: this.form.title,
         isNF: this.form.isNF,
         supply: this.getSupply(),
-        price: this.form.price,
+        price: this.fractionPrice,
         finalizationTime: this.finalizationTimeUnix,
         description: this.form.description,
         seats: seats,
@@ -568,7 +544,7 @@ export default {
         ticket: {
           title: type.title,
           description: type.description,
-          event: this.address,
+          event: this.$route.query.address,
           mapping: type.seats
         }
       });
@@ -595,20 +571,6 @@ export default {
         name: `Events`
       });
     },
-    // async setEvent() {
-    //   this.event = await idb.getEvent(this.$route.query.address);
-    //   if (this.event != null) {
-    //     this.eventSet = true;
-    //     this.notFoundMessageVisible = false;
-    //     console.log(this.event);
-    //     this.eventTitle = this.event.title;
-    //     this.contract = new this.web3.web3Instance.eth.Contract(
-    //       EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-    //       this.$route.query.address
-    //     );
-    //     // this.fetchOccupiedSeats();
-    //   }
-    // },
     getDateAfterMonths(n) {
       let d = new Date();
       d.setMonth(d.getMonth() + n);
@@ -628,6 +590,13 @@ export default {
     }
   },
   computed: {
+    currencyDecimalFactor() {
+      return Math.pow(10, this.currencyDecimals);
+    },
+
+    fractionPrice() {
+      return BigNumber(this.form.price * this.currencyDecimalFactor).toFixed();
+    },
     nonFungibleSupply() {
       return this.amountOfSelectedSeats;
     },
@@ -663,11 +632,17 @@ export default {
   },
   async created() {
     console.log("ticket form created executed");
-    this.$root.$on("web3Injected", () => {
+    this.$root.$on("web3Injected", async () => {
       this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
         EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
         this.$route.query.address
       );
+      // let a = new this.$store.state.web3.web3Instance.eth.Contract(
+      //   ERC20_ABI,
+      //   ERC20TESTTOKEN
+      // );
+      // let c = await a.methods.decimals().call();
+      // console.log(c);
     });
     if (this.$store.state.web3.web3Instance) {
       this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
@@ -675,7 +650,8 @@ export default {
         this.$route.query.address
       );
     }
-    let event = await idb.getEvent(this.$route.query.address);
+    this.event = await idb.getEvent(this.$route.query.address);
+    this.currencyDecimals = getDecimals(this.event.currency);
     this.finalizationTime_Date = this.getDateAfterMonths(8);
     this.presale_date = this.getDateAfterMonths(2);
   },
