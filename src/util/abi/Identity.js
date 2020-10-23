@@ -1,6 +1,38 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const IDENTITY_ADDRESS = "0x68bB3B61635C932a4c1711Ea1B398BFb9F1c1874";
+const IDENTITY_ADDRESS = "0x067b6772E882b541121a2af3Cf947E27D1edf4E9"; // docker
+// const IDENTITY_ADDRESS = "0xc033185772c71E259480Fc386257158aa0434b24";
 const IDENTITY_ABI = [
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "approverAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes1",
+        "name": "hashFunction",
+        "type": "bytes1"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes1",
+        "name": "size",
+        "type": "bytes1"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "digest",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ApproverRegistered",
+    "type": "event"
+  },
   {
     "inputs": [
       {
@@ -98,6 +130,26 @@ const IDENTITY_ABI = [
         "internalType": "struct Identity.IpfsCid",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_approver",
+        "type": "address"
+      }
+    ],
+    "name": "hasRegistered",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
