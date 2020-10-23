@@ -1,10 +1,9 @@
 <template>
   <div class="create-event-form-container">
     <form novalidate class="md-layout" @submit.prevent="eventFormComplete">
-      <!-- <div class="event-form-card-wrapper"> -->
       <md-card class="md-layout-item">
         <md-card-header>
-          <div class="md-title">New Event</div>
+          <div v-if="inNewMode" class="md-title">New Event</div>
         </md-card-header>
 
         <md-card-content>
@@ -39,6 +38,7 @@
                   name="location"
                   id="location"
                   v-model="form.location"
+                  :disabled="sending"
                 />
               </md-field>
             </div>
@@ -47,9 +47,11 @@
           <div
             class="md-layout md-gutter date-container"
             v-if="inEditMode || inNewMode"
+            :disabled="sending"
           >
             <div class="md-layout-item">
               <md-datepicker
+                v-if="!sending"
                 md-immediately
                 name="date"
                 id="date"
@@ -57,11 +59,22 @@
               >
                 <label for="date">Date and Start Time</label>
               </md-datepicker>
+              <md-datepicker
+                v-if="sending"
+                md-immediately
+                name="disabled-datepicker"
+                id="disabled-datepicker"
+                v-model="dateUponSending"
+                :md-disabled-dates="disabledDates"
+              >
+                <label for="disabled-datepicker">Date and Start Time</label>
+              </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
               <vue-timepicker
                 v-model="form.startTime"
                 format="HH:mm"
+                :disabled="sending"
               ></vue-timepicker>
             </div>
             <div class="md-small-size-100 info-dialog-button">
@@ -69,6 +82,7 @@
                 class="md-icon-button md-primary"
                 @click="showStartTimeDialog = true"
                 style="margin-right: 16px"
+                :disabled="sending"
               >
                 <md-icon>help_outline</md-icon>
               </md-button>
@@ -94,6 +108,7 @@
                   name="category"
                   id="category"
                   v-model="form.category"
+                  :disabled="sending"
                 >
                   <md-option value="Music">Music</md-option>
                   <md-option value="Sports">Sports</md-option>
@@ -115,6 +130,7 @@
                   name="idApprover"
                   id="idApprover"
                   v-model="form.idApprover"
+                  :disabled="sending"
                 />
                 <span class="md-error">An ID approver is required</span>
               </md-field>
@@ -128,6 +144,7 @@
                   id="idLevel"
                   name="idLevel"
                   v-model="form.idLevel"
+                  :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
@@ -173,7 +190,10 @@
 
           <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100">
-              <md-checkbox v-model="useERC20Token" :value="true"
+              <md-checkbox
+                v-model="useERC20Token"
+                :value="true"
+                :disabled="sending"
                 >Use ERC20 Token for Payment
               </md-checkbox>
             </div>
@@ -191,10 +211,16 @@
                   <md-option value="eth">ETH</md-option>
                   <md-option value="testtoken">ERC20 Test Token</md-option>
                 </md-select> -->
-              <md-radio v-model="erc20Token" :value="erc20Tokens.testToken"
+              <md-radio
+                v-model="erc20Token"
+                :value="erc20Tokens.testToken"
+                :disabled="sending"
                 >ERC20 Test Token</md-radio
               >
-              <md-radio v-model="erc20Token" :value="erc20Tokens.dai"
+              <md-radio
+                v-model="erc20Token"
+                :value="erc20Tokens.dai"
+                :disabled="sending"
                 >DAI</md-radio
               >
               <!-- <md-input
@@ -241,6 +267,7 @@
                   id="event-granularity"
                   name="event-granularity"
                   v-model="form.granularity"
+                  :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
@@ -305,7 +332,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('color')">
                 <label for="color">Color</label>
-                <md-input name="color" id="color" v-model="form.color" />
+                <md-input
+                  name="color"
+                  id="color"
+                  v-model="form.color"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -314,7 +346,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('url')">
                 <label for="url">URL</label>
-                <md-input name="url" id="url" v-model="form.url" />
+                <md-input
+                  name="url"
+                  id="url"
+                  v-model="form.url"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -323,7 +360,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('twitter')">
                 <label for="twitter">Twitter</label>
-                <md-input name="twitter" id="twitter" v-model="form.twitter" />
+                <md-input
+                  name="twitter"
+                  id="twitter"
+                  v-model="form.twitter"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -333,17 +375,19 @@
 
         <md-card-actions>
           <md-button
-            v-if="inEditMode"
+            v-if="inEditMode && !invokingMetadataChangeState"
             type="submit"
             class="md-accent"
             @click="leaveEditMode"
+            :disabled="sending"
             >Cancel</md-button
           >
           <md-button
-            v-if="inEditMode"
+            v-if="inEditMode && !invokingMetadataChangeState"
             type="submit"
             class="md-primary"
             @click="modifyEvent"
+            :disabled="sending"
             >Submit changes</md-button
           >
           <md-button
@@ -351,6 +395,7 @@
             type="submit"
             class="md-primary"
             @click="createEvent"
+            :disabled="sending"
             >Create Event</md-button
           >
         </md-card-actions>
@@ -369,17 +414,23 @@
         Please sign the transaction to deploy this event contract.
       </p>
     </div>
-    <div v-if="waitingForReceipt" class="awaiting-form-response">
+    <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
       <p style="text-align: center">
         Please wait - The Event contract is being deployed.
       </p>
     </div>
-    <div
-      v-if="showSuccessFullDeploymentMessage"
-      class="successful-deployment-message"
-    >
+    <div v-if="waitingForMetadataChangeReceipt" class="awaiting-form-response">
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p style="text-align: center">
+        Please wait - The metadata change invocation is being sent.
+      </p>
+    </div>
+    <div v-if="showSuccessFullDeploymentMessage" class="successful-message">
       <p style="text-align: center">The event was successfully deployed.</p>
+    </div>
+    <div v-if="showSuccessfullMetadataChangeMessage" class="successful-message">
+      <p style="text-align: center">The metadata change is confirmed.</p>
     </div>
     <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
       <p style="text-align: center">Something went wrong...</p>
@@ -424,10 +475,14 @@ export default {
     inNewMode: Boolean
   },
   data: () => ({
+    sending: false,
     waitingForSignature: false,
-    waitingForReceipt: false,
+    waitingForDeploymentReceipt: false,
+    waitingForMetadataChangeReceipt: false,
     deployingContractState: false,
+    invokingMetadataChangeState: false,
     showSuccessFullDeploymentMessage: false,
+    showSuccessfullMetadataChangeMessage: false,
     showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
@@ -466,8 +521,12 @@ export default {
       testToken: ERC20TESTTOKEN,
       dai: DAI
     },
-    sending: false,
-    lastEvent: null
+    lastEvent: null,
+    disabledDates: date => {
+      const day = date.getDay();
+      return day >= 0;
+    },
+    dateUponSending: null
   }),
   validations: {
     form: {
@@ -530,6 +589,9 @@ export default {
       setTimeout(() => {
         this.showErrorMessage = false;
       }, 3000);
+    },
+    sending: function(val) {
+      this.dateUponSending = this.date;
     }
   },
   created() {
@@ -578,13 +640,17 @@ export default {
       this.form.granularity = 4;
     },
     async createEvent() {
+      this.sending = true;
       await this.uploadToIpfs();
       await this.deployEventContract();
+      this.sending = false;
     },
     async modifyEvent() {
       // todo: add checks to compare to current ipfs hash
+      this.sending = true;
       await this.uploadToIpfs();
       await this.invokeMetadataChange();
+      this.sending = false;
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
@@ -593,7 +659,6 @@ export default {
         this.ipfsHash = response.path;
         console.log("Uploading to ipfs");
         console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
-        this.sending = true;
       } catch (err) {
         console.log(err);
         this.ipfsError = true;
@@ -601,7 +666,6 @@ export default {
       window.setTimeout(() => {
         this.lastEvent = `${this.form.title} ${this.form.description}`;
         this.ipfsAdded = true;
-        this.sending = false;
         // this.clearForm();
       }, 1500);
     },
@@ -638,10 +702,51 @@ export default {
         EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
         this.event.contractAddress
       );
+      this.invokingMetadataChangeState = true;
+      this.waitingForSignature = true;
       const updateMetadata = await eventContract.methods
         .updateEventMetadata(args.hashFunction, args.size, args.digest)
-        .send({ from: this.$store.state.web3.account });
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForMetadataChangeReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted metadata change invocation: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              await sleep(5000);
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForMetadataChangeReceipt = false;
+              this.invokingMetadataChangeState = false;
+              this.showSuccessfullMetadataChangeMessage = true;
+            }
+            await this.$store.dispatch("loadEvents");
+            await sleep(2000);
+            this.leaveEditMode();
+          }
+        )
+        .catch(e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForMetadataChangeReceipt = false;
+          this.invokingMetadataChangeState = false;
+          this.showSuccessfullMetadataChangeMessage = false;
+          this.showErrorMessage = true;
+          console.log(e);
+        });
     },
+
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
       this.deployingContractState = true;
@@ -660,7 +765,7 @@ export default {
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
             this.waitingForSignature = false;
-            this.waitingForReceipt = true;
+            this.waitingForDeploymentReceipt = true;
             if (transactionHash) {
               console.log(
                 "submitted event contract deployment invocation: ",
@@ -676,10 +781,11 @@ export default {
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForReceipt = false;
+              this.waitingForDeploymentReceipt = false;
               this.showSuccessFullDeploymentMessage = true;
             }
-            await sleep(3);
+            await this.$store.dispatch("loadEvents");
+            await sleep(2000);
             this.$router.push({
               path: `/`
             });
@@ -688,24 +794,12 @@ export default {
         .catch(e => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
-          this.waitingForReceipt = false;
+          this.waitingForDeploymentReceipt = false;
           this.deployingContractState = false;
           this.showSuccessFullDeploymentMessage = false;
           this.showErrorMessage = true;
           console.log(e);
         });
-
-      // this.eventFactory.events
-      //   .EventCreated()
-      //   .on(`data`, event => {
-      //     const ev = { address: event.returnValues[0], cid: this.ipfsHash };
-      //     this.lastEventInfo = ev;
-      //     this.$store.commit("addEventContract", ev);
-      //     this.eventContractDeployed = true;
-      //     console.log("Contract created");
-      //     console.log(this.lastEventInfo);
-      //   })
-      //   .on(`error`, console.error);
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
