@@ -448,14 +448,15 @@ export default {
     // It takes the seats selected in the SeatingPlan and
     // the inputs in this form and saves it to either savedTypes
     // or savedPresaleTypes.
-    saveTicketType(seats, color) {
+    async saveTicketType(seats, color) {
       console.log("save ticket executed in TicketForm");
       if (seats.length == 0) {
         return;
       } else {
         if (this.withPresale) {
-          this.savedPresaleTypes.push(this.getTypeAsPresale(seats, color));
-          console.log(this.getTypeAsPresale(seats, color));
+          let type = await this.getTypeAsPresale(seats, color);
+          this.savedPresaleTypes.push(type);
+          console.log(type);
         } else {
           this.savedTypes.push(this.getTypeAsNonPresale(seats, color));
           console.log(this.getTypeAsNonPresale(seats, color));
@@ -487,7 +488,8 @@ export default {
         color: color
       };
     },
-    getTypeAsPresale(seats, color) {
+    async getTypeAsPresale(seats, color) {
+      let presaleBlock = await this.computePresaleBlock();
       return {
         title: this.form.title,
         isNF: this.form.isNF,
@@ -496,7 +498,7 @@ export default {
         finalizationTime: this.finalizationTimeUnix,
         description: this.form.description,
         seats: seats,
-        presaleBlock: this.computePresaleBlock(),
+        presaleBlock: presaleBlock,
         color: color
       };
     },
@@ -576,9 +578,9 @@ export default {
       d.setMonth(d.getMonth() + n);
       return d;
     },
-    computePresaleBlock() {
+    async computePresaleBlock() {
       return (
-        this.getCurrentBlockNumber() +
+        (await this.getCurrentBlockNumber()) +
         Math.floor(
           (this.presaleTimeUnix - new Date().getTime() / 1000) /
             AVERAGE_BLOCKTIME
