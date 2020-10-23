@@ -27,13 +27,24 @@ export default {
   },
   methods: {
     loadEvents: async function() {
+      // setInterval(async () => {
+      //   console.log("interval executed");
+      //   await this.$store.dispatch("loadEvents");
+      //   this.$root.$emit("loadedEvents");
+      // }, 5000);
+      // }
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
+    },
+    loadApprovers: async function() {
+      await this.$store.dispatch("loadApprovers");
+      this.$root.$emit("loadedApprovers");
     }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
       this.loadEvents();
+      this.loadApprovers();
     });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
