@@ -1,4 +1,15 @@
+import state from "../store/state";
 import { ETH, ETH_DECIMALS, DAI, DAI_DECIMALS, ERC20TESTTOKEN, ERC20TESTTOKEN_DECIMALS } from "./constants/ERC20Tokens";
+
+export function getApproverFromStore(address) {
+  for (let i = 0; i < state.approvers.length; i++) {
+    let approver = state.approvers[i];
+    if (approver.approverAddress == address) {
+      return approver;
+    }
+  }
+  return false;
+}
 
 export default function getDecimals(currency) {
   switch (currency) {
