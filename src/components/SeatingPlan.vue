@@ -11,6 +11,7 @@
             name="rows"
             id="rows"
             v-model="rows"
+            :disabled="sending"
           />
         </md-field>
         <md-field>
@@ -22,6 +23,7 @@
             name="cols"
             id="cols"
             v-model="cols"
+            :disabled="sending"
           />
         </md-field>
       </div>
@@ -29,16 +31,25 @@
 
     <div class="md-layout md-gutter">
       <div class="md-layout-item md-small-size-100">
-        <md-checkbox class="md-primary" v-model="blockSelection" :value="true"
+        <md-checkbox
+          class="md-primary"
+          v-model="blockSelection"
+          :value="true"
+          :disabled="sending"
           >Block Selection</md-checkbox
         >
-        <md-checkbox v-model="unselect" :value="true">Unselect</md-checkbox>
+        <md-checkbox v-model="unselect" :value="true" :disable="sending"
+          >Unselect</md-checkbox
+        >
       </div>
     </div>
 
     <div class="md-layout md-gutter">
       <div class="md-layout-item md-small-size-100">
-        <md-button class="md-primary" @click="increaseColorIndex"
+        <md-button
+          class="md-primary"
+          @click="increaseColorIndex"
+          :disabled="sending"
           >Change color</md-button
         >
       </div>
@@ -98,10 +109,20 @@
           <input type="checkbox" v-model="blockSelection" value="true" />
         </div>
     <div class="menu-group">-->
-    <md-button class="md-accent" @click="resetSelection"
+    <md-button
+      class="md-accent"
+      @click="resetSelection"
+      v-if="!sending"
+      :disabled="sending"
       >Reset selection</md-button
     >
-    <md-button class="md-primary" @click="save">Save category</md-button>
+    <md-button
+      class="md-primary"
+      @click="save"
+      v-if="!sending"
+      :disabled="sending"
+      >Save category</md-button
+    >
     <!-- </div>
       </div>
       <div class="section legend">
@@ -153,7 +174,7 @@ export default {
       nonFungibleOccupiedSeats: []
     };
   },
-  props: { address: String, isNF: Boolean },
+  props: { address: String, isNF: Boolean, sending: Boolean },
   /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
     rows: function(val) {
@@ -307,6 +328,9 @@ export default {
     },
     // mouse down handler for when we are not on a tile
     mouseDownOnTile(col, row) {
+      if (this.sending) {
+        return;
+      }
       // console.log("mouseDownTriggered");
       this.mouseDown = true;
       if (this.blockSelection) {
@@ -317,6 +341,9 @@ export default {
     },
     // mouse release handler, check if we are doing block selection to select all tiles within the rectangle spaned by the starting and the releasing point
     mouseUpOnTile(col, row) {
+      if (this.sending) {
+        return;
+      }
       // console.log("mouseUpTriggered");
       this.mouseDown = false;
       if (this.blockSelection) {
@@ -336,6 +363,9 @@ export default {
     },
     // select a tile if we hover it while holding the mouse trigger
     mouseEnter(col, row) {
+      if (this.sending) {
+        return;
+      }
       // console.log("mouseEnterTriggered");
       if (this.mouseDown) {
         if (this.blockSelection) {

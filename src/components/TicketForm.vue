@@ -11,7 +11,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field>
                 <label for="title">Ticket Title</label>
-                <md-input name="title" id="title" v-model="form.title" />
+                <md-input
+                  name="title"
+                  id="title"
+                  v-model="form.title"
+                  :disabled="sending"
+                />
                 <span class="md-error">A Title is required.</span>
               </md-field>
             </div>
@@ -19,10 +24,18 @@
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item">
-              <md-radio class="md-primary" v-model="form.isNF" :value="true"
+              <md-radio
+                class="md-primary"
+                v-model="form.isNF"
+                :value="true"
+                :disabled="sending"
                 >Non-Fungible</md-radio
               >
-              <md-radio class="md-primary" v-model="form.isNF" :value="false"
+              <md-radio
+                class="md-primary"
+                v-model="form.isNF"
+                :value="false"
+                :disabled="sending"
                 >Fungible</md-radio
               >
               <md-field v-if="!form.isNF">
@@ -36,7 +49,7 @@
                   name="fungibleSupply"
                   id="fungibleSupply"
                   v-model="form.fungibleSupply"
-                  :disabled="form.isNF"
+                  :disabled="form.isNF || sending"
                   v-if="!form.isNF"
                 />
                 <span class="md-error">The supply is required.</span>
@@ -61,7 +74,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field>
                 <label for="price">Ticket Price</label>
-                <md-input name="price" id="price" v-model="form.price" />
+                <md-input
+                  name="price"
+                  id="price"
+                  v-model="form.price"
+                  :disabled="sending"
+                />
                 <span class="md-error">The price is required.</span>
               </md-field>
             </div>
@@ -70,32 +88,43 @@
           <div class="md-layout md-gutter date-container">
             <div class="md-layout-item">
               <md-datepicker
+                v-if="!sending"
                 md-immediately
                 name="date"
                 id="date"
-                v-model="finalizationTime_Date"
+                v-model="finalizationDate"
+              ></md-datepicker>
+              <md-datepicker
+                v-if="sending"
+                md-immediately
+                name="disabled-datepicker"
+                id="disabled-datepicker"
+                v-model="finalizationDateUponSending"
+                :md-disabled-dates="disabledDates"
               >
-                <label for="date">Finalization Time</label>
+                <label for="disabled-datepicker">Finalization Time</label>
               </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
               <vue-timepicker
-                v-model="form.finalizationTime_Time"
+                v-model="form.finalizationTime"
                 format="HH:mm"
+                :disabled="sending"
               ></vue-timepicker>
             </div>
             <div class="md-small-size-100 info-dialog-button">
               <md-button
                 class="md-icon-button md-primary"
-                @click="showFinalizationTimeDialog = true"
+                @click="showFinalizationDialog = true"
                 style="margin-right: 16px"
+                :disabled="sending"
               >
                 <md-icon>help_outline</md-icon>
               </md-button>
             </div>
           </div>
 
-          <md-dialog :md-active.sync="showFinalizationTimeDialog">
+          <md-dialog :md-active.sync="showFinalizationDialog">
             <md-dialog-title>Finalization Time</md-dialog-title>
             <p class="dialog-text">
               After the first block with a timestamp higher than the
@@ -103,13 +132,16 @@
             </p>
             <md-button
               class="md-primary"
-              @click="showFinalizationTimeDialog = false"
+              @click="showFinalizationDialog = false"
               >Close</md-button
             >
           </md-dialog>
 
           <div class="md-layout-item md-gutter presale-checkbox">
-            <md-checkbox class="md-primary" v-model="withPresale"
+            <md-checkbox
+              class="md-primary"
+              v-model="withPresale"
+              :disabled="sending"
               >Presale Lottery</md-checkbox
             >
           </div>
@@ -117,18 +149,32 @@
           <div class="md-layout md-gutter date-container" v-if="withPresale">
             <div class="md-layout-item">
               <md-datepicker
+                v-if="!sending"
                 md-immediately
-                name="presale_date"
-                id="presale_date"
-                v-model="presale_date"
+                name="presale-closing-date"
+                id="presale-closing-date"
+                v-model="presaleClosingDate"
               >
-                <label for="date">Presale Closing Time</label>
+                <label for="presale-closing-date">Presale Closing Time</label>
+              </md-datepicker>
+              <md-datepicker
+                v-if="sending"
+                md-immediately
+                name="presale_date_disabled_datepicker"
+                id="presale_date_disabled_datepicker"
+                v-model="presaleClosingDateUponSending"
+                :md-disabled-dates="disabledDates"
+              >
+                <label for="presale_date_disabled_datepicker"
+                  >Presale Closing Time</label
+                >
               </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
               <vue-timepicker
-                v-model="form.presale_time"
+                v-model="form.presaleClosingTime"
                 format="HH:mm"
+                :disabled="sending"
               ></vue-timepicker>
             </div>
             <div class="md-small-size-100 info-dialog-button">
@@ -136,6 +182,7 @@
                 class="md-icon-button md-primary"
                 @click="showPresaleDialog = true"
                 style="margin-right: 16px"
+                :disabled="sending"
               >
                 <md-icon>help_outline</md-icon>
               </md-button>
@@ -172,6 +219,7 @@
                   id="ticket-description"
                   name="ticket-description"
                   v-model="form.description"
+                  :disabled="sending"
                 ></md-textarea>
               </md-field>
             </div>
@@ -179,6 +227,7 @@
           <SeatingPlan
             v-bind:address="this.$route.query.address"
             v-bind:isNF="this.form.isNF"
+            v-bind:sending="sending"
             v-on:savetickettype="saveTicketType"
             v-on:updateamountofselected="updateAmountOfSelected"
           ></SeatingPlan>
@@ -206,6 +255,7 @@ import {
 import { cidToArgs, argsToCid } from "idetix-utils";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
+import sleep from "await-sleep";
 const BigNumber = require("bignumber.js");
 
 // internal imports
@@ -217,7 +267,10 @@ import {
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ERC20_ABI } from "../util/abi/ERC20";
 import SeatingPlan from "../components/SeatingPlan";
-import { AVERAGE_BLOCKTIME } from "../util/constants/constants";
+import {
+  AVERAGE_BLOCKTIME,
+  AVERAGE_BLOCKTIME_LOCAL
+} from "../util/constants/constants";
 import idb from "../util/db/idb";
 import getDecimals from "../util/utility.js";
 import { ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
@@ -229,12 +282,13 @@ export default {
     VueTimepicker
   },
   data: () => ({
+    sending: false,
     contract: null,
     currencyDecimals: null,
     withPresale: false,
     amountOfSelectedSeats: 0,
-    finalizationTime_Date: null,
-    showFinalizationTimeDialog: false,
+    finalizationDate: null,
+    showFinalizationDialog: false,
     showPresaleDialog: false,
     occupiedSeats: [], // list of seats already used in a type on the blockchain
     savedTypes: [],
@@ -244,18 +298,29 @@ export default {
       description: "ticket description",
       isNF: false,
       price: "2",
-      finalizationTime_Time: {
+      finalizationTime: {
         HH: "10",
         mm: "00"
       },
-      presale_time: {
+      presaleClosingTime: {
         HH: "10",
         mm: "00"
       },
       fungibleSupply: 400
     },
-    sending: false
+    disabledDates: date => {
+      const day = date.getDay();
+      return day >= 0;
+    },
+    presaleClosingDateUponSending: null,
+    finalizationDateUponSending: null
   }),
+  watch: {
+    sending: function(val) {
+      this.presaleClosingDateUponSending = this.presaleClosingDate;
+      this.finalizationDateUponSending = this.finalizationDate;
+    }
+  },
   methods: {
     async createTypes() {
       if (this.savedTypes.length > 0) {
@@ -346,7 +411,7 @@ export default {
       let digests = [];
       let isNFs = [];
       let prices = [];
-      let finalizationTimes = [];
+      let finalizations = [];
       let supplies = [];
       var i;
       for (i = 0; i < this.savedTypes.length; i++) {
@@ -357,7 +422,7 @@ export default {
         digests.push(args.digest);
         isNFs.push(type.isNF);
         prices.push(type.price);
-        finalizationTimes.push(type.finalizationTime);
+        finalizations.push(type.finalization);
         supplies.push(type.supply);
       }
       let parameterArrays = [];
@@ -366,7 +431,7 @@ export default {
       parameterArrays.push(digests);
       parameterArrays.push(isNFs);
       parameterArrays.push(prices);
-      parameterArrays.push(finalizationTimes);
+      parameterArrays.push(finalizations);
       parameterArrays.push(supplies);
       return parameterArrays;
     },
@@ -376,7 +441,7 @@ export default {
       let digests = [];
       let isNFs = [];
       let prices = [];
-      let finalizationTimes = [];
+      let finalizations = [];
       let supplies = [];
       let presaleBlocks = [];
       var i;
@@ -388,7 +453,7 @@ export default {
         digests.push(args.digest);
         isNFs.push(type.isNF);
         prices.push(type.price);
-        finalizationTimes.push(type.finalizationTime);
+        finalizations.push(type.finalization);
         supplies.push(type.supply);
         presaleBlocks.push(type.presaleBlock);
       }
@@ -398,7 +463,7 @@ export default {
       invocParams.push(digests);
       invocParams.push(isNFs);
       invocParams.push(prices);
-      invocParams.push(finalizationTimes);
+      invocParams.push(finalizations);
       invocParams.push(supplies);
       invocParams.push(presaleBlocks);
       return invocParams;
@@ -414,11 +479,51 @@ export default {
           params[2], // digest
           params[3], // is non fungible
           params[4], // price
-          params[5], // finalization time
+          params[5], // finalization
           params[6], // supply
           params[7] // presale block
         )
-        .send({ from: this.$store.state.web3.account });
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForDeploymentReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted event contract deployment invocation: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForDeploymentReceipt = false;
+              this.showSuccessFullDeploymentMessage = true;
+            }
+            await this.$store.dispatch("loadEvents");
+            await sleep(2000);
+            this.$router.push({
+              path: `/`
+            });
+          }
+        )
+        .catch(e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForDeploymentReceipt = false;
+          this.deployingContractState = false;
+          this.showSuccessFullDeploymentMessage = false;
+          this.showErrorMessage = true;
+          console.log(e);
+        });
+
+      // await this.$store.dispatch("loadEvents");
       this.savedPresaleTypes = [];
       console.log("createPresaleTypes invocation executed");
       return response;
@@ -435,7 +540,7 @@ export default {
           params[2], // digest
           params[3], // is non-fungible
           params[4], // price
-          params[5], // finalization time
+          params[5], // finalization
           params[6] // presale block
         )
         .send({ from: this.$store.state.web3.account });
@@ -451,6 +556,7 @@ export default {
     async saveTicketType(seats, color) {
       console.log("save ticket executed in TicketForm");
       if (seats.length == 0) {
+        console.log("no seats selected - doing nothing");
         return;
       } else {
         if (this.withPresale) {
@@ -482,7 +588,7 @@ export default {
         isNF: this.form.isNF,
         supply: this.getSupply(),
         price: this.fractionPrice,
-        finalizationTime: this.finalizationTimeUnix,
+        finalization: this.finalizationUnixSeconds,
         description: this.form.description,
         seats: seats,
         color: color
@@ -490,12 +596,15 @@ export default {
     },
     async getTypeAsPresale(seats, color) {
       let presaleBlock = await this.computePresaleBlock();
+      console.log("get as presale");
+      console.log(presaleBlock);
+      console.log(typeof presaleBlock);
       return {
         title: this.form.title,
         isNF: this.form.isNF,
         supply: this.getSupply(),
         price: this.fractionPrice,
-        finalizationTime: this.finalizationTimeUnix,
+        finalization: this.finalizationUnixSeconds,
         description: this.form.description,
         seats: seats,
         presaleBlock: presaleBlock,
@@ -537,7 +646,7 @@ export default {
       this.form.title = null;
       this.form.description = null;
       // this.form.ticketIsNonFungible = null;
-      // this.form.finalizationTime = null;
+      // this.form.finalization = null;
       // this.form.ticketInitialSupply = null;
     },
     createIpfsString(type) {
@@ -579,13 +688,17 @@ export default {
       return d;
     },
     async computePresaleBlock() {
-      return (
-        (await this.getCurrentBlockNumber()) +
-        Math.floor(
-          (this.presaleTimeUnix - new Date().getTime() / 1000) /
-            AVERAGE_BLOCKTIME
-        )
+      let currentBlockNumber = BigNumber(await this.getCurrentBlockNumber());
+      console.log(currentBlockNumber.toFixed());
+      let nowUnixInSeconds = BigNumber(new Date().getTime()).dividedBy(
+        BigNumber(1000)
       );
+      let avgBlockTimeInSeconds = BigNumber(AVERAGE_BLOCKTIME).dividedBy(1000);
+      return this.presaleClosingTimeUnixSeconds
+        .minus(nowUnixInSeconds)
+        .dividedBy(avgBlockTimeInSeconds)
+        .plus(currentBlockNumber)
+        .toFixed(0);
     },
     async getCurrentBlockNumber() {
       return await this.$store.state.web3.web3Instance.eth.getBlockNumber();
@@ -603,24 +716,45 @@ export default {
       return this.amountOfSelectedSeats;
     },
     finalizationDateInSeconds() {
-      return Number(Date.parse(this.finalizationTime_Date) / 1000);
-    },
-    finalizationTimeUnix() {
-      return (
-        this.finalizationDateInSeconds +
-        this.form.finalizationTime_Time.HH * 3600 +
-        this.form.finalizationTime_Time.mm * 60
+      return BigNumber(Date.parse(this.finalizationDate)).dividedBy(
+        BigNumber(1000)
       );
     },
-    presaleDateInSeconds() {
-      return Number(Date.parse(this.presale_date) / 1000);
-    },
-    presaleTimeUnix() {
-      return (
-        this.presaleDateInSeconds +
-        this.form.presale_time.HH * 3600 +
-        this.form.presale_time.mm * 60
+    finalizationHoursInSeconds() {
+      return BigNumber(this.form.finalizationTime.HH).multipliedBy(
+        BigNumber(3600)
       );
+    },
+    finalizationMinutesInSeconds() {
+      return BigNumber(this.form.finalizationTime.mm).multipliedBy(
+        BigNumber(60)
+      );
+    },
+    finalizationUnixSeconds() {
+      return this.finalizationDateInSeconds
+        .plus(this.finalizationHoursInSeconds)
+        .plus(this.finalizationMinutesInSeconds)
+        .toFixed();
+    },
+    presaleClosingDateInSeconds() {
+      return BigNumber(Date.parse(this.presaleClosingDate)).dividedBy(
+        BigNumber(1000)
+      );
+    },
+    presaleClosingTimeHoursInSeconds() {
+      return BigNumber(this.form.presaleClosingTime.HH).multipliedBy(
+        BigNumber(3600)
+      );
+    },
+    presaleClosingTimeMinutesInSeconds() {
+      return BigNumber(this.form.presaleClosingTime.mm).multipliedBy(
+        BigNumber(60)
+      );
+    },
+    presaleClosingTimeUnixSeconds() {
+      return this.presaleClosingDateInSeconds
+        .plus(this.presaleClosingTimeHoursInSeconds)
+        .plus(this.presaleClosingTimeMinutesInSeconds);
     },
     web3() {
       return this.$store.state.web3;
@@ -654,8 +788,8 @@ export default {
     }
     this.event = await idb.getEvent(this.$route.query.address);
     this.currencyDecimals = getDecimals(this.event.currency);
-    this.finalizationTime_Date = this.getDateAfterMonths(8);
-    this.presale_date = this.getDateAfterMonths(2);
+    this.finalizationDate = this.getDateAfterMonths(8);
+    this.presaleClosingDate = this.getDateAfterMonths(2);
   },
   validations: {
     form: {
@@ -663,7 +797,7 @@ export default {
         // required,
         minLength: minLength(3)
         // },
-        // finalizationTime: {
+        // finalization: {
         //   required
       }
     }
