@@ -33,6 +33,9 @@ export default new Vuex.Store({
     updateEventStore(state, events) {
       state.events = events;
     },
+    updateApproverStore(state, approvers) {
+      state.approvers = approvers;
+    },
     registerIpfsInstance(state, payload) {
       state.ipfsInstance = payload;
     }
@@ -126,23 +129,61 @@ export default new Vuex.Store({
       commit("updateEventStore", events);
     },
     async loadApprovers({ commit }) {
+      const registerEvents = await state.identity.getPastEvents("ApproverRegistered", {
+        fromBlock: 1
+      });
+      console.log(registerEvents);
       let approvers = [];
-      for (const event of state.events) {
-        const approverAddress = event.identityContractAddress;
-        console.log(approverAddress);
-        const inStore = await idb.getApprover(approverAddress);
+      for (let i = 0; i < registerEvents.length; i++) {
+        let registerEvent = registerEvents[i];
+        let address = registerEvent.returnValues.approverAddress;
+        console.log(address);
+        const inStore = await idb.getApprover(address); // whether this approver is present
         let approver;
-        if (inStore) {
-          approver = new IdentityApprover(inStore);
-          approver.requestUrlVerification();
-          approver.requestTwitterVerification();
-        } else {
-          approver = new IdentityApprover(approverAddress);
+        console.log("loading approver: " + address);
+        if (!inStore) {
+          console.log("approver not in store");
+          approver = new IdentityApprover(address);
           await approver.loadData(state.identity, state.ipfsInstance);
+          console.log(approver);
+        } else {
+          console.log("approver in store");
+          approver = new IdentityApprover(inStore);
         }
+        console.log("loading approver data");
+        let fetch = await approver.loadData(state.identity, state.ipfsInstance);
+        console.log("loaded approver data");
+        if (fetch) {
+          approver.lastFetchedBlock = state.web3.currentBlock;
+        }
+        console.log("saving approver data");
         await idb.saveApprover(approver);
+        console.log("saved approver data");
         approvers.push(approver);
       }
+      // for (const approver of state.approvers) {
+      //   let approverAddress = approver.approverAddress;
+      //   console.log(approverAddress)
+      //   const inStore = await idb.getApprover(approverAddress);
+      //   if (inStore) {}
+      // }
+      // for (const event of state.events) {
+      //   const approverAddress = event.identityContractAddress;
+      //   console.log(approverAddress);
+      //   const inStore = await idb.getApprover(approverAddress);
+      //   let approver;
+      //   if (inStore) {
+      //     approver = new IdentityApprover(inStore);
+      //     approver.requestUrlVerification();
+      //     approver.requestTwitterVerification();
+      //   } else {
+      //     approver = new IdentityApprover(approverAddress);
+      //     await approver.loadData(state.identity, state.ipfsInstance);
+      //   }
+      //   await idb.saveApprover(approver);
+      //   approvers.push(approver);
+      // }
+
       commit("updateApproverStore", approvers);
     },
     /* 

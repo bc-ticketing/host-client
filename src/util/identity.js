@@ -13,11 +13,11 @@ export class IdentityApprover {
     this.methods = [];
     this.website = {
       url: "",
-      verification: "pending",
+      verification: false,
     };
     this.twitter = {
       url: "",
-      verification: "pending",
+      verification: false,
     };
     this.lastFetchedBlock = 0;
     this.ipfsHash = "";
@@ -55,8 +55,8 @@ export class IdentityApprover {
   async loadData(identitySC, ipfsInstance) {
     await this.fetchIPFSHash(identitySC);
     await this.loadIPFSMetadata(ipfsInstance);
-    this.requestTwitterVerification();
-    this.requestUrlVerification();
+    // this.requestTwitterVerification();
+    // this.requestUrlVerification();
   }
 
   async requestTwitterVerification() {

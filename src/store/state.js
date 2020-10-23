@@ -14,8 +14,9 @@ let state = {
     eventFactory: null,
     identity: null,
     approvers: [],
+    lastFetchedBlockApprovers: 1,
     ipfsInstance: null,
-    lastFetchedBlock: 1
+    lastFetchedBlock: 1,
 };
 
 export default state;
