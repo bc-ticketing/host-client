@@ -171,30 +171,52 @@
           </div>-->
 
           <div class="md-layout md-gutter" v-if="inNewMode">
+            <div class="md-layout-item md-small-size-100">
+              <md-checkbox v-model="useERC20Token" :value="true"
+                >Use ERC20 Token for Payment
+              </md-checkbox>
+            </div>
+          </div>
+
+          <div v-if="useERC20Token" class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100 info-dialog">
-              <md-field :class="getValidationClass('erc20Token')">
-                <label for="erc20Token">Accepted Token For Payment</label>
-                <md-input
-                  name="erc20Token"
-                  id="erc20Token"
-                  v-model="form.erc20Token"
-                />
-                <span class="md-error" v-if="!$v.form.erc20Token.required"
-                  >The token that is accepted for payment is required</span
+              <!-- <md-field :class="getValidationClass('erc20Token')">
+                <label for="erc20-token">Accepted Token For Payment</label>
+              <md-select
+                  id="erc20-token"
+                  name="erc20-token"
+                  v-model="acceptedToken"
                 >
-                <!-- <span
+                  <md-option value="eth">ETH</md-option>
+                  <md-option value="testtoken">ERC20 Test Token</md-option>
+                </md-select> -->
+              <md-radio v-model="erc20Token" :value="erc20Tokens.testToken"
+                >ERC20 Test Token</md-radio
+              >
+              <md-radio v-model="erc20Token" :value="erc20Tokens.dai"
+                >DAI</md-radio
+              >
+              <!-- <md-input
+                  name="erc20-token"
+                  id="erc20-token"
+                  v-model="form.erc20Token"
+                /> -->
+              <!-- <span class="md-error" v-if="!$v.form.erc20Token.required"
+                >The token that is accepted for payment is required</span
+              > -->
+              <!-- <span
                   class="md-error"
                   v-else-if="!$v.form.erc20Token.maxLength"
                 >Invalid event token hash</span>-->
-              </md-field>
-              <div class="info-dialog-button">
+              <!-- </md-field> -->
+              <!-- <div class="info-dialog-button">
                 <md-button
                   class="md-icon-button md-primary"
                   @click="showTokenDialog = true"
                 >
                   <md-icon>help_outline</md-icon>
                 </md-button>
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -202,7 +224,7 @@
             <md-dialog-title>Accepted Token</md-dialog-title>
             <p class="dialog-text">
               You can request any ERC20 Token for payment of your tickets. To
-              use ETH, keep the initial placeholder.
+              use ETH, unselect the provided checkbox.
             </p>
             <md-button class="md-primary" @click="showTokenDialog = false"
               >Close</md-button
@@ -364,7 +386,7 @@ import {
   EVENT_FACTORY_ADDRESS
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
-import { DAI } from "../util/constants/ERC20Tokens.js";
+import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 export default {
   name: "EventForm",
   mixins: [validationMixin],
@@ -388,7 +410,6 @@ export default {
     ipfsAdded: false,
     eventContractDeployed: false,
     lastEventInfo: null,
-    ethToken: "0",
     form: {
       // ipfs info
       title: "title",
@@ -402,12 +423,16 @@ export default {
       },
       url: "",
       twitter: "",
-      //   eventTags: [],
       // blockchain info
-      erc20Token: "0x0000000000000000000000000000000000000000",
       idApprover: "0x2bF80bcfA49A7058a053B1F121cFaCEe072C432e",
       idLevel: 1,
       granularity: 2
+    },
+    useERC20Token: false,
+    erc20Token: ERC20TESTTOKEN,
+    erc20Tokens: {
+      testToken: ERC20TESTTOKEN,
+      dai: DAI
     },
     sending: false,
     lastEvent: null
@@ -463,6 +488,9 @@ export default {
         this.form.startTime.HH * 3600 +
         this.form.startTime.mm * 60
       );
+    },
+    usedToken() {
+      return this.useERC20Token ? this.erc20Token : ETH;
     }
   },
   created() {
@@ -584,7 +612,7 @@ export default {
           args.digest,
           this.form.idApprover,
           this.form.idLevel,
-          this.form.erc20Token,
+          this.usedToken,
           this.form.granularity
         )
         .send({ from: this.$store.state.web3.account });
