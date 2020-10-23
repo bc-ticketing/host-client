@@ -64,11 +64,11 @@ export class Event {
     this.identityLevel = 0;
     this.website = {
       url: '',
-      verification: 'pending'
+      verification: false
     }
     this.twitter = {
       url: '',
-      verification: 'pending'
+      verification: false
     }
   }
 

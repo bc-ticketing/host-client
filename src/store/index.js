@@ -22,6 +22,7 @@ export default new Vuex.Store({
       state.web3.networkId = web3.networkId;
       state.web3.account = web3.account;
       state.web3.balance = parseInt(web3.balance, 10);
+      state.web3.currentBlock = web3.currentBlock;
     },
     setEventFactory(state, factory) {
       state.eventFactory = factory;
@@ -31,6 +32,9 @@ export default new Vuex.Store({
     },
     updateEventStore(state, events) {
       state.events = events;
+    },
+    updateApproverStore(state, approvers) {
+      state.approvers = approvers;
     },
     registerIpfsInstance(state, payload) {
       state.ipfsInstance = payload;
@@ -93,9 +97,8 @@ export default new Vuex.Store({
         if (state.web3.account == owner) {
           const inStore = await idb.getEvent(address); // whether this event is present
           let event;
-          console.log("loading event; " + address);
           if (!inStore) {
-            console.log("not in store");
+            console.log("event not in store - fetching event");
             event = new Event(address);
             await event.loadIdentityData(
               // load the data
@@ -103,22 +106,17 @@ export default new Vuex.Store({
               state.web3.web3Instance
             );
           } else {
-            console.log("in store");
             event = new Event(inStore);
           }
-          console.log("loading event data");
           let fetch = await event.loadData(
             EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
             state.ipfsInstance,
             state.web3.web3Instance
           );
-          console.log("loaded event data");
           if (fetch) {
             event.lastFetchedBlock = state.web3.currentBlock;
           }
-          console.log("saving event data");
           await idb.saveEvent(event);
-          console.log("saved event data");
           events.push(event);
         }
       }
@@ -126,18 +124,29 @@ export default new Vuex.Store({
     },
     async loadApprovers({ commit }) {
       let approvers = [];
-      for (const event of state.events) {
-        const approverAddress = event.identityContractAddress;
-        console.log(approverAddress);
-        const inStore = await idb.getApprover(approverAddress);
+      // adding approvers that are already in the store to the list
+      for (let i = 0; i < state.approvers.length; i++) {
         let approver;
-        if (inStore) {
-          approver = new IdentityApprover(inStore);
-          approver.requestUrlVerification();
-          approver.requestTwitterVerification();
-        } else {
-          approver = new IdentityApprover(approverAddress);
+        const approverInStore = await idb.getApprover(state.approvers[i].approverAddress);
+        approver = new IdentityApprover(approverInStore);
+        await idb.saveApprover(approver);
+        approvers.push(approver);
+      }
+      // Fetching register events that occured since the last fetched block and store the approvers
+      const registerEvents = await state.identity.getPastEvents("ApproverRegistered", {
+        fromBlock: state.lastFetchedBlockApprovers
+      });
+      for (let i = 0; i < registerEvents.length; i++) {
+        let registerEvent = registerEvents[i];
+        let address = registerEvent.returnValues.approverAddress;
+        const inStore = await idb.getApprover(address); // whether this approver is present
+        let approver;
+        if (!inStore) {
+          console.log("approver not in store - fetching approver");
+          approver = new IdentityApprover(address);
           await approver.loadData(state.identity, state.ipfsInstance);
+        } else {
+          approver = new IdentityApprover(inStore);
         }
         await idb.saveApprover(approver);
         approvers.push(approver);

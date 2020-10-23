@@ -3,7 +3,7 @@
     <form novalidate class="md-layout" @submit.prevent="eventFormComplete">
       <md-card class="md-layout-item">
         <md-card-header>
-          <div class="md-title">New Event</div>
+          <div v-if="inNewMode" class="md-title">New Event</div>
         </md-card-header>
 
         <md-card-content>
@@ -38,6 +38,7 @@
                   name="location"
                   id="location"
                   v-model="form.location"
+                  :disabled="sending"
                 />
               </md-field>
             </div>
@@ -46,9 +47,11 @@
           <div
             class="md-layout md-gutter date-container"
             v-if="inEditMode || inNewMode"
+            :disabled="sending"
           >
             <div class="md-layout-item">
               <md-datepicker
+                v-if="!sending"
                 md-immediately
                 name="date"
                 id="date"
@@ -56,11 +59,22 @@
               >
                 <label for="date">Date and Start Time</label>
               </md-datepicker>
+              <md-datepicker
+                v-if="sending"
+                md-immediately
+                name="disabled-datepicker"
+                id="disabled-datepicker"
+                v-model="dateUponSending"
+                :md-disabled-dates="disabledDates"
+              >
+                <label for="disabled-datepicker">Date and Start Time</label>
+              </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
               <vue-timepicker
                 v-model="form.startTime"
                 format="HH:mm"
+                :disabled="sending"
               ></vue-timepicker>
             </div>
             <div class="md-small-size-100 info-dialog-button">
@@ -68,6 +82,7 @@
                 class="md-icon-button md-primary"
                 @click="showStartTimeDialog = true"
                 style="margin-right: 16px"
+                :disabled="sending"
               >
                 <md-icon>help_outline</md-icon>
               </md-button>
@@ -93,6 +108,7 @@
                   name="category"
                   id="category"
                   v-model="form.category"
+                  :disabled="sending"
                 >
                   <md-option value="Music">Music</md-option>
                   <md-option value="Sports">Sports</md-option>
@@ -114,6 +130,7 @@
                   name="idApprover"
                   id="idApprover"
                   v-model="form.idApprover"
+                  :disabled="sending"
                 />
                 <span class="md-error">An ID approver is required</span>
               </md-field>
@@ -127,6 +144,7 @@
                   id="idLevel"
                   name="idLevel"
                   v-model="form.idLevel"
+                  :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
@@ -171,30 +189,61 @@
           </div>-->
 
           <div class="md-layout md-gutter" v-if="inNewMode">
+            <div class="md-layout-item md-small-size-100">
+              <md-checkbox
+                v-model="useERC20Token"
+                :value="true"
+                :disabled="sending"
+                >Use ERC20 Token for Payment
+              </md-checkbox>
+            </div>
+          </div>
+
+          <div v-if="useERC20Token" class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100 info-dialog">
-              <md-field :class="getValidationClass('erc20Token')">
-                <label for="erc20Token">Accepted Token For Payment</label>
-                <md-input
-                  name="erc20Token"
-                  id="erc20Token"
-                  v-model="form.erc20Token"
-                />
-                <span class="md-error" v-if="!$v.form.erc20Token.required"
-                  >The token that is accepted for payment is required</span
+              <!-- <md-field :class="getValidationClass('erc20Token')">
+                <label for="erc20-token">Accepted Token For Payment</label>
+              <md-select
+                  id="erc20-token"
+                  name="erc20-token"
+                  v-model="acceptedToken"
                 >
-                <!-- <span
+                  <md-option value="eth">ETH</md-option>
+                  <md-option value="testtoken">ERC20 Test Token</md-option>
+                </md-select> -->
+              <md-radio
+                v-model="erc20Token"
+                :value="erc20Tokens.testToken"
+                :disabled="sending"
+                >ERC20 Test Token</md-radio
+              >
+              <md-radio
+                v-model="erc20Token"
+                :value="erc20Tokens.dai"
+                :disabled="sending"
+                >DAI</md-radio
+              >
+              <!-- <md-input
+                  name="erc20-token"
+                  id="erc20-token"
+                  v-model="form.erc20Token"
+                /> -->
+              <!-- <span class="md-error" v-if="!$v.form.erc20Token.required"
+                >The token that is accepted for payment is required</span
+              > -->
+              <!-- <span
                   class="md-error"
                   v-else-if="!$v.form.erc20Token.maxLength"
                 >Invalid event token hash</span>-->
-              </md-field>
-              <div class="info-dialog-button">
+              <!-- </md-field> -->
+              <!-- <div class="info-dialog-button">
                 <md-button
                   class="md-icon-button md-primary"
                   @click="showTokenDialog = true"
                 >
                   <md-icon>help_outline</md-icon>
                 </md-button>
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -202,7 +251,7 @@
             <md-dialog-title>Accepted Token</md-dialog-title>
             <p class="dialog-text">
               You can request any ERC20 Token for payment of your tickets. To
-              use ETH, keep the initial placeholder.
+              use ETH, unselect the provided checkbox.
             </p>
             <md-button class="md-primary" @click="showTokenDialog = false"
               >Close</md-button
@@ -218,6 +267,7 @@
                   id="event-granularity"
                   name="event-granularity"
                   v-model="form.granularity"
+                  :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
@@ -282,7 +332,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('color')">
                 <label for="color">Color</label>
-                <md-input name="color" id="color" v-model="form.color" />
+                <md-input
+                  name="color"
+                  id="color"
+                  v-model="form.color"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -291,7 +346,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('url')">
                 <label for="url">URL</label>
-                <md-input name="url" id="url" v-model="form.url" />
+                <md-input
+                  name="url"
+                  id="url"
+                  v-model="form.url"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -300,7 +360,12 @@
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('twitter')">
                 <label for="twitter">Twitter</label>
-                <md-input name="twitter" id="twitter" v-model="form.twitter" />
+                <md-input
+                  name="twitter"
+                  id="twitter"
+                  v-model="form.twitter"
+                  :disabled="sending"
+                />
               </md-field>
             </div>
           </div>
@@ -310,36 +375,66 @@
 
         <md-card-actions>
           <md-button
-            v-if="inEditMode"
+            v-if="inEditMode && !invokingMetadataChangeState"
             type="submit"
             class="md-accent"
             @click="leaveEditMode"
+            :disabled="sending"
             >Cancel</md-button
           >
           <md-button
-            v-if="inEditMode"
+            v-if="inEditMode && !invokingMetadataChangeState"
             type="submit"
             class="md-primary"
             @click="modifyEvent"
+            :disabled="sending"
             >Submit changes</md-button
           >
           <md-button
-            v-if="inNewMode"
+            v-if="inNewMode && !deployingContractState"
             type="submit"
             class="md-primary"
             @click="createEvent"
+            :disabled="sending"
             >Create Event</md-button
           >
         </md-card-actions>
       </md-card>
+      <!-- </div> -->
 
-      <md-snackbar :md-active.sync="ipfsAdded">
+      <!-- <md-snackbar :md-active.sync="ipfsAdded">
         The event {{ lastEvent }} was uploaded to IPFS with success!
       </md-snackbar>
-      <md-snackbar :md-active.sync="eventContractDeployed">
+      <md-snackbar :md-active.sync="deployingContractState">
         The event {{ lastEvent }} was successfully deployed! Contract address:
-      </md-snackbar>
+      </md-snackbar> -->
     </form>
+    <div v-if="waitingForSignature" class="awaiting-signature-message">
+      <p style="text-align: center">
+        Please sign the transaction to deploy this event contract.
+      </p>
+    </div>
+    <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p style="text-align: center">
+        Please wait - The Event contract is being deployed.
+      </p>
+    </div>
+    <div v-if="waitingForMetadataChangeReceipt" class="awaiting-form-response">
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p style="text-align: center">
+        Please wait - The metadata change invocation is being sent.
+      </p>
+    </div>
+    <div v-if="showSuccessFullDeploymentMessage" class="successful-message">
+      <p style="text-align: center">The event was successfully deployed.</p>
+    </div>
+    <div v-if="showSuccessfullMetadataChangeMessage" class="successful-message">
+      <p style="text-align: center">The metadata change is confirmed.</p>
+    </div>
+    <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
+      <p style="text-align: center">Something went wrong...</p>
+    </div>
   </div>
 </template>
 
@@ -355,16 +450,21 @@ import {
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
+import sleep from "await-sleep";
 
 // project internal imports
-import { NETWORKS } from "../util/constants/constants.js";
+import {
+  AVERAGE_BLOCKTIME,
+  AVERAGE_BLOCKTIME_LOCAL,
+  NETWORKS
+} from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
-import { DAI } from "../util/constants/ERC20Tokens.js";
+import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 export default {
   name: "EventForm",
   mixins: [validationMixin],
@@ -375,6 +475,15 @@ export default {
     inNewMode: Boolean
   },
   data: () => ({
+    sending: false,
+    waitingForSignature: false,
+    waitingForDeploymentReceipt: false,
+    waitingForMetadataChangeReceipt: false,
+    deployingContractState: false,
+    invokingMetadataChangeState: false,
+    showSuccessFullDeploymentMessage: false,
+    showSuccessfullMetadataChangeMessage: false,
+    showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
@@ -388,7 +497,6 @@ export default {
     ipfsAdded: false,
     eventContractDeployed: false,
     lastEventInfo: null,
-    ethToken: "0",
     form: {
       // ipfs info
       title: "title",
@@ -402,15 +510,23 @@ export default {
       },
       url: "",
       twitter: "",
-      //   eventTags: [],
       // blockchain info
-      erc20Token: "0x0000000000000000000000000000000000000000",
       idApprover: "0x2bF80bcfA49A7058a053B1F121cFaCEe072C432e",
       idLevel: 1,
       granularity: 2
     },
-    sending: false,
-    lastEvent: null
+    useERC20Token: false,
+    erc20Token: ERC20TESTTOKEN,
+    erc20Tokens: {
+      testToken: ERC20TESTTOKEN,
+      dai: DAI
+    },
+    lastEvent: null,
+    disabledDates: date => {
+      const day = date.getDay();
+      return day >= 0;
+    },
+    dateUponSending: null
   }),
   validations: {
     form: {
@@ -463,6 +579,19 @@ export default {
         this.form.startTime.HH * 3600 +
         this.form.startTime.mm * 60
       );
+    },
+    usedToken() {
+      return this.useERC20Token ? this.erc20Token : ETH;
+    }
+  },
+  watch: {
+    showErrorMessage: function(val) {
+      setTimeout(() => {
+        this.showErrorMessage = false;
+      }, 3000);
+    },
+    sending: function(val) {
+      this.dateUponSending = this.date;
     }
   },
   created() {
@@ -511,13 +640,17 @@ export default {
       this.form.granularity = 4;
     },
     async createEvent() {
+      this.sending = true;
       await this.uploadToIpfs();
       await this.deployEventContract();
+      this.sending = false;
     },
     async modifyEvent() {
       // todo: add checks to compare to current ipfs hash
+      this.sending = true;
       await this.uploadToIpfs();
       await this.invokeMetadataChange();
+      this.sending = false;
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
@@ -526,7 +659,6 @@ export default {
         this.ipfsHash = response.path;
         console.log("Uploading to ipfs");
         console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
-        this.sending = true;
       } catch (err) {
         console.log(err);
         this.ipfsError = true;
@@ -534,7 +666,6 @@ export default {
       window.setTimeout(() => {
         this.lastEvent = `${this.form.title} ${this.form.description}`;
         this.ipfsAdded = true;
-        this.sending = false;
         // this.clearForm();
       }, 1500);
     },
@@ -571,12 +702,55 @@ export default {
         EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
         this.event.contractAddress
       );
+      this.invokingMetadataChangeState = true;
+      this.waitingForSignature = true;
       const updateMetadata = await eventContract.methods
         .updateEventMetadata(args.hashFunction, args.size, args.digest)
-        .send({ from: this.$store.state.web3.account });
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForMetadataChangeReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted metadata change invocation: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              await sleep(5000);
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForMetadataChangeReceipt = false;
+              this.invokingMetadataChangeState = false;
+              this.showSuccessfullMetadataChangeMessage = true;
+            }
+            await this.$store.dispatch("loadEvents");
+            await sleep(2000);
+            this.leaveEditMode();
+          }
+        )
+        .catch(e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForMetadataChangeReceipt = false;
+          this.invokingMetadataChangeState = false;
+          this.showSuccessfullMetadataChangeMessage = false;
+          this.showErrorMessage = true;
+          console.log(e);
+        });
     },
+
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
+      this.deployingContractState = true;
+      this.waitingForSignature = true;
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
@@ -584,22 +758,48 @@ export default {
           args.digest,
           this.form.idApprover,
           this.form.idLevel,
-          this.form.erc20Token,
+          this.usedToken,
           this.form.granularity
         )
-        .send({ from: this.$store.state.web3.account });
-
-      this.eventFactory.events
-        .EventCreated()
-        .on(`data`, event => {
-          const ev = { address: event.returnValues[0], cid: this.ipfsHash };
-          this.lastEventInfo = ev;
-          this.$store.commit("addEventContract", ev);
-          this.eventContractDeployed = true;
-          console.log("Contract created");
-          console.log(this.lastEventInfo);
-        })
-        .on(`error`, console.error);
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForDeploymentReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted event contract deployment invocation: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForDeploymentReceipt = false;
+              this.showSuccessFullDeploymentMessage = true;
+            }
+            await this.$store.dispatch("loadEvents");
+            await sleep(2000);
+            this.$router.push({
+              path: `/`
+            });
+          }
+        )
+        .catch(e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForDeploymentReceipt = false;
+          this.deployingContractState = false;
+          this.showSuccessFullDeploymentMessage = false;
+          this.showErrorMessage = true;
+          console.log(e);
+        });
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
@@ -616,4 +816,7 @@ export default {
 .date-container {
   display: flex;
 }
+/* .event-form-card-wrapper {
+  background: rgba(255, 255, 255, 0.5);
+} */
 </style>

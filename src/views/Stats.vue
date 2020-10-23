@@ -25,7 +25,7 @@ import EventModificationCard from "../components/EventModificationCard";
 import BlockchainStatsCard from "../components/BlockchainStatsCard";
 import LiveStatsCard from "../components/LiveStatsCard";
 import TicketStats from "../components/TicketStats";
-import getEvent from "../util/utility";
+import idb from "../util/db/idb";
 
 export default {
   name: "Stats",
@@ -47,22 +47,22 @@ export default {
       });
     }
   },
-  created() {
+  async created() {
     setTimeout(() => {
       if (!this.eventSet) {
         this.notFoundMessageVisible = true;
       }
     }, 5000);
     console.log("modification view created executed");
-    this.$root.$on("eventsFullyLoaded", () => {
-      this.event = getEvent(address);
+    this.$root.$on("eventsFullyLoaded", async () => {
+      this.event = await idb.getEvent(address);
       if (this.event != null) {
         this.eventSet = true;
         this.notFoundMessageVisible = false;
       }
     });
     let address = this.$route.query.address;
-    this.event = getEvent(address);
+    this.event = await idb.getEvent(address);
     if (this.event != null) {
       this.eventSet = true;
     }

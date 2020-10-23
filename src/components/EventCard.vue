@@ -134,7 +134,7 @@ export default {
         return (
           WEEKDAYS[date.getDay()] +
           " " +
-          date.getDay() +
+          date.getDate() +
           ". " +
           MONTHS[date.getMonth()] +
           " " +

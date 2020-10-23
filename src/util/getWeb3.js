@@ -14,6 +14,8 @@ export async function getWeb3() {
     web3.web3Instance = await window.web3;
     web3.balance = await window.web3.eth.getBalance(web3.account);
     web3.eth = await window.web3.eth;
+    const block = await window.web3.eth.getBlock('latest');
+    web3.currentBlock = block.number;
     return web3;
   } catch (error) {
     // User denied account access...

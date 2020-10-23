@@ -1,17 +1,13 @@
-import store from '../store';
+import { ETH, ETH_DECIMALS, DAI, DAI_DECIMALS, ERC20TESTTOKEN, ERC20TESTTOKEN_DECIMALS } from "./constants/ERC20Tokens";
 
-export default function getEvent(address) {
-  const es = store.state.events;
-  if (es.length == 0) {
-    console.log("no events found");
-    return null;
-  } else {
-    for (let i = 0; i < es.length; i++) {
-      if (es[i].contractAddress == address) {
-        console.log(es[i]);
-        return es[i];
-      }
-    }
+export default function getDecimals(currency) {
+  switch (currency) {
+    case ETH:
+      return ETH_DECIMALS;
+    case DAI:
+      return DAI_DECIMALS;
+    case ERC20TESTTOKEN:
+      return ERC20TESTTOKEN_DECIMALS;
   }
 }
 

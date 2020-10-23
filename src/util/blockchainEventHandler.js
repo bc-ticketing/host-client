@@ -55,6 +55,10 @@ export async function ticketMetadataChanged(contract, fromBlock, ticketId) {
     return events.length > 0;
 }
 
+// export async function approverMetadataChanged(contract, fromBlock) {
+//     return await getLatestEvent(contract, `ApproverMetadata`, fromBlock)
+// }
+
 
 /* aftermarket */
 export async function ticketTransferred(contract, fromBlock, filter = '', filterValue = '') {
