@@ -45,5 +45,5 @@ export const MESSAGE_BUYORDER_PLACED = 'You enqueued for this ticket!';
 export const MESSAGE_BUYORDER_FILLED = 'You sold your ticket!';
 export const MESSAGE_SELLORDER_WITHDRAWN = 'The sale listing has been withdrawn!';
 
-export const AVERAGE_BLOCKTIME = 15;
-export const AVERAGE_BLOCKTIME_LOCAL = 0.1;
+export const AVERAGE_BLOCKTIME = 15000; // in ms
+export const AVERAGE_BLOCKTIME_LOCAL = 100; // in ms
