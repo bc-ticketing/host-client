@@ -46,3 +46,4 @@ export const MESSAGE_BUYORDER_FILLED = 'You sold your ticket!';
 export const MESSAGE_SELLORDER_WITHDRAWN = 'The sale listing has been withdrawn!';
 
 export const AVERAGE_BLOCKTIME = 15;
+export const AVERAGE_BLOCKTIME_LOCAL = 0.1;

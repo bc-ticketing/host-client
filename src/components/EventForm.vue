@@ -1,6 +1,7 @@
 <template>
   <div class="create-event-form-container">
     <form novalidate class="md-layout" @submit.prevent="eventFormComplete">
+      <!-- <div class="event-form-card-wrapper"> -->
       <md-card class="md-layout-item">
         <md-card-header>
           <div class="md-title">New Event</div>
@@ -346,7 +347,7 @@
             >Submit changes</md-button
           >
           <md-button
-            v-if="inNewMode"
+            v-if="inNewMode && !deployingContractState"
             type="submit"
             class="md-primary"
             @click="createEvent"
@@ -354,14 +355,35 @@
           >
         </md-card-actions>
       </md-card>
+      <!-- </div> -->
 
-      <md-snackbar :md-active.sync="ipfsAdded">
+      <!-- <md-snackbar :md-active.sync="ipfsAdded">
         The event {{ lastEvent }} was uploaded to IPFS with success!
       </md-snackbar>
-      <md-snackbar :md-active.sync="eventContractDeployed">
+      <md-snackbar :md-active.sync="deployingContractState">
         The event {{ lastEvent }} was successfully deployed! Contract address:
-      </md-snackbar>
+      </md-snackbar> -->
     </form>
+    <div v-if="waitingForSignature" class="awaiting-signature-message">
+      <p style="text-align: center">
+        Please sign the transaction to deploy this event contract.
+      </p>
+    </div>
+    <div v-if="waitingForReceipt" class="awaiting-form-response">
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p style="text-align: center">
+        Please wait - The Event contract is being deployed.
+      </p>
+    </div>
+    <div
+      v-if="showSuccessFullDeploymentMessage"
+      class="successful-deployment-message"
+    >
+      <p style="text-align: center">The event was successfully deployed.</p>
+    </div>
+    <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
+      <p style="text-align: center">Something went wrong...</p>
+    </div>
   </div>
 </template>
 
@@ -377,9 +399,14 @@ import {
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
+import sleep from "await-sleep";
 
 // project internal imports
-import { NETWORKS } from "../util/constants/constants.js";
+import {
+  AVERAGE_BLOCKTIME,
+  AVERAGE_BLOCKTIME_LOCAL,
+  NETWORKS
+} from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
@@ -397,6 +424,11 @@ export default {
     inNewMode: Boolean
   },
   data: () => ({
+    waitingForSignature: false,
+    waitingForReceipt: false,
+    deployingContractState: false,
+    showSuccessFullDeploymentMessage: false,
+    showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
@@ -491,6 +523,13 @@ export default {
     },
     usedToken() {
       return this.useERC20Token ? this.erc20Token : ETH;
+    }
+  },
+  watch: {
+    showErrorMessage: function(val) {
+      setTimeout(() => {
+        this.showErrorMessage = false;
+      }, 3000);
     }
   },
   created() {
@@ -605,6 +644,8 @@ export default {
     },
     async deployEventContract() {
       const args = cidToArgs(this.ipfsHash);
+      this.deployingContractState = true;
+      this.waitingForSignature = true;
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
@@ -615,19 +656,56 @@ export default {
           this.usedToken,
           this.form.granularity
         )
-        .send({ from: this.$store.state.web3.account });
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted event contract deployment invocation: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForReceipt = false;
+              this.showSuccessFullDeploymentMessage = true;
+            }
+            await sleep(3);
+            this.$router.push({
+              path: `/`
+            });
+          }
+        )
+        .catch(e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForReceipt = false;
+          this.deployingContractState = false;
+          this.showSuccessFullDeploymentMessage = false;
+          this.showErrorMessage = true;
+          console.log(e);
+        });
 
-      this.eventFactory.events
-        .EventCreated()
-        .on(`data`, event => {
-          const ev = { address: event.returnValues[0], cid: this.ipfsHash };
-          this.lastEventInfo = ev;
-          this.$store.commit("addEventContract", ev);
-          this.eventContractDeployed = true;
-          console.log("Contract created");
-          console.log(this.lastEventInfo);
-        })
-        .on(`error`, console.error);
+      // this.eventFactory.events
+      //   .EventCreated()
+      //   .on(`data`, event => {
+      //     const ev = { address: event.returnValues[0], cid: this.ipfsHash };
+      //     this.lastEventInfo = ev;
+      //     this.$store.commit("addEventContract", ev);
+      //     this.eventContractDeployed = true;
+      //     console.log("Contract created");
+      //     console.log(this.lastEventInfo);
+      //   })
+      //   .on(`error`, console.error);
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
@@ -644,4 +722,7 @@ export default {
 .date-container {
   display: flex;
 }
+/* .event-form-card-wrapper {
+  background: rgba(255, 255, 255, 0.5);
+} */
 </style>
