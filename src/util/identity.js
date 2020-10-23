@@ -1,5 +1,6 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
+// import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
   constructor(approverAddress) {
@@ -70,6 +71,14 @@ export class IdentityApprover {
       this.website.url
     );
   }
+
+  // async metadataChanged(identitySC) {
+  //   const changed = await approverMetadataChanged(
+  //     identitySC,
+  //     this.lastFetchedBlock + 1
+  //   )
+  //   return changed;
+  // }
 
   async getApprovalLevel(identitySC, userAddress) {
     const level = await identitySC.methods
