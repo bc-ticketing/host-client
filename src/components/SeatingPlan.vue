@@ -131,8 +131,8 @@ export default {
   data() {
     return {
       amountSelected: 0,
-      rows: 12,
-      cols: 12,
+      rows: 20,
+      cols: 20,
       minRowSize: 0,
       minColSize: 0,
       blockSelection: false,
