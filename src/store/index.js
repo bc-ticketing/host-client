@@ -151,6 +151,7 @@ export default new Vuex.Store({
         await idb.saveApprover(approver);
         approvers.push(approver);
       }
+      state.lastFetchedBlockApprovers = state.web3.currentBlock;
       commit("updateApproverStore", approvers);
     },
     /* 
