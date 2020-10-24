@@ -328,16 +328,18 @@
             </div>
           </div>
 
-          <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
+          <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('color')">
-                <label for="color">Color</label>
-                <md-input
-                  name="color"
-                  id="color"
-                  v-model="form.color"
+              <md-field>
+                <label for="image">Image</label>
+                <md-file
+                  name="image"
+                  id="image"
+                  @change="readImageFile"
+                  accept="image/*"
                   :disabled="sending"
                 />
+                <span class="md-error">An image is required.</span>
               </md-field>
             </div>
           </div>
@@ -371,8 +373,6 @@
           </div>
         </md-card-content>
 
-        <md-progress-bar md-mode="indeterminate" v-if="sending" />
-
         <md-card-actions>
           <md-button
             v-if="inEditMode && !invokingMetadataChangeState"
@@ -400,6 +400,8 @@
           >
         </md-card-actions>
       </md-card>
+
+      <md-progress-bar md-mode="indeterminate" v-if="sending" />
       <!-- </div> -->
 
       <!-- <md-snackbar :md-active.sync="ipfsAdded">
@@ -409,31 +411,39 @@
         The event {{ lastEvent }} was successfully deployed! Contract address:
       </md-snackbar> -->
     </form>
+    <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p class="process-message">
+        Please wait - The Event metadata is uploaded to IPFS.
+      </p>
+    </div>
+
     <div v-if="waitingForSignature" class="awaiting-signature-message">
-      <p style="text-align: center">
+      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
+      <p class="process-message">
         Please sign the transaction to deploy this event contract.
       </p>
     </div>
     <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p style="text-align: center">
+      <p class="process-message">
         Please wait - The Event contract is being deployed.
       </p>
     </div>
     <div v-if="waitingForMetadataChangeReceipt" class="awaiting-form-response">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p style="text-align: center">
+      <p class="process-message">
         Please wait - The metadata change invocation is being sent.
       </p>
     </div>
     <div v-if="showSuccessFullDeploymentMessage" class="successful-message">
-      <p style="text-align: center">The event was successfully deployed.</p>
+      <p class="process-message">The event was successfully deployed.</p>
     </div>
     <div v-if="showSuccessfullMetadataChangeMessage" class="successful-message">
-      <p style="text-align: center">The metadata change is confirmed.</p>
+      <p class="process-message">The metadata change is confirmed.</p>
     </div>
     <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
-      <p style="text-align: center">Something went wrong...</p>
+      <p class="process-message">Something went wrong...</p>
     </div>
   </div>
 </template>
@@ -481,6 +491,7 @@ export default {
     waitingForMetadataChangeReceipt: false,
     deployingContractState: false,
     invokingMetadataChangeState: false,
+    uploadingToIpfs: false,
     showSuccessFullDeploymentMessage: false,
     showSuccessfullMetadataChangeMessage: false,
     showErrorMessage: false,
@@ -503,7 +514,6 @@ export default {
       location: "Zurich",
       category: "Music",
       eventDescription: "test description",
-      color: "#add8e6",
       startTime: {
         HH: "18",
         mm: "00"
@@ -521,7 +531,7 @@ export default {
       testToken: ERC20TESTTOKEN,
       dai: DAI
     },
-    lastEvent: null,
+    imageData: "",
     disabledDates: date => {
       const day = date.getDay();
       return day >= 0;
@@ -629,7 +639,7 @@ export default {
       this.form.location = "";
       this.form.category = "";
       this.form.eventDescription = "";
-      this.color = "";
+      this.imageData = "";
       this.time = 0;
       this.url = "";
       this.twitter = "";
@@ -654,20 +664,18 @@ export default {
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
+      this.uploadingToIpfs = true;
       try {
         const response = await this.ipfsInstance.add(this.ipfsString);
         this.ipfsHash = response.path;
         console.log("Uploading to ipfs");
         console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
+        this.uploadingToIpfs = false;
+        this.ipfsAdded = true;
       } catch (err) {
         console.log(err);
         this.ipfsError = true;
       }
-      window.setTimeout(() => {
-        this.lastEvent = `${this.form.title} ${this.form.description}`;
-        this.ipfsAdded = true;
-        // this.clearForm();
-      }, 1500);
     },
     async downloadFromIpfs() {
       console.log("downloading from ipfs...");
@@ -683,11 +691,11 @@ export default {
           location: this.form.location,
           category: this.form.category,
           description: this.form.eventDescription,
-          color: this.form.color,
           time: this.startTimeUnix,
           duration: "",
           url: this.form.url,
-          twitter: this.form.twitter
+          twitter: this.form.twitter,
+          image: this.imageData
         }
       });
     },
@@ -785,7 +793,6 @@ export default {
               this.showSuccessFullDeploymentMessage = true;
             }
             await this.$store.dispatch("loadEvents");
-            await sleep(2000);
             this.$router.push({
               path: `/`
             });
@@ -803,6 +810,23 @@ export default {
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();
       console.log(eventAddresses);
+    },
+    readImageFile(event) {
+      // Reference to the DOM input element
+      var input = event.target;
+      // Ensure that you have a file before attempting to read it
+      if (input.files && input.files[0]) {
+        // create a new FileReader to read this image and convert to base64 format
+        var reader = new FileReader();
+        // Define a callback function to run, when FileReader finishes its job
+        reader.onload = e => {
+          // Note: arrow function used here, so that "this.imageData" refers to the imageData of Vue component
+          // Read image as base64 and set to imageData
+          this.imageData = e.target.result;
+        };
+        // Start the reader job - read file as a data url (base64 format)
+        reader.readAsDataURL(input.files[0]);
+      }
     }
   }
 };
@@ -816,7 +840,7 @@ export default {
 .date-container {
   display: flex;
 }
-/* .event-form-card-wrapper {
-  background: rgba(255, 255, 255, 0.5);
-} */
+.process-message {
+  text-align: center;
+}
 </style>

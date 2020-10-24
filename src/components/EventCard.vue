@@ -15,38 +15,45 @@
             <div v-if="date" class="event-card-date">{{ date }}</div>
             <div v-if="location" class="md-subhead">{{ location }}</div>
           </md-card-header>
-          <md-card-content>
-            <div v-if="category" class="content-entry">
-              <b>Category: </b>{{ category }}
+          <md-card-content class="card-content">
+            <div class="text-content">
+              <div v-if="category" class="content-entry">
+                <b>Category: </b>{{ category }}
+              </div>
+              <div v-if="website" class="content-entry">
+                <b>Website: </b>{{ website.url }}
+                <span class="danger"
+                  ><md-icon class="danger" v-if="website.verification == false"
+                    >warning</md-icon
+                  ></span
+                >
+                <span class="good"
+                  ><md-icon v-if="website.verification == true"
+                    >done</md-icon
+                  ></span
+                >
+              </div>
+              <div v-if="twitter" class="content-entry">
+                <b>Twitter: </b>{{ twitter.url }}
+                <span class="danger"
+                  ><md-icon class="danger" v-if="twitter.verification == false"
+                    >warning</md-icon
+                  ></span
+                >
+                <span class="good"
+                  ><md-icon v-if="twitter.verification == true"
+                    >done</md-icon
+                  ></span
+                >
+              </div>
+              <div v-if="description" class="content-entry">
+                <b>Description: </b>{{ description }}
+              </div>
             </div>
-            <div v-if="website" class="content-entry">
-              <b>Website: </b>{{ website.url }}
-              <span class="danger"
-                ><md-icon class="danger" v-if="website.verification == false"
-                  >warning</md-icon
-                ></span
-              >
-              <span class="good"
-                ><md-icon v-if="website.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </div>
-            <div v-if="twitter" class="content-entry">
-              <b>Twitter: </b>{{ twitter.url }}
-              <span class="danger"
-                ><md-icon class="danger" v-if="twitter.verification == false"
-                  >warning</md-icon
-                ></span
-              >
-              <span class="good"
-                ><md-icon v-if="twitter.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </div>
-            <div v-if="description" class="content-entry">
-              <b>Description: </b>{{ description }}
+            <div class="image-content">
+              <div v-if="image" class="content-entry">
+                <img class="preview" :src="image" />
+              </div>
             </div>
           </md-card-content>
         </div>
@@ -153,6 +160,9 @@ export default {
     },
     twitter() {
       return this.event.twitter ? this.event.twitter : "no twitter found";
+    },
+    image() {
+      return this.event.image ? this.event.image : "no image found";
     }
   },
   created() {
@@ -168,5 +178,16 @@ export default {
 }
 .content-entry {
   display: block;
+}
+.card-content {
+  display: flex;
+}
+.text-content {
+  min-width: 50%;
+}
+.image-content {
+  position: absolute;
+  right: 20px;
+  top: 20px;
 }
 </style>
