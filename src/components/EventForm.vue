@@ -130,25 +130,29 @@
                   name="idApprover"
                   id="idApprover"
                   v-model="form.idApprover"
+                  @blur="checkIfApproverRegistered"
                   :disabled="sending"
                 />
                 <span class="md-error">An ID approver is required</span>
               </md-field>
               <md-field
                 :class="getValidationClass('idLevel')"
-                style="max-width:150px"
+                style="max-width:250px"
               >
                 <label for="idLevel">Identification level</label>
                 <md-select
-                  type="number"
                   id="idLevel"
                   name="idLevel"
-                  v-model="form.idLevel"
+                  v-model="form.selectedApproverLevel"
                   :disabled="sending"
                 >
-                  <md-option value="1">1</md-option>
-                  <md-option value="2">2</md-option>
-                  <md-option value="3">3</md-option>
+                  <md-option
+                    v-for="level in approverLevels"
+                    v-bind:key="level.level"
+                    v-bind:value="level.level"
+                  >
+                    {{ level.value }}
+                  </md-option>
                 </md-select>
                 <span class="md-error" v-if="!$v.form.idLevel.required"
                   >The id level is required</span
@@ -475,6 +479,9 @@ import {
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
+import idb from "../util/db/idb";
+import { getApproverFromStore } from "../util/utility";
+
 export default {
   name: "EventForm",
   mixins: [validationMixin],
@@ -506,6 +513,9 @@ export default {
     ipfsString: null,
     ipfsError: false,
     ipfsAdded: false,
+    approverLevels: [{ level: 0, value: "No identity approval required" }],
+    // approverLevelNames: ["No identity approval required"],
+    // approverLevels: [{ level: "0", value: "No identity approval required" }],
     eventContractDeployed: false,
     lastEventInfo: null,
     form: {
@@ -521,8 +531,8 @@ export default {
       url: "",
       twitter: "",
       // blockchain info
-      idApprover: "0x2bF80bcfA49A7058a053B1F121cFaCEe072C432e",
-      idLevel: 1,
+      idApprover: "",
+      selectedApproverLevel: 0,
       granularity: 2
     },
     useERC20Token: false,
@@ -592,6 +602,11 @@ export default {
     },
     usedToken() {
       return this.useERC20Token ? this.erc20Token : ETH;
+    },
+    getApproverLevel() {
+      return this.approverLevels.find(
+        approverLevel => approverLevel.level === this.form.selectedApproverLevel
+      );
     }
   },
   watch: {
@@ -765,7 +780,7 @@ export default {
           args.size,
           args.digest,
           this.form.idApprover,
-          this.form.idLevel,
+          this.form.selectedApproverLevel,
           this.usedToken,
           this.form.granularity
         )
@@ -827,6 +842,24 @@ export default {
         // Start the reader job - read file as a data url (base64 format)
         reader.readAsDataURL(input.files[0]);
       }
+    },
+    checkIfApproverRegistered() {
+      let approvers = this.$store.state.approvers;
+      for (let i = 0; i < approvers.length; i++) {
+        let address = approvers[i].approverAddress;
+        if (this.form.idApprover == address) {
+          let approver = getApproverFromStore(address);
+          for (let j = 0; j < approver.methods.length; j++) {
+            let method = approver.methods[j];
+            this.approverLevels.push(method);
+            // this.approverLevels.push(method.level);
+            // this.approverLevelNames.push(method.value);
+          }
+          return true;
+        }
+      }
+      console.log(false);
+      return false;
     }
   }
 };
