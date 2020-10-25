@@ -150,7 +150,7 @@
                   id="idApprover"
                   name="idApprover"
                   v-model="form.selectedApproverAddress"
-                  @blur="setApproverLevels"
+                  @md-selected="setApproverLevels"
                   :disabled="sending"
                 >
                   <md-option
@@ -216,8 +216,7 @@
                 showSelectedIdentityApproverDialog = true;
               "
               class="md-primary"
-              >Click here for avaliable information about your set approver,
-              e.g. its level specifications.</md-button
+              >Information about {{ selectedApprover.title }}</md-button
             >
             <md-button
               class="md-primary"
@@ -588,11 +587,10 @@ export default {
       website: "",
       twitter: "",
       idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
-      selectedApprover: NULL_ADDRESS,
+      selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
       granularity: 2
     },
-    approverRegistered: false,
     noApprover: {
       title: "No approver",
       approverAddress: NULL_ADDRESS
@@ -680,6 +678,9 @@ export default {
       return getApproverFromStore(this.form.selectedApproverAddress)
         ? getApproverFromStore(this.form.selectedApproverAddress)
         : new IdentityApprover("");
+    },
+    approverRegistered() {
+      return this.form.selectedApproverAddress != NULL_ADDRESS;
     }
   },
   watch: {
@@ -850,7 +851,7 @@ export default {
       console.log(args.hashFunction);
       console.log(args.size);
       console.log(args.digest);
-      console.log(this.form.selectedApprover);
+      console.log(this.form.selectedApproverAddress);
       console.log(this.form.selectedApproverLevel);
       console.log(this.usedToken);
       console.log(this.form.granularity);
@@ -859,7 +860,7 @@ export default {
           args.hashFunction,
           args.size,
           args.digest,
-          this.form.selectedApprover,
+          this.form.selectedApproverAddress,
           this.form.selectedApproverLevel,
           this.usedToken,
           this.form.granularity
@@ -925,15 +926,20 @@ export default {
     },
 
     setApproverLevels() {
+      console.log("setting approver levels");
       this.approverLevels = [];
       let methods = getApproverFromStore(this.form.selectedApproverAddress)
         .methods;
-      for (let i = 0; i < methods.length; i++) {
-        let method = methods[i];
-        this.approverLevels.push(method);
-      }
-      if (methods.length == 0) {
+      const nrMethods = methods.length;
+      if (nrMethods > 0) {
+        for (let i = 0; i < nrMethods; i++) {
+          let method = methods[i];
+          this.approverLevels.push(method);
+        }
+        this.form.selectedApproverLevel = 1;
+      } else {
         this.approverLevels.push(this.zeroApproverLevel);
+        this.form.selectedApproverLevel = 0;
       }
     }
     // Called on change in approver field
