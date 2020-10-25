@@ -29,13 +29,11 @@ export class IdentityApprover {
     const approverMetadata = await identitySC.methods
       .getApproverInfo(this.approverAddress)
       .call();
-    console.log(approverMetadata);
     this.ipfsHash = argsToCid(
       approverMetadata.hashFunction,
       approverMetadata.size,
       approverMetadata.digest
     );
-    console.log(this.ipfsHash);
     return true;
   }
 

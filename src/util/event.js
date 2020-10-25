@@ -57,7 +57,7 @@ export class Event {
     this.nonFungibleTickets = [];
     this.location = "";
     this.title = "";
-    this.img_url = "";
+    this.image = "";
     this.ipfsHash = "";
     this.currency = 0;
     this.identityContractAddress = "";
@@ -291,12 +291,12 @@ export class Event {
     const metadata = JSON.parse(ipfsData);
     this.location = metadata.event.location;
     this.title = metadata.event.title;
-    this.img_url = metadata.event.img_url;
+    this.image = metadata.event.image;
     this.description = metadata.event.description;
     this.category = metadata.event.category;
     this.duration = metadata.event.duration;
     this.twitter.url = metadata.event.twitter;
-    this.website.url = metadata.event.url;
+    this.website.url = metadata.event.website;
     this.timestamp = metadata.event.time;
     this.seatColor = metadata.event.color;
     this.timestamp = metadata.event.time;

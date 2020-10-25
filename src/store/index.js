@@ -10,6 +10,8 @@ import { IDENTITY_ABI, IDENTITY_ADDRESS } from "../util/abi/Identity";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { IdentityApprover } from "../util/identity";
 import idb from "./../util/db/idb";
+import { NULL_ADDRESS } from "../util/constants/constants";
+import { getApproverFromStore } from "../util/utility";
 
 Vue.use(Vuex);
 
@@ -122,27 +124,36 @@ export default new Vuex.Store({
       }
       commit("updateEventStore", events);
     },
+    async addNullAddressApproverToStore({ commit }) {
+      console.log("adding null address approver to store")
+      let approvers = [];
+      let nullAddressApprover = new IdentityApprover(NULL_ADDRESS)
+      nullAddressApprover.title = "No approver";
+      approvers.push(nullAddressApprover)
+      commit("updateApproverStore", approvers);
+    },
     async loadApprovers({ commit }) {
       let approvers = [];
       // adding approvers that are already in the store to the list
       for (let i = 0; i < state.approvers.length; i++) {
-        let approver;
-        const approverInStore = await idb.getApprover(state.approvers[i].approverAddress);
-        approver = new IdentityApprover(approverInStore);
+        let approver = state.approvers[i];
         await idb.saveApprover(approver);
         approvers.push(approver);
       }
       // Fetching register events that occured since the last fetched block and store the approvers
       const registerEvents = await state.identity.getPastEvents("ApproverRegistered", {
-        fromBlock: state.lastFetchedBlockApprovers
+        fromBlock: state.lastFetchedBlockApprovers + 1
       });
+      // update last fetched block for approvers
+      state.lastFetchedBlockApprovers = state.web3.currentBlock;
+      // add all newly registered approvers to the store and the db
       for (let i = 0; i < registerEvents.length; i++) {
         let registerEvent = registerEvents[i];
         let address = registerEvent.returnValues.approverAddress;
         const inStore = await idb.getApprover(address); // whether this approver is present
         let approver;
         if (!inStore) {
-          console.log("approver not in store - fetching approver");
+          console.log("approver not in store - fetching approver data");
           approver = new IdentityApprover(address);
           await approver.loadData(state.identity, state.ipfsInstance);
         } else {
@@ -150,8 +161,8 @@ export default new Vuex.Store({
         }
         await idb.saveApprover(approver);
         approvers.push(approver);
+        console.log("added " + approver.title)
       }
-      state.lastFetchedBlockApprovers = state.web3.currentBlock;
       commit("updateApproverStore", approvers);
     },
     /* 
