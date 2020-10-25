@@ -38,7 +38,7 @@ export default {
       setInterval(async () => {
         this.loadEvents();
         this.loadApprovers();
-      }, 5000);
+      }, 15000);
     }
   },
   async beforeCreate() {
@@ -47,6 +47,8 @@ export default {
       this.loadApprovers();
       this.loadEventsAndApproversInInterval();
     });
+    await this.$store.dispatch("addNullAddressApproverToStore");
+    this.$root.$emit("addedNullAddressApproverToStore");
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
