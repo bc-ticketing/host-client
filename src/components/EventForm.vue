@@ -1,6 +1,6 @@
 <template>
   <div class="create-event-form-container">
-    <form novalidate class="md-layout" @submit.prevent="eventFormComplete">
+    <form novalidate class="md-layout" @submit.prevent="validateForm">
       <md-card class="md-layout-item">
         <md-card-header>
           <div v-if="inNewMode" class="md-title">New Event</div>
@@ -17,12 +17,11 @@
                   v-model="form.title"
                   :disabled="sending"
                 />
-                <span class="md-error" v-if="!$v.form.title.required"
-                  >The event title is required</span
-                >
-                <span class="md-error" v-else-if="!$v.form.title.minlength"
-                  >Invalid event title</span
-                >
+                <p v-if="errors" class="error">
+                  <span class="md-error" v-if="!$v.form.title.required"
+                    >The event title is required</span
+                  >
+                </p>
               </md-field>
             </div>
           </div>
@@ -37,9 +36,14 @@
                 <md-input
                   name="location"
                   id="location"
-                  v-model="form.location"
+                  v-model.lazy="$v.form.location.$model"
                   :disabled="sending"
                 />
+                <p v-if="errors" class="error">
+                  <span class="md-error" v-if="!$v.form.location.required"
+                    >The location is required</span
+                  >
+                </p>
               </md-field>
             </div>
           </div>
@@ -55,8 +59,12 @@
                 md-immediately
                 name="date"
                 id="date"
-                v-model="date"
-              >
+                v-model="form.date"
+                ><p v-if="errors" class="error">
+                  <span class="md-error" v-if="!$v.form.date.required"
+                    >The location is required</span
+                  >
+                </p>
                 <label for="date">Date and Start Time</label>
               </md-datepicker>
               <md-datepicker
@@ -68,6 +76,11 @@
                 :md-disabled-dates="disabledDates"
               >
                 <label for="disabled-datepicker">Date and Start Time</label>
+                <p class="error" v-if="errors">
+                  <span class="md-error" v-if="!$v.form.date.required"
+                    >The date is required.</span
+                  >
+                </p>
               </md-datepicker>
             </div>
             <div class="md-small-size-100" style="margin: 20px 0">
@@ -102,7 +115,7 @@
 
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('category')">
+              <md-field>
                 <label for="category">Category</label>
                 <md-select
                   name="category"
@@ -114,31 +127,47 @@
                   <md-option value="Sports">Sports</md-option>
                   <md-option value="Theatre">Theatre</md-option>
                 </md-select>
-                <span class="md-error">The event category is required.</span>
               </md-field>
             </div>
           </div>
 
           <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100" style="display:flex">
-              <md-field
+              <!-- <md-field
                 :class="getValidationClass('idApprover')"
                 style="margin-right: 24px"
-              >
+              > -->
+              <md-field style="margin-right: 24px">
                 <label for="idApprover">ID Approver</label>
-                <md-input
+                <!-- <md-input
                   name="idApprover"
                   id="idApprover"
-                  v-model="form.idApprover"
+                  v-model.lazy="$v.form.idApprover.$model"
                   @blur="checkIfApproverRegistered"
                   :disabled="sending"
-                />
-                <span class="md-error">An ID approver is required</span>
+                /> -->
+                <md-select
+                  id="idApprover"
+                  name="idApprover"
+                  v-model="form.selectedApproverAddress"
+                  @blur="setApproverLevels"
+                  :disabled="sending"
+                >
+                  <md-option
+                    v-for="approver in this.$store.state.approvers"
+                    v-bind:key="approver.approverAddress"
+                    v-bind:value="approver.approverAddress"
+                  >
+                    {{ approver.title }}
+                  </md-option>
+                </md-select>
+                <p v-if="errors" class="error">
+                  <span class="md-error" v-if="!$v.form.idApprover.required"
+                    >An identity approver is required</span
+                  >
+                </p>
               </md-field>
-              <md-field
-                :class="getValidationClass('idLevel')"
-                style="max-width:250px"
-              >
+              <md-field style="max-width:250px">
                 <label for="idLevel">Identification level</label>
                 <md-select
                   id="idLevel"
@@ -154,9 +183,13 @@
                     {{ level.value }}
                   </md-option>
                 </md-select>
-                <span class="md-error" v-if="!$v.form.idLevel.required"
-                  >The id level is required</span
-                >
+                <p v-if="errors" class="error">
+                  <span
+                    class="md-error"
+                    v-if="!$v.form.selectedApproverLevel.required"
+                    >The id level is required</span
+                  >
+                </p>
               </md-field>
               <div class="info-dialog-button">
                 <md-button
@@ -176,7 +209,13 @@
               verified by the here specified approver. The level marks the
               minimum level of verification offered by the given approver.
             </p>
-            <md-button class="md-primary"
+            <md-button
+              v-if="approverRegistered"
+              @click="
+                showIdentityApproverDialog = false;
+                showSelectedIdentityApproverDialog = true;
+              "
+              class="md-primary"
               >Click here for avaliable information about your set approver,
               e.g. its level specifications.</md-button
             >
@@ -187,10 +226,65 @@
             >
           </md-dialog>
 
-          <!-- TODO 24.7.2020 Michael: fetch approver levels and add as dropdown options to choose from -->
-          <!-- <div class="md-layout-item md-small-size-100">
-            
-          </div>-->
+          <md-dialog :md-active.sync="showSelectedIdentityApproverDialog">
+            <md-dialog-title>{{ selectedApprover.title }}</md-dialog-title>
+            <div class="dialog-approver-entry">
+              <div class="dialog-approver-entry-title"><b>Website: </b></div>
+              <a
+                class="dialog-text"
+                v-if="selectedApprover.website.url"
+                :href="selectedApprover.website.url"
+                target="_blank"
+                >{{ selectedApprover.website.url }}</a
+              >
+              <p class="dialog-text" v-if="!selectedApprover.website.url">
+                No website linked
+              </p>
+            </div>
+            <div class="dialog-approver-entry">
+              <div class="dialog-approver-entry-title"><b>Twitter: </b></div>
+              <a
+                class="dialog-text"
+                v-if="selectedApprover.twitter.url"
+                :href="selectedApprover.twitter.url"
+                target="_blank"
+                >{{ selectedApprover.twitter.url }}</a
+              >
+              <p class="dialog-text" v-if="!selectedApprover.twitter.url">
+                No Twitter linked
+              </p>
+            </div>
+            <div class="dialog-approver-entry">
+              <div class="dialog-approver-entry-title">
+                <b>Provided Methods</b>
+              </div>
+            </div>
+            <div class="dialog-approver-methods-wrapper">
+              <div
+                class="dialog-text dialog-approver-methods"
+                :key="method.level"
+                v-for="method in selectedApprover.methods"
+              >
+                <p class="dialog-approver-methods-level">
+                  Level {{ method.level }}:
+                </p>
+                <p class="dialog-approver-methods-value">{{ method.value }}</p>
+              </div>
+            </div>
+            <md-button
+              class="md-primary"
+              @click="
+                showSelectedIdentityApproverDialog = false;
+                showIdentityApproverDialog = true;
+              "
+              >Back</md-button
+            >
+            <md-button
+              class="md-primary"
+              @click="showSelectedIdentityApproverDialog = false"
+              >Close</md-button
+            >
+          </md-dialog>
 
           <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100">
@@ -205,49 +299,18 @@
 
           <div v-if="useERC20Token" class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100 info-dialog">
-              <!-- <md-field :class="getValidationClass('erc20Token')">
-                <label for="erc20-token">Accepted Token For Payment</label>
-              <md-select
-                  id="erc20-token"
-                  name="erc20-token"
-                  v-model="acceptedToken"
-                >
-                  <md-option value="eth">ETH</md-option>
-                  <md-option value="testtoken">ERC20 Test Token</md-option>
-                </md-select> -->
               <md-radio
-                v-model="erc20Token"
+                v-model.lazy="$v.form.erc20Token.$model"
                 :value="erc20Tokens.testToken"
                 :disabled="sending"
                 >ERC20 Test Token</md-radio
               >
               <md-radio
-                v-model="erc20Token"
+                v-model.lazy="$v.form.erc20Token.$model"
                 :value="erc20Tokens.dai"
                 :disabled="sending"
                 >DAI</md-radio
               >
-              <!-- <md-input
-                  name="erc20-token"
-                  id="erc20-token"
-                  v-model="form.erc20Token"
-                /> -->
-              <!-- <span class="md-error" v-if="!$v.form.erc20Token.required"
-                >The token that is accepted for payment is required</span
-              > -->
-              <!-- <span
-                  class="md-error"
-                  v-else-if="!$v.form.erc20Token.maxLength"
-                >Invalid event token hash</span>-->
-              <!-- </md-field> -->
-              <!-- <div class="info-dialog-button">
-                <md-button
-                  class="md-icon-button md-primary"
-                  @click="showTokenDialog = true"
-                >
-                  <md-icon>help_outline</md-icon>
-                </md-button>
-              </div> -->
             </div>
           </div>
 
@@ -270,7 +333,7 @@
                   type="number"
                   id="event-granularity"
                   name="event-granularity"
-                  v-model="form.granularity"
+                  v-model.lazy="$v.form.granularity.$model"
                   :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
@@ -283,12 +346,11 @@
                   <md-option value="50">50</md-option>
                   <md-option value="100">100</md-option>
                 </md-select>
-                <span class="md-error" v-if="!$v.form.granularity.required"
-                  >The granularity is required</span
-                >
-                <span class="md-error" v-else-if="!$v.form.granularity"
-                  >Invalid granularity</span
-                >
+                <p v-if="errors" class="error">
+                  <span class="md-error" v-if="!$v.form.granularity.required"
+                    >The granularity is required</span
+                  >
+                </p>
               </md-field>
               <div class="info-dialog-button">
                 <md-button
@@ -311,7 +373,6 @@
               75%, 50% or 25% of the initial price, if you choose 100, tickets
               can be resold for 100%, 99%, 98%, ..., or 1%.
             </p>
-            <p></p>
             <md-button class="md-primary" @click="showGranularityDialog = false"
               >Close</md-button
             >
@@ -319,15 +380,18 @@
 
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass(`eventDescription`)">
+              <md-field :class="getValidationClass('eventDescription')">
+                <!-- <md-field> -->
                 <label for="eventDescription">Description</label>
                 <md-textarea
                   id="eventDescription"
                   name="eventDescription"
-                  v-model="form.eventDescription"
+                  v-model.lazy="$v.form.eventDescription.$model"
                   :disabled="sending"
                 ></md-textarea>
-                <span class="md-error">A description is required</span>
+                <span class="md-error" v-if="!$v.form.eventDescription.required"
+                  >A description is required</span
+                >
               </md-field>
             </div>
           </div>
@@ -343,19 +407,18 @@
                   accept="image/*"
                   :disabled="sending"
                 />
-                <span class="md-error">An image is required.</span>
               </md-field>
             </div>
           </div>
 
           <div class="md-layout md-gutter">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('url')">
-                <label for="url">URL</label>
+              <md-field>
+                <label for="website">Website</label>
                 <md-input
-                  name="url"
-                  id="url"
-                  v-model="form.url"
+                  name="website"
+                  id="website"
+                  v-model.lazy="$v.form.website.$model"
                   :disabled="sending"
                 />
               </md-field>
@@ -364,12 +427,12 @@
 
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
-              <md-field :class="getValidationClass('twitter')">
+              <md-field>
                 <label for="twitter">Twitter</label>
                 <md-input
                   name="twitter"
                   id="twitter"
-                  v-model="form.twitter"
+                  v-model.lazy="$v.form.twitter.$model"
                   :disabled="sending"
                 />
               </md-field>
@@ -380,7 +443,6 @@
         <md-card-actions>
           <md-button
             v-if="inEditMode && !invokingMetadataChangeState"
-            type="submit"
             class="md-accent"
             @click="leaveEditMode"
             :disabled="sending"
@@ -390,15 +452,14 @@
             v-if="inEditMode && !invokingMetadataChangeState"
             type="submit"
             class="md-primary"
-            @click="modifyEvent"
+            @click.prevent="modifyEvent"
             :disabled="sending"
             >Submit changes</md-button
           >
           <md-button
             v-if="inNewMode && !deployingContractState"
-            type="submit"
             class="md-primary"
-            @click="createEvent"
+            @click.prevent="createEvent"
             :disabled="sending"
             >Create Event</md-button
           >
@@ -406,14 +467,6 @@
       </md-card>
 
       <md-progress-bar md-mode="indeterminate" v-if="sending" />
-      <!-- </div> -->
-
-      <!-- <md-snackbar :md-active.sync="ipfsAdded">
-        The event {{ lastEvent }} was uploaded to IPFS with success!
-      </md-snackbar>
-      <md-snackbar :md-active.sync="deployingContractState">
-        The event {{ lastEvent }} was successfully deployed! Contract address:
-      </md-snackbar> -->
     </form>
     <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
@@ -459,6 +512,7 @@ import { validationMixin } from "vuelidate";
 import {
   required,
   email,
+  url,
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
@@ -470,7 +524,8 @@ import sleep from "await-sleep";
 import {
   AVERAGE_BLOCKTIME,
   AVERAGE_BLOCKTIME_LOCAL,
-  NETWORKS
+  NETWORKS,
+  NULL_ADDRESS
 } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
@@ -480,6 +535,7 @@ import {
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 import idb from "../util/db/idb";
+import { IdentityApprover } from "../util/identity";
 import { getApproverFromStore } from "../util/utility";
 
 export default {
@@ -492,6 +548,8 @@ export default {
     inNewMode: Boolean
   },
   data: () => ({
+    uiState: "submit not clicked",
+    errors: false,
     sending: false,
     waitingForSignature: false,
     waitingForDeploymentReceipt: false,
@@ -505,6 +563,7 @@ export default {
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
+    showSelectedIdentityApproverDialog: false,
     showGranularityDialog: false,
     ipfsArgs: null,
     ipfsCid: null,
@@ -513,9 +572,6 @@ export default {
     ipfsString: null,
     ipfsError: false,
     ipfsAdded: false,
-    approverLevels: [{ level: 0, value: "No identity approval required" }],
-    // approverLevelNames: ["No identity approval required"],
-    // approverLevels: [{ level: "0", value: "No identity approval required" }],
     eventContractDeployed: false,
     lastEventInfo: null,
     form: {
@@ -523,20 +579,30 @@ export default {
       title: "title",
       location: "Zurich",
       category: "Music",
-      eventDescription: "test description",
+      eventDescription: "",
+      erc20Token: ERC20TESTTOKEN,
       startTime: {
         HH: "18",
         mm: "00"
       },
-      url: "",
+      website: "",
       twitter: "",
-      // blockchain info
-      idApprover: "",
+      idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
+      selectedApprover: NULL_ADDRESS,
       selectedApproverLevel: 0,
       granularity: 2
     },
+    approverRegistered: false,
+    noApprover: {
+      title: "No approver",
+      approverAddress: NULL_ADDRESS
+    },
+    zeroApproverLevel: {
+      level: 0,
+      value: "No identity approval required"
+    },
+    approverLevels: [{ level: 0, value: "No identity approval required" }],
     useERC20Token: false,
-    erc20Token: ERC20TESTTOKEN,
     erc20Tokens: {
       testToken: ERC20TESTTOKEN,
       dai: DAI
@@ -551,21 +617,21 @@ export default {
   validations: {
     form: {
       title: {
-        // required,
-        minLength: minLength(3)
+        required
       },
-      category: {
-        // required,
+      location: {
+        required
+      },
+      date: {
+        required
       },
       eventDescription: {
-        // required,
-        minLength: minLength(10)
+        required
       },
       erc20Token: {
         required
-        // maxLength: maxLength(42)
       },
-      idLevel: {
+      selectedApproverLevel: {
         required
       },
       idApprover: {
@@ -573,11 +639,13 @@ export default {
       },
       granularity: {
         required
+      },
+      website: {
+        url
+      },
+      twitter: {
+        url
       }
-      // url: {
-      //   // required,
-      //   url
-      // }
     }
   },
   computed: {
@@ -591,7 +659,7 @@ export default {
       return this.$store.state.ipfsInstance;
     },
     dateSeconds() {
-      return Number(Date.parse(this.date) / 1000);
+      return Number(Date.parse(this.form.date) / 1000);
     },
     startTimeUnix() {
       return (
@@ -601,12 +669,17 @@ export default {
       );
     },
     usedToken() {
-      return this.useERC20Token ? this.erc20Token : ETH;
+      return this.useERC20Token ? this.form.erc20Token : ETH;
     },
     getApproverLevel() {
       return this.approverLevels.find(
         approverLevel => approverLevel.level === this.form.selectedApproverLevel
       );
+    },
+    selectedApprover() {
+      return getApproverFromStore(this.form.selectedApproverAddress)
+        ? getApproverFromStore(this.form.selectedApproverAddress)
+        : new IdentityApprover("");
     }
   },
   watch: {
@@ -616,11 +689,11 @@ export default {
       }, 3000);
     },
     sending: function(val) {
-      this.dateUponSending = this.date;
+      this.dateUponSending = this.form.date;
     }
   },
   created() {
-    this.date = this.getDateAfterMonths(8);
+    this.form.date = this.getDateAfterMonths(8);
     if (this.inEditMode) {
       this.fillFormFromEvent();
     }
@@ -638,33 +711,32 @@ export default {
       this.$emit("setEditMode", false);
     },
     getValidationClass(fieldName) {
-      return {
-        "md-invalid": false
-      };
-      // const field = this.$v.form[fieldName];
-      // if (field) {
-      //   return {
-      //     "md-invalid": false, //field.$invalid && field.$dirty,
-      //   };
-      // }
-    },
-    clearForm() {
-      this.$v.$reset();
-      this.form.title = "";
-      this.form.location = "";
-      this.form.category = "";
-      this.form.eventDescription = "";
-      this.imageData = "";
-      this.time = 0;
-      this.url = "";
-      this.twitter = "";
-      //   this.form.eventTags = null;
-
-      this.form.levelNumber = null;
-      this.form.idApprover = null;
-      this.form.granularity = 4;
+      // return {
+      //   "md-invalid": false
+      // };
+      const field = this.$v.form[fieldName];
+      if (field) {
+        if (this.errors) {
+          return {
+            "md-invalid": field.$invalid,
+            "md-required": field.$required
+          };
+        }
+      }
     },
     async createEvent() {
+      this.errors = this.$v.form.$invalid;
+      console.log(this.errors);
+      this.uiState = "submit clicked";
+      if (this.errors === true) {
+        return;
+      }
+      let now = new Date();
+      let nowSeconds = Date.parse(now) / 1000;
+      if (this.dateSeconds < nowSeconds) {
+        this.errors = true;
+      }
+      this.uiState = "form submitted";
       this.sending = true;
       await this.uploadToIpfs();
       await this.deployEventContract();
@@ -679,6 +751,7 @@ export default {
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
+      console.log(this.ipfsString);
       this.uploadingToIpfs = true;
       try {
         const response = await this.ipfsInstance.add(this.ipfsString);
@@ -708,13 +781,13 @@ export default {
           description: this.form.eventDescription,
           time: this.startTimeUnix,
           duration: "",
-          url: this.form.url,
+          website: this.form.website,
           twitter: this.form.twitter,
           image: this.imageData
         }
       });
     },
-    eventFormComplete() {
+    validateForm() {
       // check if required input fields are valid and then upload the event form to ipfs
       this.$v.$touch();
       return !this.$v.$invalid;
@@ -774,12 +847,19 @@ export default {
       const args = cidToArgs(this.ipfsHash);
       this.deployingContractState = true;
       this.waitingForSignature = true;
+      console.log(args.hashFunction);
+      console.log(args.size);
+      console.log(args.digest);
+      console.log(this.form.selectedApprover);
+      console.log(this.form.selectedApproverLevel);
+      console.log(this.usedToken);
+      console.log(this.form.granularity);
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
           args.size,
           args.digest,
-          this.form.idApprover,
+          this.form.selectedApprover,
           this.form.selectedApproverLevel,
           this.usedToken,
           this.form.granularity
@@ -843,24 +923,41 @@ export default {
         reader.readAsDataURL(input.files[0]);
       }
     },
-    checkIfApproverRegistered() {
-      let approvers = this.$store.state.approvers;
-      for (let i = 0; i < approvers.length; i++) {
-        let address = approvers[i].approverAddress;
-        if (this.form.idApprover == address) {
-          let approver = getApproverFromStore(address);
-          for (let j = 0; j < approver.methods.length; j++) {
-            let method = approver.methods[j];
-            this.approverLevels.push(method);
-            // this.approverLevels.push(method.level);
-            // this.approverLevelNames.push(method.value);
-          }
-          return true;
-        }
+
+    setApproverLevels() {
+      this.approverLevels = [];
+      let methods = getApproverFromStore(this.form.selectedApproverAddress)
+        .methods;
+      for (let i = 0; i < methods.length; i++) {
+        let method = methods[i];
+        this.approverLevels.push(method);
       }
-      console.log(false);
-      return false;
+      if (methods.length == 0) {
+        this.approverLevels.push(this.zeroApproverLevel);
+      }
     }
+    // Called on change in approver field
+    // chaeckIfApproverRegistered() {
+    //   this.approverLevels = [this.zeroApproverLevel];
+    //   let approvers = this.$store.state.approvers;
+    //   for (let i = 0; i < approvers.length; i++) {
+    //     let approver = approvers[i];
+    //     let address = approver.approverAddress;
+    //     if (this.form.idApprover == address) {
+    //       this.selectedApprover = approver;
+    //       for (let j = 0; j < this.selectedApprover.methods.length; j++) {
+    //         let method = this.selectedApprover.methods[j];
+    //         this.approverLevels.push(method);
+    //       }
+    //       this.approverRegistered = true;
+    //       return true;
+    //     }
+    //   }
+    //   this.form.selectedApproverLevel = 0;
+    //   this.form.selectedApprover = NULL_ADDRESS;
+    //   this.approverRegistered = false;
+    //   return false;
+    // }
   }
 };
 </script>
@@ -875,5 +972,26 @@ export default {
 }
 .process-message {
   text-align: center;
+}
+.dialog-approver-entry {
+  display: flex;
+}
+.dialog-approver-entry-title {
+  margin-left: 24px;
+  min-width: 64px;
+}
+.dialog-approver-methods-wrapper {
+  padding-bottom: 20px;
+}
+.dialog-approver-methods {
+  display: flex;
+  text-align: center;
+  max-height: 1rem;
+}
+.dialog-approver-methods-level {
+  min-width: 64px;
+}
+.dialog-approver-entry-value {
+  margin-left: 10px;
 }
 </style>
