@@ -519,6 +519,12 @@ import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 import sleep from "await-sleep";
 
+const pinataSDK = require("@pinata/sdk");
+const pinata = pinataSDK(
+  process.env.VUE_APP_PINATA_API_KEY,
+  process.env.VUE_APP_PINATA_SECRET_API_KEY
+);
+
 // project internal imports
 import {
   AVERAGE_BLOCKTIME,
@@ -694,6 +700,16 @@ export default {
     }
   },
   created() {
+    pinata
+      .testAuthentication()
+      .then(result => {
+        //handle successful authentication here
+        console.log(result);
+      })
+      .catch(err => {
+        //handle error here
+        console.log(err);
+      });
     this.form.date = this.getDateAfterMonths(8);
     if (this.inEditMode) {
       this.fillFormFromEvent();
@@ -827,6 +843,14 @@ export default {
               this.waitingForMetadataChangeReceipt = false;
               this.invokingMetadataChangeState = false;
               this.showSuccessfullMetadataChangeMessage = true;
+              pinata
+                .pinJSONToIPFS(JSON.parse(this.ipfsString))
+                .then(result => {
+                  console.log(result);
+                })
+                .catch(err => {
+                  console.log(err);
+                });
             }
             await this.$store.dispatch("loadEvents");
             await sleep(2000);
@@ -887,6 +911,14 @@ export default {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.waitingForDeploymentReceipt = false;
               this.showSuccessFullDeploymentMessage = true;
+              pinata
+                .pinJSONToIPFS(JSON.parse(this.ipfsString))
+                .then(result => {
+                  console.log(result);
+                })
+                .catch(err => {
+                  console.log(err);
+                });
             }
             await this.$store.dispatch("loadEvents");
             this.$router.push({

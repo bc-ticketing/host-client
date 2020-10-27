@@ -34,7 +34,9 @@
         </md-card-content>
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="approveIdentity">Approve Identity</md-button>
+          <md-button type="submit" class="md-primary" @click="approveIdentity"
+            >Approve Identity</md-button
+          >
         </md-card-actions>
 
         <!-- <md-card-actions>
@@ -46,6 +48,12 @@
 </template>
 
 <script>
+const pinataSDK = require("@pinata/sdk");
+const pinata = pinataSDK(
+  process.env.VUE_APP_PINATA_API_KEY,
+  process.env.VUE_APP_PINATA_SECRET_API_KEY
+);
+
 export default {
   name: "IdentityApprovalForm",
   data() {
@@ -69,6 +77,7 @@ export default {
       const approval = await this.identityContract.methods
         .approveIdentity(this.form.address, this.form.approvalLevel)
         .send({ from: this.$store.state.web3.account });
+      // todo waiting for receipt
       console.log(approval);
     },
     async getSecurityLevel() {

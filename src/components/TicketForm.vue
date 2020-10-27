@@ -257,6 +257,11 @@ import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 import sleep from "await-sleep";
 const BigNumber = require("bignumber.js");
+const pinataSDK = require("@pinata/sdk");
+const pinata = pinataSDK(
+  process.env.VUE_APP_PINATA_API_KEY,
+  process.env.VUE_APP_PINATA_SECRET_API_KEY
+);
 
 // internal imports
 import { NETWORKS } from "../util/constants/constants.js";
@@ -284,6 +289,10 @@ export default {
   data: () => ({
     sending: false,
     contract: null,
+    presaleTypeIpfsHashes: [],
+    presaleTypeIpfsStrings: [],
+    nonPresaleTypeIpfsHashes: [],
+    nonPresaleTypeIpfsStrings: [],
     currencyDecimals: null,
     withPresale: false,
     amountOfSelectedSeats: 0,
@@ -333,18 +342,20 @@ export default {
       }
     },
     async createPresaleTypes() {
-      let ipfsHashes = await this.uploadToIpfs(this.createIpfsStrings(true));
-      console.log("presale ipfs hashes: " + ipfsHashes);
+      this.createIpfsStrings(true); // creating ipfs strings for presale types
+      this.presaleTypeIpfsHashes = await this.uploadToIpfs(true);
+      console.log("presale ipfs hashes: " + this.presaleTypeIpfsHashes);
       let response = await this.invokeCreatePresaleTypes(
-        this.prepareInvocationParametersPresale(ipfsHashes)
+        this.prepareInvocationParametersPresale()
       );
       console.log(response);
     },
     async createNonPresaleTypes() {
-      let ipfsHashes = await this.uploadToIpfs(this.createIpfsStrings(false));
-      console.log("non presale ipfs hashes: " + ipfsHashes);
+      this.createIpfsStrings(false); // creating ipfs strings for non presale types
+      this.nonPresaleTypeIpfsHashes = await this.uploadToIpfs(false);
+      console.log("non presale ipfs hashes: " + this.nonPresaleTypeIpfsHashes);
       let response = await this.invokeCreateTypes(
-        this.prepareInvocationParameters(ipfsHashes)
+        this.prepareInvocationParameters()
       );
       console.log(response);
     },
@@ -365,26 +376,33 @@ export default {
         for (j = 0; j < type.seats.length; j++) {
           map.push(type.seats[j]);
         }
-        ipfsStrings.push(
-          JSON.stringify({
-            version: "1.0",
-            ticket: {
-              title: type.title,
-              description: type.description,
-              color: type.color,
-              // image: type.imageIpfsHash,
-              event: this.$route.query.address,
-              mapping: map
-            }
-          })
-        );
+        const json = JSON.stringify({
+          version: "1.0",
+          ticket: {
+            title: type.title,
+            description: type.description,
+            color: type.color,
+            event: this.$route.query.address,
+            mapping: map
+          }
+        });
+        if (presale) {
+          this.presaleTypeIpfsStrings.push(json);
+        } else {
+          this.nonPresaleTypeIpfsStrings.push(json);
+        }
       }
-      return ipfsStrings;
     },
 
-    async uploadToIpfs(metadataList) {
+    async uploadToIpfs(presale) {
       var i;
       var ipfsHashes = [];
+      var metadataList;
+      if (presale) {
+        metadataList = this.presaleTypeIpfsStrings;
+      } else {
+        metadataList = this.nonPresaleTypeIpfsStrings;
+      }
       for (i = 0; i < metadataList.length; i++) {
         try {
           let response = await this.ipfsInstance.add(metadataList[i]);
@@ -405,7 +423,7 @@ export default {
     // Takes the necessary parameter of the saved ticket types that
     // dont have a presale and rearanges them in correct form for
     // the invocation.
-    prepareInvocationParameters(ipfsHashes) {
+    prepareInvocationParameters() {
       let hashFunctions = [];
       let sizes = [];
       let digests = [];
@@ -416,7 +434,7 @@ export default {
       var i;
       for (i = 0; i < this.savedTypes.length; i++) {
         let type = this.savedTypes[i];
-        let args = cidToArgs(ipfsHashes[i]);
+        let args = cidToArgs(this.nonPresaleTypeIpfsHashes[i]);
         hashFunctions.push(args.hashFunction);
         sizes.push(args.size);
         digests.push(args.digest);
@@ -435,7 +453,8 @@ export default {
       parameterArrays.push(supplies);
       return parameterArrays;
     },
-    prepareInvocationParametersPresale(ipfsHashes) {
+
+    prepareInvocationParametersPresale() {
       let hashFunctions = [];
       let sizes = [];
       let digests = [];
@@ -447,7 +466,7 @@ export default {
       var i;
       for (i = 0; i < this.savedPresaleTypes.length; i++) {
         let type = this.savedPresaleTypes[i];
-        let args = cidToArgs(ipfsHashes[i]);
+        let args = cidToArgs(this.presaleTypeIpfsHashes[i]);
         hashFunctions.push(args.hashFunction);
         sizes.push(args.size);
         digests.push(args.digest);
@@ -490,7 +509,7 @@ export default {
             this.waitingForDeploymentReceipt = true;
             if (transactionHash) {
               console.log(
-                "submitted event contract deployment invocation: ",
+                "submitted invocation to create presale tickets: ",
                 transactionHash
               );
             }
@@ -505,12 +524,16 @@ export default {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.waitingForDeploymentReceipt = false;
               this.showSuccessFullDeploymentMessage = true;
+              pinata
+                .pinJSONToIPFS(JSON.parse(this.presaleTypeIpfsStrings))
+                .then(result => {
+                  console.log(result);
+                })
+                .catch(err => {
+                  console.log(err);
+                });
             }
             await this.$store.dispatch("loadEvents");
-            await sleep(2000);
-            this.$router.push({
-              path: `/`
-            });
           }
         )
         .catch(e => {
@@ -543,7 +566,40 @@ export default {
           params[5], // finalization
           params[6] // presale block
         )
-        .send({ from: this.$store.state.web3.account });
+        .send(
+          { from: this.$store.state.web3.account },
+          async (error, transactionHash) => {
+            this.waitingForSignature = false;
+            this.waitingForDeploymentReceipt = true;
+            if (transactionHash) {
+              console.log(
+                "submitted invocation to create non-presale tickets: ",
+                transactionHash
+              );
+            }
+            let transactionReceipt = null;
+            while (transactionReceipt == null) {
+              transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+                transactionHash
+              );
+              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            }
+            if (transactionReceipt) {
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.waitingForDeploymentReceipt = false;
+              this.showSuccessFullDeploymentMessage = true;
+              pinata
+                .pinJSONToIPFS(JSON.parse(this.nonPresaleTypeIpfsStrings))
+                .then(result => {
+                  console.log(result);
+                })
+                .catch(err => {
+                  console.log(err);
+                });
+            }
+            await this.$store.dispatch("loadEvents");
+          }
+        );
       this.savedTypes = [];
       console.log("createTypes invocation executed");
       return response;

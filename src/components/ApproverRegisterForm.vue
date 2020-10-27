@@ -186,6 +186,11 @@ import {
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
+const pinataSDK = require("@pinata/sdk");
+const pinata = pinataSDK(
+  process.env.VUE_APP_PINATA_API_KEY,
+  process.env.VUE_APP_PINATA_SECRET_API_KEY
+);
 
 // project internal imports
 import { NETWORKS } from "../util/constants/constants.js";
@@ -317,7 +322,7 @@ export default {
           this.ipfsArgs.size,
           this.ipfsArgs.digest
         )
-        .send({ from: this.web3.account });
+        .send({ from: this.web3.account }); // todo waiting for receipt
 
       console.log(register);
     }
