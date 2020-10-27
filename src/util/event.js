@@ -51,7 +51,9 @@ export class Event {
       this.contractAddress = contractAddress.contractAddress;
       return;
     }
-    this.lastFetchedBlock = 0;
+    this.lastFetchedBlockMetadata = 0;
+    this.lastFetchedBlockTickets = 0;
+    this.lastFetchedBlockAftermarket = 0;
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
@@ -70,6 +72,85 @@ export class Event {
       url: '',
       verification: false
     }
+  }
+
+    // loading event metadata
+  async loadMetadata(web3Instance, ABI, ipfsInstance) {
+    try {
+      const changed = await this.metadataChanged(ABI, web3Instance);
+      if (changed) {
+        await this.fetchIPFSHash(ABI, web3Instance);
+        await this.loadIPFSMetadata(ipfsInstance);
+        // await this.fetchPosition();
+      }
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+    return true;
+  }
+
+  setLastFetchedBlockMetadata(block) {
+    this.lastFetchedBlockMetadata = block;
+  }
+
+  // loading currency
+  async loadCurrency(web3Instance, ABI) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    const currency = await eventSC.methods.erc20Contract().call();
+    this.currency = currency;
+  }
+
+  // loading ticket types
+  async loadTickets(web3Instance, ABI, ipfsInstance) {
+    try {
+      await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
+      await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+    return true;
+  }
+
+  setLastFetchedBlockTickets(block) {
+    this.lastFetchedBlockTickets = block;
+  }
+
+  // loading aftermarket related information
+  async loadAftermarket(web3Instance, ABI) {
+    try {
+      await this.loadOwnerShipChanges(web3Instance, ABI);
+      await this.loadTicketsSoldChanges(web3Instance, ABI);
+      await this.loadAftermarketChanges(web3Instance, ABI);
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+    return true;
+  }
+
+  setLastFetchedBlockAftermarket(block) {
+    this.lastFetchedBlockAftermarket = block;
+  }
+
+  // loading identity approver and its level
+  async loadIdentityData(web3Instance, ABI) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    const identityContractAddress = await eventSC.methods.identityApprover().call();
+    const identityLevel = await eventSC.methods.identityLevel().call();
+    this.identityContractAddress = identityContractAddress;
+    this.identityLevel = identityLevel;
+  }
+
+  // returns true if metadata changed since last fetched block
+  async metadataChanged(ABI, web3Instance) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    const changed = await eventMetadataChanged(
+      eventSC,
+      this.lastFetchedBlockMetadata + 1
+    );
+    return changed;
   }
 
   parseTimeStamp() {
@@ -91,6 +172,7 @@ export class Event {
     return this.date.getMonth();
   }
 
+  // getting the geo-position of the location
   async fetchPosition() {
     let response;
     try {
@@ -154,6 +236,7 @@ export class Event {
       return tt.sellOrders.filter(o => o.address === address);
     }
   }
+
   getBuyOrdersByAddress(address, isNf) {
     let buyOrders = [];
     const tickets = !isNf ? this.fungibleTickets : this.nonFungibleTickets;
@@ -208,6 +291,7 @@ export class Event {
     }
   }
 
+  // get a specific non-fungible ticket
   getNfTicket(ticketTypeId, ticketId) {
     const foundNonFungible = this.nonFungibleTickets.find(
       t => t.typeId === ticketTypeId
@@ -217,46 +301,27 @@ export class Event {
     }
   }
 
-  async metadataChanged(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const changed = await eventMetadataChanged(
-      eventSC,
-      this.lastFetchedBlock + 1
-    );
-    return changed;
-  }
-
-  async loadIdentityData(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const currency = await eventSC.methods.erc20Contract().call();
-    const identityContractAddress = await eventSC.methods.identityApprover().call();
-    const identityLevel = await eventSC.methods.identityLevel().call();
-    this.currency = currency;
-    this.identityContractAddress = identityContractAddress;
-    this.identityLevel = identityLevel;
-  }
-
-  async loadData(ABI, ipfsInstance, web3Instance) {
-    try {
-      const changed = await this.metadataChanged(ABI, web3Instance);
-      if (changed) {
-        await this.fetchIPFSHash(ABI, web3Instance);
-        await this.loadIPFSMetadata(ipfsInstance);
-        await this.fetchPosition();
-      }
-      // this.requestTwitterVerification();
-      // this.requestUrlVerification();
-      await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
-      await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
-      await this.loadOwnerShipChanges(web3Instance, ABI);
-      await this.loadTicketsSoldChanges(web3Instance, ABI);
-      await this.loadAftermarketChanges(web3Instance, ABI);
-    } catch (e) {
-      console.log(e);
-      return false;
-    }
-    return true;
-  }
+  // async loadData(ABI, ipfsInstance, web3Instance) {
+  //   try {
+  //     const changed = await this.metadataChanged(ABI, web3Instance);
+  //     if (changed) {
+  //       await this.fetchIPFSHash(ABI, web3Instance);
+  //       await this.loadIPFSMetadata(ipfsInstance);
+  //       await this.fetchPosition();
+  //     }
+  //     // this.requestTwitterVerification();
+  //     // this.requestUrlVerification();
+  //     await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
+  //     await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
+  //     await this.loadOwnerShipChanges(web3Instance, ABI);
+  //     await this.loadTicketsSoldChanges(web3Instance, ABI);
+  //     await this.loadAftermarketChanges(web3Instance, ABI);
+  //   } catch (e) {
+  //     console.log(e);
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   async requestTwitterVerification() {
     this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
@@ -268,8 +333,10 @@ export class Event {
 
   async fetchIPFSHash(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+
+    console.log("fetchipfshash last block: " + this.lastFetchedBlockMetadata)
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
-      fromBlock: this.lastFetchedBlock + 1
+      fromBlock: this.lastFetchedBlockMetadata + 1
     });
 
     var metadataObject = eventMetadata[0].returnValues;
@@ -324,7 +391,7 @@ export class Event {
         const typeIdentifier = getIdAsBigNumber(false, i);
         const changed = await ticketMetadataChanged(
           eventSC,
-          this.lastFetchedBlock + 1,
+          this.lastFetchedBlockTickets + 1,
           typeIdentifier
         );
         if (changed) {
@@ -361,7 +428,7 @@ export class Event {
         const typeIdentifier = getIdAsBigNumber(false, i);
         const changed = await ticketMetadataChanged(
           eventSC,
-          this.lastFetchedBlock + 1,
+          this.lastFetchedBlockTickets + 1,
           typeIdentifier
         );
         if (changed) {
@@ -429,7 +496,7 @@ export class Event {
 
   async loadOwnerShipChanges(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const events = await MintNonFungibles(eventSC, this.lastFetchedBlock + 1);
+    const events = await MintNonFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
       const owner = event.returnValues.owner;
       for (const id of event.returnValues.ids) {
@@ -445,7 +512,7 @@ export class Event {
 
   async loadTicketsSoldChanges(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const events = await MintFungibles(eventSC, this.lastFetchedBlock + 1);
+    const events = await MintFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
       //const owner = event.returnValues.owner;
       const ticketType = Number(
@@ -509,7 +576,7 @@ export class Event {
 
     const buyOrdersPlaced = await BuyOrderPlaced(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of buyOrdersPlaced) {
       const ticketTypeId = Number(
@@ -540,7 +607,7 @@ export class Event {
 
     const buyOrderWithdrawn = await BuyOrderWithdrawn(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of buyOrderWithdrawn) {
       const ticketTypeId = Number(
@@ -571,7 +638,7 @@ export class Event {
 
     const sellOrderFungiblePlaced = await SellOrderFungiblePlaced(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderFungiblePlaced) {
       console.log('sell order fungible placed');
@@ -596,7 +663,7 @@ export class Event {
 
     const sellOrderFungibleFilled = await SellOrderFungibleFilled(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderFungibleFilled) {
       const ticketTypeId = Number(
@@ -620,7 +687,7 @@ export class Event {
 
     const buyOrderFungibleFilled = await BuyOrderFungibleFilled(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of buyOrderFungibleFilled) {
       const ticketTypeId = Number(
@@ -644,7 +711,7 @@ export class Event {
 
     const sellOrderFungibleWithdrawn = await SellOrderFungibleWithdrawn(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderFungibleWithdrawn) {
       const ticketTypeId = Number(
@@ -667,7 +734,7 @@ export class Event {
     }
     const sellOrderNonFungiblePlaced = await SellOrderNonFungiblePlaced(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderNonFungiblePlaced) {
       const address = event.returnValues.addr;
@@ -691,7 +758,7 @@ export class Event {
     }
     const sellOrderNonFungibleFilled = await SellOrderNonFungibleFilled(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderNonFungibleFilled) {
       const address = event.returnValues.addr;
@@ -716,7 +783,7 @@ export class Event {
 
     const buyOrderNonFungibleFilled = await BuyOrderNonFungibleFilled(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of buyOrderNonFungibleFilled) {
       const address = event.returnValues.addr;
@@ -741,7 +808,7 @@ export class Event {
 
     const sellOrderNonFungibleWithdrawn = await SellOrderNonFungibleWithdrawn(
       eventSC,
-      this.lastFetchedBlock + 1
+      this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderNonFungibleWithdrawn) {
       const address = event.returnValues.addr;

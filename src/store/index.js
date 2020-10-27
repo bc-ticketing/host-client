@@ -11,7 +11,6 @@ import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintabl
 import { IdentityApprover } from "../util/identity";
 import idb from "./../util/db/idb";
 import { NULL_ADDRESS } from "../util/constants/constants";
-import { getApproverFromStore } from "../util/utility";
 
 Vue.use(Vuex);
 
@@ -34,6 +33,9 @@ export default new Vuex.Store({
     },
     updateEventStore(state, events) {
       state.events = events;
+    },
+    updateEventDataInStore(state, {index, updatedEvent}) {
+      state.events[index] = updatedEvent;
     },
     updateApproverStore(state, approvers) {
       state.approvers = approvers;
@@ -71,25 +73,80 @@ export default new Vuex.Store({
       commit("setIdentity", identity);
     },
 
-    /* 
-      Loads all events from the IDB and Blockchain.
-      First gets all the event addresses from the eventFactory Smart contract.
-      Then checks for each address if there is a record in the DB.
-      If there is a record, checks with the 'lastFetchedBlock' if any updates 
-      are needed (metadata, tickets, ticketMetadata, aftermarket listings, etc.)
-      and fetches the updates if needed.
-      If there is no record, creates one and fetches all information from block 1.
-      finally stores/updates the event in the IDB and puts it into 
-      the state.
-    */
-    async loadEvents({ commit }) {
-      const eventAddresses = await state.eventFactory.methods
-        .getEvents()
-        .call();
+    async updateMetadataOfExistingEvents({ commit }) {
       let events = [];
-      // filter the event addresses of the owned events of the current active account
-      for (let i = 0; i < eventAddresses.length; i++) {
-        const address = eventAddresses[i];
+      for (let i = 0; i < state.events.length; i++) {
+        const address = state.events[i].contractAddress;
+        let inDb = await idb.getEvent(address);
+        let event = new Event(inDb);
+        await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+        event.setLastFetchedBlockMetadata(state.web3.currentBlock);
+        await idb.saveEvent(event);
+        events.push(event);
+      }
+      commit("updateEventStore", events);
+    },
+
+    async loadTicketsOfExistingEvent({ commit }, address) {
+      console.log("loadTickets action executed");
+      let events = [];
+      for (let i = 0; i < state.events.length; i++) {
+        if (state.events[i].contractAddress == address) {
+          let inDb = await idb.getEvent(address);
+          let event = new Event(inDb);
+          await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+          event.setLastFetchedBlockTickets(state.web3.currentBlock);
+          await idb.saveEvent(event);
+          events.push(event);
+        } else {
+          let inDb = await idb.getEvent(address);
+          let event = new Event(inDb);
+          events.push(event);
+        }
+      }
+      commit("updateEventStore", events);
+    },
+
+    async loadAftermarketOfExistingEvent({ commit }, address) {
+      console.log("loadAftermarket action executed");
+      let events = [];
+      for (let i = 0; i < state.events.length; i++) {
+        if (state.events[i].contractAddress == address) {
+          let inDb = await idb.getEvent(address);
+          let event = new Event(inDb);
+          await event.loadAftermarket(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+          event.setLastFetchedBlockAftermarket(state.web3.currentBlock);
+          await idb.saveEvent(event);
+          events.push(event);
+        } else {
+          let inDb = await idb.getEvent(address);
+          let event = new Event(inDb);
+          events.push(event);
+        }
+      }
+      commit("updateEventStore", events);
+    },
+
+    // Loads events and its metadata
+    // Loads only events that are newly created since the last time checked
+    async loadNewEvents({ commit }){
+      let events = [];
+      let event;
+      // adding events that are already in the store to the list
+      for (let i = 0; i < state.events.length; i++) {
+        event = state.events[i];
+        await idb.saveEvent(event);
+        events.push(event);
+      }
+      // Fetching register events that occured since last fetched block and store the events
+      const creationEvents = await state.eventFactory.getPastEvents("EventCreated", {
+        fromBlock: state.lastFetchedBlockEvents + 1
+      });
+      // update last fetched block for events
+      state.lastFetchedBlockEvents = state.web3.currentBlock;
+      // add all newly created events to the store and the db
+      for (let i = 0; i < creationEvents.length; i++) {
+        const address = creationEvents[i].returnValues[0];
         const eventContract = new state.web3.web3Instance.eth.Contract(
           EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
           address
@@ -97,33 +154,23 @@ export default new Vuex.Store({
         const owner = await eventContract.methods.getOwner().call();
 
         if (state.web3.account == owner) {
-          const inStore = await idb.getEvent(address); // whether this event is present
-          let event;
-          if (!inStore) {
-            console.log("event not in store - fetching event");
+          const inDb = await idb.getEvent(address); // whether this event is present in the db
+          if (!inDb) {
+            console.log("event not in db - saving to db");
             event = new Event(address);
-            await event.loadIdentityData(
-              // load the data
-              EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-              state.web3.web3Instance
-            );
+            await event.loadIPFSMetadata();
           } else {
-            event = new Event(inStore);
+            event = new Event(inDb)
           }
-          let fetch = await event.loadData(
-            EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-            state.ipfsInstance,
-            state.web3.web3Instance
-          );
-          if (fetch) {
-            event.lastFetchedBlock = state.web3.currentBlock;
-          }
+          await event.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
           await idb.saveEvent(event);
           events.push(event);
         }
       }
+      console.log(events);
       commit("updateEventStore", events);
     },
+
     async addNullAddressApproverToStore({ commit }) {
       console.log("adding null address approver to store")
       let approvers = [];
@@ -132,6 +179,7 @@ export default new Vuex.Store({
       approvers.push(nullAddressApprover)
       commit("updateApproverStore", approvers);
     },
+
     async loadApprovers({ commit }) {
       let approvers = [];
       // adding approvers that are already in the store to the list
