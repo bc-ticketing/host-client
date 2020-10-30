@@ -50,36 +50,36 @@
                 <b>Description: </b>{{ description }}
               </div>
             </div>
-            <div class="image-content">
-              <div v-if="image" class="content-entry">
-                <img class="preview" :src="image" />
+            <div class="image-content-wrapper">
+              <div v-if="image" class="content-entry-image">
+                <img class="image-content" :src="image" />
               </div>
             </div>
           </md-card-content>
         </div>
-        <md-card-actions>
-          <!-- <md-button class="md-primary" @click="openStats()"
+        <!-- <md-card-actions> -->
+        <!-- <md-button class="md-primary" @click="openStats()"
             >See some stats</md-button
           > -->
-          <md-button
+        <!-- <md-button
             v-if="inListView || inStatsView"
             class="md-primary"
             @click="openSummaryView()"
             >Overview</md-button
-          >
-          <md-button
-            v-if="inModificationView"
-            class="md-primary"
-            @click="enterEditMode()"
-            >Edit</md-button
-          >
-          <md-button
-            v-if="inListView"
-            class="md-primary"
-            @click="openNewTicketView()"
-            >Create ticket</md-button
-          >
-        </md-card-actions>
+          > -->
+        <md-button
+          v-if="inModificationView"
+          class="md-primary"
+          @click="enterEditMode()"
+          >Edit</md-button
+        >
+        <!-- <md-button
+          v-if="inListView"
+          class="md-primary"
+          @click="openNewTicketView()"
+          >Create ticket</md-button
+        > -->
+        <!-- </md-card-actions> -->
         <!-- </md-ripple> -->
       </md-card>
     </div>
@@ -174,10 +174,19 @@ export default {
 
 <style>
 .event-card-container {
-  margin-bottom: 10px;
+  padding-bottom: 10px;
 }
 .content-entry {
   display: block;
+}
+.image-content {
+  position: relative;
+  padding: 16px;
+  bottom: 10px;
+  overflow: hidden;
+}
+.md-card-content.card-content {
+  padding-bottom: 0;
 }
 .card-content {
   display: flex;
@@ -185,9 +194,9 @@ export default {
 .text-content {
   min-width: 50%;
 }
-.image-content {
+/* .image-content-wrapper {
   position: absolute;
   right: 20px;
   top: 20px;
-}
+} */
 </style>
