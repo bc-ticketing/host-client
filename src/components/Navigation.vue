@@ -91,7 +91,7 @@ export default {
       this.$root.$emit("updatedWeb3");
     },
     async reloadEvents() {
-      await this.$store.dispatch("loadEvents");
+      await this.$store.dispatch("loadNewEvents");
     },
     prettyAddress(address) {
       const start = address.substring(0, 4);
