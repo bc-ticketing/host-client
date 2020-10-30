@@ -41,6 +41,8 @@ import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 
 import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
 
+import { getJSONFromIpfs } from "../util/getIpfs";
+
 const BigNumber = require("bignumber.js");
 
 export class Event {
@@ -82,12 +84,13 @@ export class Event {
         await this.fetchIPFSHash(ABI, web3Instance);
         await this.loadIPFSMetadata(ipfsInstance);
         // await this.fetchPosition();
+        return true;
       }
     } catch (e) {
       console.log(e);
       return false;
     }
-    return true;
+    return false;
   }
 
   setLastFetchedBlockMetadata(block) {
@@ -339,6 +342,9 @@ export class Event {
       fromBlock: this.lastFetchedBlockMetadata + 1
     });
 
+    if (metadataObject == null) {
+      return false;
+    }
     var metadataObject = eventMetadata[0].returnValues;
     this.ipfsHash = argsToCid(
       metadataObject.hashFunction,
@@ -350,12 +356,18 @@ export class Event {
 
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
+    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    if (ipfsData == null) {
+      return;
     }
-    const metadata = JSON.parse(ipfsData);
+    console.log(ipfsData);
+    // for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+    //   timeout: 2000
+    // })) {
+    //   ipfsData = Buffer(chunk, "utf8").toString();
+    //   console.log(ipfsData);
+    // }
+    const metadata = ipfsData;
     this.location = metadata.event.location;
     this.title = metadata.event.title;
     this.image = metadata.event.image;

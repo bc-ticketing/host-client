@@ -1,5 +1,6 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
+import { getJSONFromIpfs } from "../util/getIpfs";
 // import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
@@ -39,14 +40,19 @@ export class IdentityApprover {
 
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
+    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    if (ipfsData == null) {
+      return;
     }
+    console.log(ipfsData)
+    // for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+    //   timeout: 2000,
+    // })) {
+    //   ipfsData = Buffer(chunk, "utf8").toString();
+    // }
     const metadata = JSON.parse(ipfsData);
     this.title = metadata.approver.title;
-    this.website.url = metadata.approver.url;
+    this.website.url = metadata.approver.website;
     this.twitter.url = metadata.approver.twitter;
     this.methods = metadata.approver.methods;
   }
@@ -59,9 +65,13 @@ export class IdentityApprover {
   }
 
   async requestTwitterVerification() {
+    try {
     this.twitter.verification = await requestTwitterVerification(
       getHandle(this.twitter.url)
     );
+    } catch(e) {
+      console.log(e)
+    }
   }
 
   async requestUrlVerification() {

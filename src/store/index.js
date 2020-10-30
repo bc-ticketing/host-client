@@ -79,8 +79,13 @@ export default new Vuex.Store({
         const address = state.events[i].contractAddress;
         let inDb = await idb.getEvent(address);
         let event = new Event(inDb);
-        await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+        let changed = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
         event.setLastFetchedBlockMetadata(state.web3.currentBlock);
+        if (!changed) {
+          console.log("no changes to events metadata");
+          return;
+        }
+        console.log("saving changes");
         await idb.saveEvent(event);
         events.push(event);
       }
@@ -158,7 +163,7 @@ export default new Vuex.Store({
           if (!inDb) {
             console.log("event not in db - saving to db");
             event = new Event(address);
-            await event.loadIPFSMetadata();
+            await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
           } else {
             event = new Event(inDb)
           }
@@ -167,7 +172,6 @@ export default new Vuex.Store({
           events.push(event);
         }
       }
-      console.log(events);
       commit("updateEventStore", events);
     },
 
@@ -209,7 +213,6 @@ export default new Vuex.Store({
         }
         await idb.saveApprover(approver);
         approvers.push(approver);
-        console.log("added " + approver.title)
       }
       commit("updateApproverStore", approvers);
     },

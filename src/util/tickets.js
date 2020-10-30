@@ -4,14 +4,15 @@
 import { argsToCid, getIdAsBigNumber } from "idetix-utils";
 import {
     NULL_ADDRESS,
-    MESSAGE_TRANSACTION_DENIED,
-    MESSAGE_TICKET_BOUGHT,
-    MESSAGE_DEFAULT_ERROR,
-    MESSAGE_MAX_TICKETS_ALLOWED,
-    MESSAGE_SELLORDER_PLACED,
-    MESSAGE_SELLORDER_WITHDRAWN
+    TRANSACTION_DENIED,
+    TICKET_BOUGHT,
+    DEFAULT_ERROR,
+    MAX_TICKETS_ALLOWED,
+    SELLORDER_PLACED,
+    SELLORDER_WITHDRAWN
 } from "./constants/constants";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "./../util/abi/EventMintableAftermarketPresale";
+import { getJSONFromIpfs } from "../util/getIpfs"
 
 const BigNumber = require("bignumber.js");
 
@@ -147,17 +148,17 @@ export function getLowestSellOrder(ticket) {
 function decodeError(e) {
     if (e.code === 4001) {
         return {
-        message: MESSAGE_TRANSACTION_DENIED,
+        message: TRANSACTION_DENIED,
         status: -1
         };
     } else if (e.code === -32603) {
         return {
-            message: MESSAGE_MAX_TICKETS_ALLOWED,
+            message: MAX_TICKETS_ALLOWED,
             status: -1
         };
     }
     return {
-        message: MESSAGE_DEFAULT_ERROR,
+        message: DEFAULT_ERROR,
         status: -1
     };
 }
@@ -173,11 +174,17 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
         return;
     }
     var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(ticket.ipfsHash, {
-        timeout: 2000
-    })) {
-        ipfsData = Buffer(chunk, "utf8").toString();
+    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    if (ipfsData == null) {
+        console.log("ipfs data null for event: " + this.ipfsHash);
+        return;
     }
+    console.log(ipfsData)
+    // for await (const chunk of ipfsInstance.cat(ticket.ipfsHash, {
+    //     timeout: 2000
+    // })) {
+    //     ipfsData = Buffer(chunk, "utf8").toString();
+    // }
     const metadata = JSON.parse(ipfsData);
     ticket.description = metadata.ticket.description;
     ticket.seatMapping = metadata.ticket.mapping;
