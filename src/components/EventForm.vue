@@ -237,7 +237,7 @@
                 >{{ selectedApprover.website.url }}</a
               >
               <p class="dialog-text" v-if="!selectedApprover.website.url">
-                No website linked
+                No website provided
               </p>
             </div>
             <div class="dialog-approver-entry">
@@ -250,7 +250,7 @@
                 >{{ selectedApprover.twitter.url }}</a
               >
               <p class="dialog-text" v-if="!selectedApprover.twitter.url">
-                No Twitter linked
+                No Twitter provided
               </p>
             </div>
             <div class="dialog-approver-entry">
@@ -467,6 +467,13 @@
 
       <md-progress-bar md-mode="indeterminate" v-if="sending" />
     </form>
+    <!-- <div v-if="showStatusMessage" class="status-message">
+      <md-progress-bar :md-mode="progressBarMode"></md-progress-bar>
+      <p class="process-message">
+        {{ processMessage }}
+      </p>
+    </div> -->
+
     <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
       <p class="process-message">
@@ -492,10 +499,10 @@
         Please wait - The metadata change invocation is being sent.
       </p>
     </div>
-    <div v-if="showSuccessFullDeploymentMessage" class="successful-message">
+    <div v-if="showSuccessfulDeploymentMessage" class="successful-message">
       <p class="process-message">The event was successfully deployed.</p>
     </div>
-    <div v-if="showSuccessfullMetadataChangeMessage" class="successful-message">
+    <div v-if="showSuccessfulMetadataChangeMessage" class="successful-message">
       <p class="process-message">The metadata change is confirmed.</p>
     </div>
     <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
@@ -542,6 +549,7 @@ import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 import idb from "../util/db/idb";
 import { IdentityApprover } from "../util/identity";
 import { getApproverFromStore } from "../util/utility";
+import { getJSONFromIpfs } from "../util/getIpfs";
 
 export default {
   name: "EventForm",
@@ -562,8 +570,8 @@ export default {
     deployingContractState: false,
     invokingMetadataChangeState: false,
     uploadingToIpfs: false,
-    showSuccessFullDeploymentMessage: false,
-    showSuccessfullMetadataChangeMessage: false,
+    showSuccessfulDeploymentMessage: false,
+    showSuccessfulMetadataChangeMessage: false,
     showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
@@ -572,7 +580,7 @@ export default {
     showGranularityDialog: false,
     ipfsArgs: null,
     ipfsCid: null,
-    ipfsHash: null,
+    IpfsHash: null,
     ipfsData: null,
     ipfsString: null,
     ipfsError: false,
@@ -768,25 +776,18 @@ export default {
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
-      console.log(this.ipfsString);
       this.uploadingToIpfs = true;
-      try {
-        const response = await this.ipfsInstance.add(this.ipfsString);
-        this.ipfsHash = response.path;
-        console.log("Uploading to ipfs");
-        console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
-        this.uploadingToIpfs = false;
-        this.ipfsAdded = true;
-      } catch (err) {
-        console.log(err);
-        this.ipfsError = true;
-      }
-    },
-    async downloadFromIpfs() {
-      console.log("downloading from ipfs...");
-      for await (const chunk of this.ipfsInstance.cat(this.ipfsHash)) {
-        this.ipfsData = Buffer(chunk, "utf8").toString();
-      }
+      await pinata
+        .pinJSONToIPFS(JSON.parse(this.ipfsString))
+        .then(result => {
+          this.IpfsHash = result.IpfsHash;
+          this.uploadingToIpfs = false;
+          console.log(result);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+      console.log(this.ipfsString);
     },
     createIpfsString() {
       return JSON.stringify({
@@ -810,7 +811,7 @@ export default {
       return !this.$v.$invalid;
     },
     async invokeMetadataChange() {
-      const args = cidToArgs(this.ipfsHash);
+      const args = cidToArgs(this.IpfsHash);
       const eventContract = new this.$store.state.web3.web3Instance.eth.Contract(
         EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
         this.event.contractAddress
@@ -842,43 +843,42 @@ export default {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.waitingForMetadataChangeReceipt = false;
               this.invokingMetadataChangeState = false;
-              this.showSuccessfullMetadataChangeMessage = true;
-              pinata
-                .pinJSONToIPFS(JSON.parse(this.ipfsString))
-                .then(result => {
-                  console.log(result);
-                })
-                .catch(err => {
-                  console.log(err);
-                });
+              this.showSuccessfulMetadataChangeMessage = true;
             }
-            await this.$store.dispatch("loadEvents");
+            await this.$store.dispatch("loadNewEvents");
             await sleep(2000);
             this.leaveEditMode();
           }
         )
-        .catch(e => {
+        .catch(async e => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
           this.waitingForMetadataChangeReceipt = false;
           this.invokingMetadataChangeState = false;
-          this.showSuccessfullMetadataChangeMessage = false;
+          this.showSuccessfulMetadataChangeMessage = false;
           this.showErrorMessage = true;
           console.log(e);
+          await pinata
+            .unpin(this.IpfsHash)
+            .then(result => {
+              console.log(result);
+            })
+            .catch(err => {
+              console.log(err);
+            });
         });
     },
 
     async deployEventContract() {
-      const args = cidToArgs(this.ipfsHash);
-      this.deployingContractState = true;
-      this.waitingForSignature = true;
-      console.log(args.hashFunction);
-      console.log(args.size);
-      console.log(args.digest);
+      const args = cidToArgs(this.IpfsHash);
+      console.log(this.IpfsHash);
+      console.log(args);
       console.log(this.form.selectedApproverAddress);
       console.log(this.form.selectedApproverLevel);
       console.log(this.usedToken);
       console.log(this.form.granularity);
+      this.deployingContractState = true;
+      this.waitingForSignature = true;
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
@@ -910,30 +910,30 @@ export default {
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.waitingForDeploymentReceipt = false;
-              this.showSuccessFullDeploymentMessage = true;
-              pinata
-                .pinJSONToIPFS(JSON.parse(this.ipfsString))
-                .then(result => {
-                  console.log(result);
-                })
-                .catch(err => {
-                  console.log(err);
-                });
+              this.showSuccessfulDeploymentMessage = true;
             }
-            await this.$store.dispatch("loadEvents");
+            await this.$store.dispatch("loadNewEvents");
             this.$router.push({
               path: `/`
             });
           }
         )
-        .catch(e => {
+        .catch(async e => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
           this.waitingForDeploymentReceipt = false;
           this.deployingContractState = false;
-          this.showSuccessFullDeploymentMessage = false;
+          this.showSuccessfulDeploymentMessage = false;
           this.showErrorMessage = true;
           console.log(e);
+          await pinata
+            .unpin(this.IpfsHash)
+            .then(result => {
+              console.log(result);
+            })
+            .catch(err => {
+              console.log(err);
+            });
         });
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();

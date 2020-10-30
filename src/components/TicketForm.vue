@@ -240,6 +240,12 @@
         </md-card-actions>
       </md-card>
     </form>
+    <div v-if="showStatusMessage" class="status-message">
+      <md-progress-bar :md-mode="progressBarMode"></md-progress-bar>
+      <p class="process-message">
+        {{ processMessage }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -256,6 +262,7 @@ import { cidToArgs, argsToCid } from "idetix-utils";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 import sleep from "await-sleep";
+import { getJSONFromIpfs } from "../util/getIpfs";
 const BigNumber = require("bignumber.js");
 const pinataSDK = require("@pinata/sdk");
 const pinata = pinataSDK(
@@ -264,7 +271,11 @@ const pinata = pinataSDK(
 );
 
 // internal imports
-import { NETWORKS } from "../util/constants/constants.js";
+import {
+  NETWORKS,
+  TICKETS_CREATING_PRESALE,
+  WAITING_FOR_SIGNATURE_PRESALE
+} from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
   EVENT_FACTORY_ADDRESS
@@ -273,6 +284,16 @@ import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintabl
 import { ERC20_ABI } from "../util/abi/ERC20";
 import SeatingPlan from "../components/SeatingPlan";
 import {
+  WAITING_FOR_SIGNATURE,
+  UPLOADING_TO_IPFS,
+  UPLOADED_TO_IPFS,
+  TRANSACTION_DENIED,
+  DEFAULT_ERROR,
+  PROGRESS_DETERMINATE,
+  PROGRESS_INDETERMINATE,
+  TICKETS_CREATING,
+  TICKETS_CREATED,
+  TICKETS_CREATED_PRESALE,
   AVERAGE_BLOCKTIME,
   AVERAGE_BLOCKTIME_LOCAL
 } from "../util/constants/constants";
@@ -288,6 +309,10 @@ export default {
   },
   data: () => ({
     sending: false,
+    showStatusMessage: false,
+    progressBarMode: PROGRESS_DETERMINATE,
+    processMessage: DEFAULT_ERROR,
+
     contract: null,
     presaleTypeIpfsHashes: [],
     presaleTypeIpfsStrings: [],
@@ -331,33 +356,47 @@ export default {
     }
   },
   methods: {
+    /**
+     * Create all saved ticket types
+     */
     async createTypes() {
+      this.sending = true;
       if (this.savedTypes.length > 0) {
-        console.log("create non presale types");
         this.createNonPresaleTypes();
       }
       if (this.savedPresaleTypes.length > 0) {
-        console.log("create presale types");
         this.createPresaleTypes();
       }
+
+      this.sending = false;
     },
     async createPresaleTypes() {
       this.createIpfsStrings(true); // creating ipfs strings for presale types
-      this.presaleTypeIpfsHashes = await this.uploadToIpfs(true);
-      console.log("presale ipfs hashes: " + this.presaleTypeIpfsHashes);
+      this.showStatus("indeterminate");
+      let ipfsStatus = await this.uploadToIpfs(true);
+      if (!ipfsStatus) {
+        this.sending = false;
+        this.showErrorMessage();
+        return false;
+      }
       let response = await this.invokeCreatePresaleTypes(
         this.prepareInvocationParametersPresale()
       );
-      console.log(response);
+      return true;
     },
     async createNonPresaleTypes() {
       this.createIpfsStrings(false); // creating ipfs strings for non presale types
-      this.nonPresaleTypeIpfsHashes = await this.uploadToIpfs(false);
-      console.log("non presale ipfs hashes: " + this.nonPresaleTypeIpfsHashes);
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
+      let ipfsStatus = await this.uploadToIpfs(false);
+      if (!ipfsStatus) {
+        this.sending = false;
+        this.showErrorStatus();
+        return false;
+      }
       let response = await this.invokeCreateTypes(
         this.prepareInvocationParameters()
       );
-      console.log(response);
+      return true;
     },
 
     // Creates json strings for each type and returns them in an ordered array.
@@ -395,29 +434,33 @@ export default {
     },
 
     async uploadToIpfs(presale) {
-      var i;
-      var ipfsHashes = [];
-      var metadataList;
+      this.sending = true;
+      this.nonPresaleTypeIpfsHashes = [];
+      this.presaleTypeIpfsHashes = [];
+      var listOfJsonStrings;
       if (presale) {
-        metadataList = this.presaleTypeIpfsStrings;
+        listOfJsonStrings = this.presaleTypeIpfsStrings;
       } else {
-        metadataList = this.nonPresaleTypeIpfsStrings;
+        listOfJsonStrings = this.nonPresaleTypeIpfsStrings;
       }
-      for (i = 0; i < metadataList.length; i++) {
-        try {
-          let response = await this.ipfsInstance.add(metadataList[i]);
-          console.log("Uploading to ipfs");
-          console.log("http://ipfs.io/ipfs/" + response.path);
-          ipfsHashes.push(response.path);
-          this.sending = true;
-        } catch (err) {
-          console.log(err);
-        }
-        window.setTimeout(() => {
-          this.sending = false;
-        }, 1500);
+      var i;
+      for (i = 0; i < listOfJsonStrings.length; i++) {
+        let currentString = listOfJsonStrings[i];
+        await pinata
+          .pinJSONToIPFS(JSON.parse(currentString))
+          .then(result => {
+            if (presale) {
+              this.presaleTypeIpfsHashes.push(result.IpfsHash);
+            } else {
+              this.nonPresaleTypeIpfsHashes.push(result.IpfsHash);
+            }
+          })
+          .catch(err => {
+            console.log(err);
+            return false;
+          });
       }
-      return ipfsHashes;
+      return true;
     },
 
     // Takes the necessary parameter of the saved ticket types that
@@ -488,9 +531,12 @@ export default {
       return invocParams;
     },
 
-    // Invokes the method createPresaleTypes
+    /**
+     * Invokes the method `createPresaleTypes` on the event contract.
+     */
     async invokeCreatePresaleTypes(params) {
       console.log(params);
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       let response = await this.contract.methods
         .createPresaleTypes(
           params[0], // hash function
@@ -505,7 +551,6 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
             this.waitingForDeploymentReceipt = true;
             if (transactionHash) {
               console.log(
@@ -522,40 +567,39 @@ export default {
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForDeploymentReceipt = false;
-              this.showSuccessFullDeploymentMessage = true;
-              pinata
-                .pinJSONToIPFS(JSON.parse(this.presaleTypeIpfsStrings))
-                .then(result => {
-                  console.log(result);
-                })
-                .catch(err => {
-                  console.log(err);
-                });
+              this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATED_PRESALE);
             }
-            await this.$store.dispatch("loadEvents");
+            await this.$store.dispatch("loadNewEvents");
           }
         )
-        .catch(e => {
+        .catch(async e => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForDeploymentReceipt = false;
-          this.deployingContractState = false;
-          this.showSuccessFullDeploymentMessage = false;
-          this.showErrorMessage = true;
           console.log(e);
+          this.showErrorMessage();
+          for (let j = 0; j < this.presaleTypeIpfsHashes.length; j++) {
+            let hash = this.presaleTypeIpfsHashes[j];
+            await pinata
+              .unpin(hash)
+              .then(result => {
+                console.log(result);
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          }
         });
 
-      // await this.$store.dispatch("loadEvents");
+      // await this.$store.dispatch("loadNewEvents");
       this.savedPresaleTypes = [];
-      console.log("createPresaleTypes invocation executed");
+      this.sending = false;
       return response;
     },
 
-    // Invokes the method createTypes
+    /**
+     * Invokes the method `createTypes` on the event contract.
+     */
     async invokeCreateTypes(params) {
-      console.log("invokeCreateTypes");
-      console.log(params);
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       let response = await this.contract.methods
         .createTypes(
           params[0], // hash function
@@ -569,8 +613,7 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
-            this.waitingForDeploymentReceipt = true;
+            this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATING_PRESALE);
             if (transactionHash) {
               console.log(
                 "submitted invocation to create non-presale tickets: ",
@@ -586,29 +629,35 @@ export default {
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForDeploymentReceipt = false;
-              this.showSuccessFullDeploymentMessage = true;
-              pinata
-                .pinJSONToIPFS(JSON.parse(this.nonPresaleTypeIpfsStrings))
-                .then(result => {
-                  console.log(result);
-                })
-                .catch(err => {
-                  console.log(err);
-                });
+              this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATED);
             }
-            await this.$store.dispatch("loadEvents");
           }
-        );
+        )
+        .catch(async e => {
+          // Transaction rejected or failed
+          console.log(e);
+          this.showErrorMessage();
+          for (let j = 0; j < this.nonPresaleTypeIpfsHashes.length; j++) {
+            let hash = this.nonPresaleTypeIpfsHashes[j];
+            await pinata
+              .unpin(hash)
+              .then(result => {
+                console.log(result);
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          }
+        });
       this.savedTypes = [];
-      console.log("createTypes invocation executed");
       return response;
     },
 
-    // This method is called in the SeatingPlan component.
-    // It takes the seats selected in the SeatingPlan and
-    // the inputs in this form and saves it to either savedTypes
-    // or savedPresaleTypes.
+    /**
+     * This method is called in the SeatingPlan component.
+     * It takes the seats selected in the SeatingPlan and the inputs in this form
+     *  and saves it to either `savedTypes` or `savedPresaleTypes`.
+     */
     async saveTicketType(seats, color) {
       console.log("save ticket executed in TicketForm");
       if (seats.length == 0) {
@@ -743,6 +792,10 @@ export default {
       d.setMonth(d.getMonth() + n);
       return d;
     },
+
+    /**
+     * Computing expected block from presale timestamp.
+     */
     async computePresaleBlock() {
       let currentBlockNumber = BigNumber(await this.getCurrentBlockNumber());
       console.log(currentBlockNumber.toFixed());
@@ -758,6 +811,20 @@ export default {
     },
     async getCurrentBlockNumber() {
       return await this.$store.state.web3.web3Instance.eth.getBlockNumber();
+    },
+    showStatus(processBarMode, message) {
+      this.processBarMode = processBarMode;
+      this.processMessage = message;
+      this.showStatusMessage = true;
+    },
+    hideStatus() {
+      this.showStatusMessage = false;
+    },
+    showErrorStatus() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
     }
   },
   computed: {
@@ -824,17 +891,24 @@ export default {
   },
   async created() {
     console.log("ticket form created executed");
+    pinata
+      .testAuthentication()
+      .then(result => {
+        console.log(result);
+      })
+      .catch(err => {
+        console.log(err);
+      });
     this.$root.$on("web3Injected", async () => {
-      this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
-        EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-        this.$route.query.address
-      );
-      // let a = new this.$store.state.web3.web3Instance.eth.Contract(
-      //   ERC20_ABI,
-      //   ERC20TESTTOKEN
-      // );
-      // let c = await a.methods.decimals().call();
-      // console.log(c);
+      try {
+        this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
+          EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
+          this.$route.query.address
+        );
+      } catch (e) {
+        this.showErrorMessage();
+        console.log(e);
+      }
     });
     if (this.$store.state.web3.web3Instance) {
       this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
@@ -842,7 +916,15 @@ export default {
         this.$route.query.address
       );
     }
-    this.event = await idb.getEvent(this.$route.query.address);
+    try {
+      this.event = await idb.getEvent(this.$route.query.address);
+    } catch (e) {
+      console.log(e);
+    }
+    if (!this.event) {
+      this.showErrorMessage();
+      return;
+    }
     this.currencyDecimals = getDecimals(this.event.currency);
     this.finalizationDate = this.getDateAfterMonths(8);
     this.presaleClosingDate = this.getDateAfterMonths(2);
