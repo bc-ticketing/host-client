@@ -1,7 +1,7 @@
 <template>
   <div class="events-container">
     <EventCard
-      v-for="event in $store.state.events"
+      v-for="event in $store.state.events.slice().reverse()"
       v-bind:key="event.contractAddress"
       v-bind:event="event"
       v-bind:inListView="true"

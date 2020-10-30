@@ -40,20 +40,23 @@ async function getLatestEvent(contract, name, fromBlock) {
 
 /* event */
 export async function eventMetadataChanged(contract, fromBlock) {
-    return await getLatestEvent(contract, 'EventMetadata',fromBlock);
+    return await getLatestEvent(contract, 'EventMetadata', fromBlock);
 }
 
 export async function newTickets(contract, fromBlock) {
-    return await getLatestEvent(contract, 'TicketMetadata',fromBlock);
+    return await getLatestEvent(contract, 'TicketMetadata', fromBlock);
 }
 export async function ticketMetadataChanged(contract, fromBlock, ticketId) {
     const events = await contract.getPastEvents('TicketMetadata', {
         fromBlock: fromBlock,
         filter: { ticketTypeId: ticketId },
-
     });
     return events.length > 0;
 }
+
+// export async function approverMetadataChanged(contract, fromBlock) {
+//     return await getLatestEvent(contract, `ApproverMetadata`, fromBlock)
+// }
 
 
 /* aftermarket */

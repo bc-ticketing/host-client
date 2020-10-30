@@ -1,5 +1,6 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
+// import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
   constructor(approverAddress) {
@@ -13,11 +14,11 @@ export class IdentityApprover {
     this.methods = [];
     this.website = {
       url: "",
-      verification: "pending",
+      verification: false,
     };
     this.twitter = {
       url: "",
-      verification: "pending",
+      verification: false,
     };
     this.lastFetchedBlock = 0;
     this.ipfsHash = "";
@@ -28,13 +29,11 @@ export class IdentityApprover {
     const approverMetadata = await identitySC.methods
       .getApproverInfo(this.approverAddress)
       .call();
-    console.log(approverMetadata);
     this.ipfsHash = argsToCid(
       approverMetadata.hashFunction,
       approverMetadata.size,
       approverMetadata.digest
     );
-    console.log(this.ipfsHash);
     return true;
   }
 
@@ -55,8 +54,8 @@ export class IdentityApprover {
   async loadData(identitySC, ipfsInstance) {
     await this.fetchIPFSHash(identitySC);
     await this.loadIPFSMetadata(ipfsInstance);
-    this.requestTwitterVerification();
-    this.requestUrlVerification();
+    // this.requestTwitterVerification();
+    // this.requestUrlVerification();
   }
 
   async requestTwitterVerification() {
@@ -70,6 +69,14 @@ export class IdentityApprover {
       this.website.url
     );
   }
+
+  // async metadataChanged(identitySC) {
+  //   const changed = await approverMetadataChanged(
+  //     identitySC,
+  //     this.lastFetchedBlock + 1
+  //   )
+  //   return changed;
+  // }
 
   async getApprovalLevel(identitySC, userAddress) {
     const level = await identitySC.methods

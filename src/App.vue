@@ -11,6 +11,7 @@
 // Material kit css
 import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
+import sleep from "await-sleep";
 import Navigation from "./components/Navigation";
 import Vue from "vue";
 
@@ -26,15 +27,40 @@ export default {
     Navigation
   },
   methods: {
-    loadEvents: async function() {
-      await this.$store.dispatch("loadEvents");
+    loadNewEvents: async function() {
+      await this.$store.dispatch("loadNewEvents");
       this.$root.$emit("loadedEvents");
+    },
+    updateEventsMetadata: async function() {
+      await this.$store.dispatch("updateMetadataOfExistingEvents");
+      this.$root.$emit("updatedMetadataOfExistingEvents");
+    },
+    loadApprovers: async function() {
+      await this.$store.dispatch("loadApprovers");
+      this.$root.$emit("loadedApprovers");
+    },
+    loadNewEventsAndApproversInterval: async function() {
+      setInterval(async () => {
+        this.loadNewEvents();
+        this.loadApprovers();
+      }, 18000);
+    },
+    updateEventsMetadataInterval: async function() {
+      setInterval(async () => {
+        this.updateEventsMetadata();
+      }, 2000);
     }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
-      this.loadEvents();
+      this.loadNewEvents();
+      this.loadApprovers();
+      await sleep(3000);
+      this.loadNewEventsAndApproversInterval();
+      this.updateEventsMetadataInterval();
     });
+    await this.$store.dispatch("addNullAddressApproverToStore");
+    this.$root.$emit("addedNullAddressApproverToStore");
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
@@ -42,13 +68,6 @@ export default {
     this.$root.$emit("identityContractCreated");
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
-  },
-  computed: {
-    web3() {
-      console.log("accounts");
-      console.log(this.$store.state.web3.accounts);
-      return this.$store.state.web3;
-    }
   }
 };
 </script>
