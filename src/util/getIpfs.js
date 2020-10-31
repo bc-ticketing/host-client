@@ -19,20 +19,20 @@ function getIpfs() {
 export default getIpfs;
 
 export async function getJSONFromIpfs(hash) {
-  const url = "http://ipfs.io/ipfs/" + hash;
-  console.log(url)
+  console.log("hash start");
+  console.log(hash);
+  console.log("hash end")
+  const url = "https://ipfs.io/ipfs/" + hash;
+  // const url = "https://gateway.pinata.cloud/ipfs/" + hash;
+  console.log(url);
   let data;
-  await axios.get(url, { timeout: 5000 })
-  .then(response => {
-    console.log("response:")
-    console.log(response.request);
+  const response = await axios.get(url, { timeout: 13000 });
+  if (response.status == 200) {
     data = JSON.parse(response.request.responseText);
-  })
-  .catch(err => {
-      console.log("error: ");
-      console.log(err);
-  });
-  return data;
+    return data;
+  } else {
+    return false;
+  }
 }
 
 //   // console.log(response);
