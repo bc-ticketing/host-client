@@ -1,6 +1,7 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
 import { getJSONFromIpfs } from "../util/getIpfs";
+import { STARTING_BLOCK } from "./constants/constants";
 // import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
@@ -21,7 +22,7 @@ export class IdentityApprover {
       url: "",
       verification: false,
     };
-    this.lastFetchedBlock = 0;
+    this.lastFetchedBlock = STARTING_BLOCK;
     this.ipfsHash = "";
   }
 
@@ -40,6 +41,10 @@ export class IdentityApprover {
 
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
+    if (this.ipfsHash == null) {
+      console.log("ipfshash was null");
+      return;
+    }
     ipfsData = await getJSONFromIpfs(this.ipfsHash);
     if (ipfsData == null) {
       return;

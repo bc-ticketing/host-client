@@ -174,7 +174,7 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
         return;
     }
     var ipfsData = null;
-    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    ipfsData = await getJSONFromIpfs(ticket.ipfsHash);
     if (ipfsData == null) {
         console.log("ipfs data null for event: " + this.ipfsHash);
         return;
