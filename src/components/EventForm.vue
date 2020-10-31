@@ -707,17 +707,9 @@ export default {
       this.dateUponSending = this.form.date;
     }
   },
-  created() {
-    pinata
-      .testAuthentication()
-      .then(result => {
-        //handle successful authentication here
-        console.log(result);
-      })
-      .catch(err => {
-        //handle error here
-        console.log(err);
-      });
+  async created() {
+    const pinataAuth = await pinata.testAuthentication();
+    console.log(pinataAuth);
     this.form.date = this.getDateAfterMonths(8);
     if (this.inEditMode) {
       this.fillFormFromEvent();
@@ -777,18 +769,21 @@ export default {
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
       this.uploadingToIpfs = true;
-      await pinata
-        .pinJSONToIPFS(JSON.parse(this.ipfsString))
-        .then(result => {
-          this.IpfsHash = result.IpfsHash;
-          this.uploadingToIpfs = false;
-          console.log(result);
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
+      // .then(result => {
+      //   this.IpfsHash = result.IpfsHash;
+      //   this.uploadingToIpfs = false;
+      //   console.log(result);
+      // })
+      // .catch(err => {
+      //   console.log(err);
+      // });
+      this.IpfsHash = result.IpfsHash;
+      this.uploadingToIpfs = false;
+      console.log(this.IpfsHash);
       console.log(this.ipfsString);
     },
+
     createIpfsString() {
       return JSON.stringify({
         version: "1.0",
@@ -836,7 +831,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+              await sleep(AVERAGE_BLOCKTIME);
             }
             if (transactionReceipt) {
               await sleep(5000);
@@ -858,14 +853,8 @@ export default {
           this.showSuccessfulMetadataChangeMessage = false;
           this.showErrorMessage = true;
           console.log(e);
-          await pinata
-            .unpin(this.IpfsHash)
-            .then(result => {
-              console.log(result);
-            })
-            .catch(err => {
-              console.log(err);
-            });
+          const result = await pinata.unpin(this.IpfsHash);
+          console.log(result);
         });
     },
 
@@ -905,7 +894,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+              await sleep(AVERAGE_BLOCKTIME);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -926,14 +915,8 @@ export default {
           this.showSuccessfulDeploymentMessage = false;
           this.showErrorMessage = true;
           console.log(e);
-          await pinata
-            .unpin(this.IpfsHash)
-            .then(result => {
-              console.log(result);
-            })
-            .catch(err => {
-              console.log(err);
-            });
+          const result = await pinata.unpin(this.IpfsHash);
+          console.log(result);
         });
 
       const eventAddresses = await this.eventFactory.methods.getEvents().call();

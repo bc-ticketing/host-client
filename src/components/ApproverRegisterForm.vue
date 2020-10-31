@@ -339,17 +339,9 @@ export default {
     async uploadToIpfs() {
       this.pinningToIpfs = true;
       this.ipfsString = this.createIpfsString();
-      await pinata
-        .pinJSONToIPFS(JSON.parse(this.ipfsString))
-        .then(result => {
-          this.IpfsHash = result.IpfsHash;
-          this.pinningToIpfs = false;
-        })
-        .catch(err => {
-          console.log(err);
-          this.pinningToIpfs = false;
-          this.errorState = true;
-        });
+      const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
+      this.IpfsHash = result.IpfsHash;
+      this.pinningToIpfs = false;
     },
     isApproverRegisterFormComplete() {
       return true;
@@ -375,7 +367,7 @@ export default {
             transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
               transactionHash
             );
-            await sleep(AVERAGE_BLOCKTIME_LOCAL);
+            await sleep(AVERAGE_BLOCKTIME);
           }
           if (transactionReceipt) {
             console.log("Got the transaction receipt: ", transactionReceipt);
@@ -392,28 +384,16 @@ export default {
           this.showSuccessFulMessageApproverRegistration = false;
           this.errorState = true;
           console.log(e);
-          await pinata
-            .unpin(this.IpfsHash)
-            .then(result => {
-              console.log(result);
-            })
-            .catch(err => {
-              console.log(err);
-            });
+          const result = await pinata.unpin(this.IpfsHash);
+          console.log(result);
         });
 
       console.log(register);
     }
   },
   async created() {
-    await pinata
-      .testAuthentication()
-      .then(result => {
-        console.log(result);
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    const pinataAuth = await pinata.testAuthentication();
+    console.log(pinataAuth);
   }
 };
 </script>

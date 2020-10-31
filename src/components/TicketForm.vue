@@ -446,19 +446,15 @@ export default {
       var i;
       for (i = 0; i < listOfJsonStrings.length; i++) {
         let currentString = listOfJsonStrings[i];
-        await pinata
-          .pinJSONToIPFS(JSON.parse(currentString))
-          .then(result => {
-            if (presale) {
-              this.presaleTypeIpfsHashes.push(result.IpfsHash);
-            } else {
-              this.nonPresaleTypeIpfsHashes.push(result.IpfsHash);
-            }
-          })
-          .catch(err => {
-            console.log(err);
-            return false;
-          });
+        const result = await pinata.pinJSONToIPFS(JSON.parse(currentString));
+        // if (result.IpfsHash == null) {
+        //   return false;
+        // }
+        if (presale) {
+          this.presaleTypeIpfsHashes.push(result.IpfsHash);
+        } else {
+          this.nonPresaleTypeIpfsHashes.push(result.IpfsHash);
+        }
       }
       return true;
     },
@@ -563,7 +559,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+              await sleep(AVERAGE_BLOCKTIME);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -578,14 +574,8 @@ export default {
           this.showErrorMessage();
           for (let j = 0; j < this.presaleTypeIpfsHashes.length; j++) {
             let hash = this.presaleTypeIpfsHashes[j];
-            await pinata
-              .unpin(hash)
-              .then(result => {
-                console.log(result);
-              })
-              .catch(err => {
-                console.log(err);
-              });
+            const result = await pinata.unpin(hash);
+            console.log(result);
           }
         });
 
@@ -625,7 +615,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME_LOCAL);
+              await sleep(AVERAGE_BLOCKTIME);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -639,14 +629,8 @@ export default {
           this.showErrorMessage();
           for (let j = 0; j < this.nonPresaleTypeIpfsHashes.length; j++) {
             let hash = this.nonPresaleTypeIpfsHashes[j];
-            await pinata
-              .unpin(hash)
-              .then(result => {
-                console.log(result);
-              })
-              .catch(err => {
-                console.log(err);
-              });
+            const result = await pinata.unpin(hash);
+            console.log(result);
           }
         });
       this.savedTypes = [];
@@ -891,14 +875,8 @@ export default {
   },
   async created() {
     console.log("ticket form created executed");
-    pinata
-      .testAuthentication()
-      .then(result => {
-        console.log(result);
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    const pinataAuth = await pinata.testAuthentication();
+    console.log(pinataAuth);
     this.$root.$on("web3Injected", async () => {
       try {
         this.contract = new this.$store.state.web3.web3Instance.eth.Contract(
