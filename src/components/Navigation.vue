@@ -1,3 +1,4 @@
+<!-- This component contains the navigation and sidebar that is used in this application. -->
 <template>
   <div class="Navigation">
     <div class="md-layout-column">
@@ -91,7 +92,7 @@ export default {
       this.$root.$emit("updatedWeb3");
     },
     async reloadEvents() {
-      await this.$store.dispatch("loadNewEvents");
+      await this.$store.dispatch("loadEvents");
     },
     prettyAddress(address) {
       const start = address.substring(0, 4);

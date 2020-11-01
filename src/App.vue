@@ -1,3 +1,4 @@
+<!-- This is the base view that is used in the whole application. -->
 <template>
   <div class="app-container">
     <Navigation />
@@ -27,41 +28,46 @@ export default {
     Navigation
   },
   methods: {
-    loadNewEvents: async function() {
-      await this.$store.dispatch("loadNewEvents");
+    loadEvents: async function() {
+      await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
-    },
-    updateEventsMetadata: async function() {
-      await this.$store.dispatch("updateMetadataOfExistingEvents");
-      this.$root.$emit("updatedMetadataOfExistingEvents");
     },
     loadApprovers: async function() {
       await this.$store.dispatch("loadApprovers");
       this.$root.$emit("loadedApprovers");
     },
-    loadNewEventsAndApproversInterval: async function() {
+    updateEventsMetadata: async function() {
+      await this.$store.dispatch("updateMetadataOfExistingEvents");
+      this.$root.$emit("updatedMetadataOfExistingEvents");
+    },
+    loadEventsAndApproversInterval: function() {
       setInterval(async () => {
-        this.loadNewEvents();
-        this.loadApprovers();
-      }, 18000);
+        console.log("loadEventsAndApprovers - loadEvents");
+        await this.loadEvents();
+        // console.log("loadEventsAndApprovers - loadApprovers");
+        // await this.loadApprovers();
+      }, 20000);
     },
     updateEventsMetadataInterval: async function() {
       setInterval(async () => {
-        this.updateEventsMetadata();
-      }, 2000);
+        console.log("updateEventsMetadata");
+        await this.updateEventsMetadata();
+      }, 40000);
     }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
-      this.loadNewEvents();
-      this.loadApprovers();
-      await sleep(3000);
-      this.loadNewEventsAndApproversInterval();
-      this.updateEventsMetadataInterval();
+      console.log("eventfactory created started");
+      await this.loadEvents();
+      await this.loadApprovers();
+      this.loadEventsAndApproversInterval();
+      // this.updateEventsMetadataInterval();
+      console.log("eventfactory created ended");
     });
+    console.log("dispatching addNullAddressApproverToStore");
     await this.$store.dispatch("addNullAddressApproverToStore");
     this.$root.$emit("addedNullAddressApproverToStore");
-    await this.$store.dispatch("registerIpfs");
+    // await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
     await this.$store.dispatch("createIdentity");

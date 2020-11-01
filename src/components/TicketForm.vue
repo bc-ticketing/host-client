@@ -1,3 +1,4 @@
+<!-- This component contains a form to create tickets for an event. -->
 <template>
   <div class="create-ticket-type-container">
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
@@ -565,7 +566,7 @@ export default {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATED_PRESALE);
             }
-            await this.$store.dispatch("loadNewEvents");
+            await this.$store.dispatch("loadEvents");
           }
         )
         .catch(async e => {
@@ -579,7 +580,7 @@ export default {
           }
         });
 
-      // await this.$store.dispatch("loadNewEvents");
+      // await this.$store.dispatch("loadEvents");
       this.savedPresaleTypes = [];
       this.sending = false;
       return response;

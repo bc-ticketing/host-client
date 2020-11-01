@@ -1,3 +1,4 @@
+<!-- This component is a form to register as an identity approver. -->
 <template>
   <div class="approver-register-form-container">
     <form
@@ -374,7 +375,7 @@ export default {
             this.waitingForReceiptApproverRegistration = false;
             this.showSuccessFulMessageApproverRegistration = true;
           }
-          await this.$store.dispatch("loadNewEvents");
+          await this.$store.dispatch("loadEvents");
         })
         .catch(async e => {
           // Transaction rejected or failed

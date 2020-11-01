@@ -840,7 +840,7 @@ export default {
               this.invokingMetadataChangeState = false;
               this.showSuccessfulMetadataChangeMessage = true;
             }
-            await this.$store.dispatch("loadNewEvents");
+            await this.$store.dispatch("loadEvents");
             await sleep(2000);
             this.leaveEditMode();
           }
@@ -901,7 +901,7 @@ export default {
               this.waitingForDeploymentReceipt = false;
               this.showSuccessfulDeploymentMessage = true;
             }
-            await this.$store.dispatch("loadNewEvents");
+            await this.$store.dispatch("loadEvents");
             this.$router.push({
               path: `/`
             });

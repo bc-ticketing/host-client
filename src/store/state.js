@@ -1,3 +1,5 @@
+import { STARTING_BLOCK } from "../util/constants/constants";
+
 let state = {
     web3: {
         isInjected: false,
@@ -14,8 +16,8 @@ let state = {
     eventFactory: null,
     identity: null,
     approvers: [],
-    lastFetchedBlockEvents: 0,
-    lastFetchedBlockApprovers: 0,
+    lastFetchedBlockEvents: STARTING_BLOCK,
+    lastFetchedBlockApprovers: STARTING_BLOCK,
     ipfsInstance: null
 };
 
