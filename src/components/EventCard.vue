@@ -1,3 +1,4 @@
+<!-- This component is a card that displays an event's metadata. -->
 <template>
   <div class="event-card-container">
     <div class="event-card-router-container">

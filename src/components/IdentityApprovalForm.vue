@@ -1,3 +1,5 @@
+<!-- This component is a form to easily store the identity approval of an account on the blockchain. -->
+<!-- It shall be used by identity approvers. -->
 <template>
   <div class="approve-identity-form">
     <form novalidate class="md-layout">
@@ -38,10 +40,6 @@
             >Approve Identity</md-button
           >
         </md-card-actions>
-
-        <!-- <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="getSecurityLevel">Fetch level</md-button>
-        </md-card-actions>-->
       </md-card>
     </form>
   </div>

@@ -1,3 +1,5 @@
+<!-- This view contains a summary of a specific event, e.g. its tickets and some statistics. -->
+<!-- Events can be edited in the form contained in this view. -->
 <template>
   <div class="modification-container">
     <div class="not-found-container" v-show="notFoundMessageVisible">
