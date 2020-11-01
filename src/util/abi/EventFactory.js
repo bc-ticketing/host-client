@@ -1,7 +1,7 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const EVENT_FACTORY_ADDRESS = "0x055b6e305864DC13E0b9F4ecB1591eE2e8a99C99"; // docker
+export const EVENT_FACTORY_ADDRESS = "0x055b6e305864DC13E0b9F4ecB1591eE2e8a99C99"; // docker
 // const EVENT_FACTORY_ADDRESS = "0xD4d3A2239f26503269dF0A9C3a7079152AEcfbE3";
-const EVENT_FACTORY_ABI = [
+export const EVENT_FACTORY_ABI = [
   {
     "inputs": [
       {
@@ -43,8 +43,7 @@ const EVENT_FACTORY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -57,8 +56,7 @@ const EVENT_FACTORY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -114,9 +112,6 @@ const EVENT_FACTORY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   }
 ];
-
-export { EVENT_FACTORY_ADDRESS, EVENT_FACTORY_ABI };
