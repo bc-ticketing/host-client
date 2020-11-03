@@ -1,4 +1,4 @@
-const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
+export const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
   {
     "inputs": [
       {
@@ -280,6 +280,12 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "ticketType",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -540,6 +546,12 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "ticketType",
+        "type": "uint256"
+      },
       {
         "indexed": true,
         "internalType": "address",
@@ -1744,5 +1756,3 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "type": "function"
   }
 ];
-
-export { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI };
