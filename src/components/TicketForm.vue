@@ -665,18 +665,19 @@ export default {
     },
 
     getSupply() {
-      let supply = this.form.fungibleSupply;
+      let supply = Number(this.form.fungibleSupply).toFixed();
       if (this.form.isNF) {
-        supply = this.nonFungibleSupply;
+        supply = this.nonFungibleSupply.toFixed();
       }
       return supply;
     },
 
     getTypeAsNonPresale(seats, color) {
+      let supply = this.getSupply();
       return {
         title: this.form.title,
         isNF: this.form.isNF,
-        supply: this.getSupply(),
+        supply: supply,
         price: this.fractionPrice,
         finalization: this.finalizationUnixSeconds,
         description: this.form.description,
@@ -685,14 +686,12 @@ export default {
       };
     },
     async getTypeAsPresale(seats, color) {
+      let supply = this.getSupply();
       let presaleBlock = await this.computePresaleBlock();
-      console.log("get as presale");
-      console.log(presaleBlock);
-      console.log(typeof presaleBlock);
       return {
         title: this.form.title,
         isNF: this.form.isNF,
-        supply: this.getSupply(),
+        supply: supply,
         price: this.fractionPrice,
         finalization: this.finalizationUnixSeconds,
         description: this.form.description,
