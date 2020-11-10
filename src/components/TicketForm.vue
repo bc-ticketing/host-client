@@ -447,6 +447,7 @@ export default {
       var i;
       for (i = 0; i < listOfJsonStrings.length; i++) {
         let currentString = listOfJsonStrings[i];
+        console.log(currentString);
         const result = await pinata.pinJSONToIPFS(JSON.parse(currentString));
         // if (result.IpfsHash == null) {
         //   return false;
@@ -800,6 +801,12 @@ export default {
       this.processBarMode = processBarMode;
       this.processMessage = message;
       this.showStatusMessage = true;
+    },
+    showErrorMessage() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
     },
     hideStatus() {
       this.showStatusMessage = false;
