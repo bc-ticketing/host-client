@@ -1,3 +1,5 @@
+<!-- This component contains an event card that is exchanged for a form to edit the metadata of an event. -->
+<!-- It is used in the overview of an event. -->
 <template>
   <div class="event-modification-card-container">
     <div class="event-card-container">

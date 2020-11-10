@@ -1,3 +1,4 @@
+<!-- This view contains a list of event cards for all events hosted by the active account. -->
 <template>
   <div class="events-container">
     <EventCard

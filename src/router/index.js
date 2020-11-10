@@ -2,7 +2,7 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Events from "../views/Events.vue"
 import Modification from "../views/Modification.vue"
-import Stats from "../views/Stats.vue"
+import Summary from "../views/Summary.vue"
 import NewEvent from "../views/NewEvent.vue"
 import NewTicket from "../views/NewTicket.vue"
 import ApproverRegister from "../views/ApproverRegister.vue"
@@ -22,9 +22,9 @@ const routes = [
     component: Modification
   },
   {
-    path: "/stats",
-    name: "Stats",
-    component: Stats
+    path: "/summary",
+    name: "Summary",
+    component: Summary
   },
   {
     path: "/new-event",

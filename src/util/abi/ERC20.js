@@ -296,4 +296,4 @@ export const ERC20_ABI = [
     "stateMutability": "nonpayable",
     "type": "function"
   }
-]
+];

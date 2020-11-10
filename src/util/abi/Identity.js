@@ -1,7 +1,7 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-const IDENTITY_ADDRESS = "0x067b6772E882b541121a2af3Cf947E27D1edf4E9"; // docker
-// const IDENTITY_ADDRESS = "0xc033185772c71E259480Fc386257158aa0434b24";
-const IDENTITY_ABI = [
+export const IDENTITY_ADDRESS = "0x067b6772E882b541121a2af3Cf947E27D1edf4E9"; // docker
+// export const IDENTITY_ADDRESS = "0x58344E4d66f335DCE8b809E1A16D374412B66F63";
+export const IDENTITY_ABI = [
   {
     "anonymous": false,
     "inputs": [
@@ -156,6 +156,4 @@ const IDENTITY_ABI = [
     "type": "function",
     "constant": true
   }
-]
-
-export { IDENTITY_ADDRESS, IDENTITY_ABI }
+];

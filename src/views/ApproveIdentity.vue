@@ -1,3 +1,4 @@
+<!-- This view contains a form to verify an identity with the active account. -->
 <template>
   <div class="approve-container">
     <IdentityApprovalForm />

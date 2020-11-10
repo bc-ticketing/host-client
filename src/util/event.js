@@ -35,11 +35,11 @@ import {
   SellOrderFungibleFilled,
   eventMetadataChanged
 } from "./blockchainEventHandler";
-import { NULL_ADDRESS } from "./constants/constants";
-
+import { NULL_ADDRESS, STARTING_BLOCK } from "./constants/constants";
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
-
 import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
+import { getJSONFromIpfs } from "../util/getIpfs";
+import { getCurrencySymbol } from "./constants/ERC20Tokens";
 
 const BigNumber = require("bignumber.js");
 
@@ -51,9 +51,10 @@ export class Event {
       this.contractAddress = contractAddress.contractAddress;
       return;
     }
-    this.lastFetchedBlockMetadata = 0;
-    this.lastFetchedBlockTickets = 0;
-    this.lastFetchedBlockAftermarket = 0;
+    this.loadedMetadata = false;
+    this.lastFetchedBlockMetadata = STARTING_BLOCK;
+    this.lastFetchedBlockTickets = STARTING_BLOCK;
+    this.lastFetchedBlockAftermarket = STARTING_BLOCK;
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
@@ -62,6 +63,7 @@ export class Event {
     this.image = "";
     this.ipfsHash = "";
     this.currency = 0;
+    this.currencySymbol = "";
     this.identityContractAddress = "";
     this.identityLevel = 0;
     this.website = {
@@ -74,31 +76,103 @@ export class Event {
     }
   }
 
-    // loading event metadata
-  async loadMetadata(web3Instance, ABI, ipfsInstance) {
+  // async tryUpdateMetadata(web3Instance, ABI, ipfsInstance) {}
+
+  /**
+   * Loads the metadata from ipfs for this event.
+   * Only call this method, when there is metadata to be fetched.
+   * 
+   * @param {*} web3Instance
+   * @param {*} ABI
+   * @param {*} ipfsInstance
+   */
+  async loadMetadata(web3Instance, ABI, currentBlock) {
+    if (this.loadedMetadata) {
+      return true;
+    }
     try {
-      const changed = await this.metadataChanged(ABI, web3Instance);
-      if (changed) {
-        await this.fetchIPFSHash(ABI, web3Instance);
-        await this.loadIPFSMetadata(ipfsInstance);
-        // await this.fetchPosition();
+      const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
+      console.log("hashRetrieved? " + hashRetrieved);
+      if (hashRetrieved) {
+        const loaded = await this.loadIPFSMetadata();
+        console.log("metadata loaded? " + loaded);
+        if (loaded) {
+          this.loadedMetadata = true;
+          this.lastFetchedBlockMetadata = currentBlock;
+          return true;
+        }
       }
     } catch (e) {
       console.log(e);
       return false;
     }
+    return false;
+  }
+
+    /**
+   * Fetches the last ipfs hash of the latest metadata change.
+   */
+  async fetchIPFSHash(ABI, web3Instance) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+
+    console.log("fetchipfshash last block: " + this.lastFetchedBlockMetadata);
+    const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
+      fromBlock: this.lastFetchedBlockMetadata + 1
+    });
+    console.log(eventMetadata);
+
+    var metadataObject = eventMetadata[0].returnValues;
+    if (metadataObject == null) {
+      return false;
+    }
+    this.ipfsHash = argsToCid(
+      metadataObject.hashFunction,
+      metadataObject.size,
+      metadataObject.digest
+    );
+    console.log(this.ipfsHash);
     return true;
   }
 
-  setLastFetchedBlockMetadata(block) {
-    this.lastFetchedBlockMetadata = block;
+  /**
+   * Loads the data stored at the ipfsHash of this event.
+   * If it fails to load the data, nothing in this object is changed.
+   */
+  async loadIPFSMetadata() {
+    var ipfsData = null;
+    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    if (ipfsData == null) {
+      return false;
+    }
+    console.log(ipfsData);
+    const metadata = ipfsData;
+    this.location = metadata.event.location;
+    this.title = metadata.event.title;
+    this.image = metadata.event.image;
+    this.description = metadata.event.description;
+    this.category = metadata.event.category;
+    this.duration = metadata.event.duration;
+    this.twitter.url = metadata.event.twitter;
+    this.website.url = metadata.event.website;
+    this.timestamp = metadata.event.time;
+    this.parseTimeStamp();
+    return true;
   }
 
-  // loading currency
+  /**
+   * Loads the token address used as currency for this event.
+   * 
+   * @param {*} web3Instance the web3 instance
+   * @param {*} ABI the abi of the event contract
+   */
   async loadCurrency(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const currency = await eventSC.methods.erc20Contract().call();
     this.currency = currency;
+    let symbol = getCurrencySymbol(this.currency);
+    if (symbol) {
+      this.currencySymbol = symbol;
+    }
   }
 
   // loading ticket types
@@ -301,73 +375,12 @@ export class Event {
     }
   }
 
-  // async loadData(ABI, ipfsInstance, web3Instance) {
-  //   try {
-  //     const changed = await this.metadataChanged(ABI, web3Instance);
-  //     if (changed) {
-  //       await this.fetchIPFSHash(ABI, web3Instance);
-  //       await this.loadIPFSMetadata(ipfsInstance);
-  //       await this.fetchPosition();
-  //     }
-  //     // this.requestTwitterVerification();
-  //     // this.requestUrlVerification();
-  //     await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
-  //     await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
-  //     await this.loadOwnerShipChanges(web3Instance, ABI);
-  //     await this.loadTicketsSoldChanges(web3Instance, ABI);
-  //     await this.loadAftermarketChanges(web3Instance, ABI);
-  //   } catch (e) {
-  //     console.log(e);
-  //     return false;
-  //   }
-  //   return true;
-  // }
-
   async requestTwitterVerification() {
     this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
   }
 
   async requestUrlVerification() {
     this.website.verification = await requestWebsiteVerification(this.website.url);
-  }
-
-  async fetchIPFSHash(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-
-    console.log("fetchipfshash last block: " + this.lastFetchedBlockMetadata)
-    const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
-      fromBlock: this.lastFetchedBlockMetadata + 1
-    });
-
-    var metadataObject = eventMetadata[0].returnValues;
-    this.ipfsHash = argsToCid(
-      metadataObject.hashFunction,
-      metadataObject.size,
-      metadataObject.digest
-    );
-    return true;
-  }
-
-  async loadIPFSMetadata(ipfsInstance) {
-    var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
-    }
-    const metadata = JSON.parse(ipfsData);
-    this.location = metadata.event.location;
-    this.title = metadata.event.title;
-    this.image = metadata.event.image;
-    this.description = metadata.event.description;
-    this.category = metadata.event.category;
-    this.duration = metadata.event.duration;
-    this.twitter.url = metadata.event.twitter;
-    this.website.url = metadata.event.website;
-    this.timestamp = metadata.event.time;
-    this.seatColor = metadata.event.color;
-    this.timestamp = metadata.event.time;
-    this.parseTimeStamp();
   }
 
   hasFungibleTicketType(id) {
@@ -407,10 +420,12 @@ export class Event {
           ticketType.supply = Number(ticketMapping.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
-          await fetchIpfsHash(ticketType, web3Instance, ABI);
-          await loadIPFSMetadata(ticketType, ipfsInstance);
-          //await loadSellOrders(ticketType, web3Instance, ABI);
-          //await loadBuyOrders(ticketType, web3Instance, ABI);
+          const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
+          if (hashRetrieved) {
+            await loadIPFSMetadata(ticketType, ipfsInstance);
+            //await loadSellOrders(ticketType, web3Instance, ABI);
+            //await loadBuyOrders(ticketType, web3Instance, ABI);
+          }
           if (!exists) {
             this.fungibleTickets.push(ticketType);
           }
@@ -456,11 +471,12 @@ export class Event {
             //ticket.sellOrder = sellOrder;
             ticketType.tickets.push(ticket);
           }
-          await fetchIpfsHash(ticketType, web3Instance, ABI);
-          await loadIPFSMetadata(ticketType, ipfsInstance);
-
-          //await loadSellOrders(ticketType, web3Instance, ABI);
-          //await loadBuyOrders(ticketType, web3Instance, ABI);
+          const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
+          if (hashRetrieved) {
+            await loadIPFSMetadata(ticketType, ipfsInstance);
+            //await loadSellOrders(ticketType, web3Instance, ABI);
+            //await loadBuyOrders(ticketType, web3Instance, ABI);
+          }
           if (!exists) {
             this.nonFungibleTickets.push(ticketType);
           }

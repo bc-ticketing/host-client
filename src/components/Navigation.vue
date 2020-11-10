@@ -1,3 +1,4 @@
+<!-- This component contains the navigation and sidebar that is used in this application. -->
 <template>
   <div class="Navigation">
     <div class="md-layout-column">

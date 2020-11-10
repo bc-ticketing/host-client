@@ -1,3 +1,4 @@
+<!-- This view contains a form to create a new event. -->
 <template>
   <div class="new-event-container">
     <EventForm v-bind:inNewMode="true" v-bind:inEditMode="false" />

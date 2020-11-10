@@ -46,5 +46,3 @@ npm run test:unit
 # lints and fixes files
 npm run lint
 ```
-
-
