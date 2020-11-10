@@ -1,7 +1,7 @@
 <!-- This view contains a summary of a specific event, e.g. its tickets and some statistics. -->
 <!-- Events can be edited in the form contained in this view. -->
 <template>
-  <div class="modification-container">
+  <div class="summary-container">
     <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
       <h3>No event found for address: {{ this.$route.query.address }}.</h3>
       <md-button class="go-back-button md-primary" @click="routeToEventList()"
@@ -30,7 +30,7 @@ import TicketStats from "../components/TicketStats";
 import idb from "../util/db/idb";
 
 export default {
-  name: "Stats",
+  name: "Summary",
   components: {
     EventModificationCard,
     BlockchainStatsCard,

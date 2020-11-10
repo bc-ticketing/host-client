@@ -39,6 +39,7 @@ import { NULL_ADDRESS, STARTING_BLOCK } from "./constants/constants";
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
 import { getJSONFromIpfs } from "../util/getIpfs";
+import { getCurrencySymbol } from "./constants/ERC20Tokens";
 
 const BigNumber = require("bignumber.js");
 
@@ -62,6 +63,7 @@ export class Event {
     this.image = "";
     this.ipfsHash = "";
     this.currency = 0;
+    this.currencySymbol = "";
     this.identityContractAddress = "";
     this.identityLevel = 0;
     this.website = {
@@ -167,6 +169,10 @@ export class Event {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const currency = await eventSC.methods.erc20Contract().call();
     this.currency = currency;
+    let symbol = getCurrencySymbol(this.currency);
+    if (symbol) {
+      this.currencySymbol = symbol;
+    }
   }
 
   // loading ticket types
