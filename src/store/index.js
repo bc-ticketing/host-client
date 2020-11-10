@@ -44,6 +44,16 @@ export default new Vuex.Store({
         state.approvers.push(newApprovers[i]);
       }
     },
+    updateEvents(state, eventsToUpdate) {
+      state.events.indexOf()
+      for (let i = 0; i < eventsToUpdate.length; i++) {
+        let currentEvent = eventsToUpdate[i];
+        let e = state.events.filter(event => event.address === currentEvent.address);
+        console.log(e);
+        let index = state.events.indexOf(e);
+        state.events[index] = e;
+      }
+    },
 
     // Only needed when using own ipfs instance.
     registerIpfsInstance(state, payload) {
@@ -137,45 +147,53 @@ export default new Vuex.Store({
       commit("addNewEventsToStore", newEvents);
     },
 
-    async updateMetadataOfExistingEvents({ commit }) {
-      let events = [];
-      for (let i = 0; i < state.events.length; i++) {
-        const address = state.events[i].contractAddress;
-        let inDb = await idb.getEvent(address);
-        let event = new Event(inDb);
-        let changed = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-        console.log("updateMetadataOfExistingEvents");
-        console.log(changed);
-        if (!changed) {
-          console.log("no changes to events metadata");
-          return;
-        }
-        event.setLastFetchedBlockMetadata(state.web3.currentBlock);
-        console.log("saving changes");
-        await idb.saveEvent(event);
-        events.push(event);
-      }
-      commit("addNewEventsToStore", events);
-    },
+    // async updateMetadataOfExistingEvents({ commit }) {
+    //   let events = [];
+    //   for (let i = 0; i < state.events.length; i++) {
+    //     const address = state.events[i].contractAddress;
+    //     let inDb = await idb.getEvent(address);
+    //     let event = new Event(inDb);
+    //     let changed = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+    //     console.log("updateMetadataOfExistingEvents");
+    //     console.log(changed);
+    //     if (!changed) {
+    //       console.log("no changes to events metadata");
+    //       return;
+    //     }
+    //     event.setLastFetchedBlockMetadata(state.web3.currentBlock);
+    //     console.log("saving changes");
+    //     await idb.saveEvent(event);
+    //     events.push(event);
+    //   }
+    //   commit("addNewEventsToStore", events);
+    // },
 
+    /**
+     * Loads all tickets of an event and their metadata.
+     * 
+     * @param {String} address the contract address from which to load the tickets.
+     */
     async loadTicketsOfExistingEvent({ commit }, address) {
-      console.log("loadTickets action executed");
+      console.log("loadTickets action executed for event contract address: " + address);
       let events = [];
       for (let i = 0; i < state.events.length; i++) {
-        if (state.events[i].contractAddress == address) {
+        if (state.events[i].contractAddress === address) {
           let inDb = await idb.getEvent(address);
           let event = new Event(inDb);
-          await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          event.setLastFetchedBlockTickets(state.web3.currentBlock);
-          await idb.saveEvent(event);
-          events.push(event);
-        } else {
-          let inDb = await idb.getEvent(address);
-          let event = new Event(inDb);
-          events.push(event);
+          let currentBlock = state.web3.currentBlock;
+          let loaded = await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
+          console.log(loaded);
+          if (loaded) {
+            event.setLastFetchedBlockTickets(currentBlock);
+            await idb.saveEvent(event);
+            events.push(event);
+          }
         }
       }
-      commit("updateEventStore", events);
+      console.log(events)
+      if (events.length > 0) {
+        commit("updateEvents", events);
+      }
     },
 
     async loadAftermarketOfExistingEvent({ commit }, address) {

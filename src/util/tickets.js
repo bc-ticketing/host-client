@@ -176,7 +176,7 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
     var ipfsData = null;
     ipfsData = await getJSONFromIpfs(ticket.ipfsHash);
     if (ipfsData == null) {
-        console.log("ipfs data null for event: " + this.ipfsHash);
+        console.log("ipfs data null for hash: " + this.ipfsHash);
         return;
     }
     console.log(ipfsData)
@@ -185,7 +185,7 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
     // })) {
     //     ipfsData = Buffer(chunk, "utf8").toString();
     // }
-    const metadata = JSON.parse(ipfsData);
+    const metadata = ipfsData;
     ticket.description = metadata.ticket.description;
     ticket.seatMapping = metadata.ticket.mapping;
     ticket.title = metadata.ticket.title;
