@@ -1,5 +1,8 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
+import { getJSONFromIpfs } from "../util/getIpfs";
+import { STARTING_BLOCK } from "./constants/constants";
+import { IDENTITY_ABI } from "./abi/Identity";
 // import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
@@ -9,6 +12,7 @@ export class IdentityApprover {
       this.approverAddress = approverAddress.approverAddress;
       return;
     }
+    this.loadedMetadata = false;
     this.approverAddress = approverAddress;
     this.title = "";
     this.methods = [];
@@ -20,48 +24,127 @@ export class IdentityApprover {
       url: "",
       verification: false,
     };
-    this.lastFetchedBlock = 0;
+    this.lastFetchedBlock = STARTING_BLOCK;
     this.ipfsHash = "";
   }
 
-  async fetchIPFSHash(identitySC) {
-    //const approverSC = new web3Instance.eth.Contract(ABI, this.approverAddress);
-    const approverMetadata = await identitySC.methods
+  async loadMetadata(identityContract, ABI, currentBlock) {
+    if (this.loadedMetadata) {
+      return true;
+    }
+    try {
+      const hashRetrieved = await this.fetchIPFSHash(ABI, identityContract);
+      console.log("hashRetrieved? " + hashRetrieved);
+      if (hashRetrieved) {
+        const loaded = await this.loadIPFSMetadata();
+        console.log("metadata loaded? " + loaded);
+        if (loaded) {
+          this.loadedMetadata = true;
+          this.lastFetchedBlock = currentBlock;
+          return true;
+        }
+      }
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+    return false;
+  }
+
+  async fetchIPFSHash(ABI, identityContract) {
+
+    console.log("fetchipfshash last block approver: " + this.lastFetchedBlock);
+    console.log(this.approverAddress);
+    const approverMetadata = await identityContract.methods
       .getApproverInfo(this.approverAddress)
       .call();
+    console.log("approverMetadata:");
+    console.log(approverMetadata);
+    if (approverMetadata == null) {
+      return;
+    }
+
     this.ipfsHash = argsToCid(
       approverMetadata.hashFunction,
       approverMetadata.size,
       approverMetadata.digest
     );
+    console.log(this.ipfsHash);
     return true;
   }
 
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
+    ipfsData = await getJSONFromIpfs(this.ipfsHash);
+    if (ipfsData == null) {
+      return false;
     }
-    const metadata = JSON.parse(ipfsData);
+    console.log(ipfsData);
+    // for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+    //   timeout: 2000,
+    // })) {
+    //   ipfsData = Buffer(chunk, "utf8").toString();
+    // }
+    const metadata = ipfsData;
     this.title = metadata.approver.title;
-    this.website.url = metadata.approver.url;
+    this.website.url = metadata.approver.website;
     this.twitter.url = metadata.approver.twitter;
     this.methods = metadata.approver.methods;
+    return true;
   }
 
-  async loadData(identitySC, ipfsInstance) {
-    await this.fetchIPFSHash(identitySC);
-    await this.loadIPFSMetadata(ipfsInstance);
-    // this.requestTwitterVerification();
-    // this.requestUrlVerification();
+  async updateNeeded(web3Instance, ABI) {
+    let changed = false;
+    try {
+      changed = await this.metadataChanged(ABI, web3Instance);
+      return changed;
+    } catch (e) {
+      console.log(e);
+    }
   }
+
+  // /**
+  //  * Loads the metadata if there are updates.
+  //  * Returns true, if anything new has been loaded.
+  //  * 
+  //  * @param {*} web3Instance 
+  //  * @param {*} ABI 
+  //  */
+  // async loadMetadata(web3Instance, ABI) {
+  //   let changed = false;
+  //   try {
+  //     changed = await this.metadataChanged(ABI, web3Instance);
+  //     console.log("approver metadata changed? " + changed);
+  //     if (changed) {
+  //       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
+  //       console.log("hashRetrieved? " + hashRetrieved);
+  //       if (hashRetrieved) {
+  //         const loaded = await this.loadIPFSMetadata();
+  //         // this.requestTwitterVerification();
+  //         // this.requestUrlVerification();
+  //         console.log("metadata loaded? " + loaded);
+  //         if (!loaded) {
+  //           changed = false;
+  //         }
+  //       } else {
+  //         changed = false;
+  //       }
+  //     }
+  //   } catch (e) {
+  //     console.log(e);
+  //     return false;
+  //   }
+  //   return changed;
+  // }
 
   async requestTwitterVerification() {
+    try {
     this.twitter.verification = await requestTwitterVerification(
       getHandle(this.twitter.url)
     );
+    } catch(e) {
+      console.log(e)
+    }
   }
 
   async requestUrlVerification() {

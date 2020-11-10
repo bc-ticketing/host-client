@@ -1,3 +1,4 @@
+<!-- This view contains a form to create new tickets for an event. -->
 <template>
   <div class="new-ticket-container">
     <TicketForm />

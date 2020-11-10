@@ -1,11 +1,13 @@
+<!-- This view contains a summary of a specific event, e.g. its tickets and some statistics. -->
+<!-- Events can be edited in the form contained in this view. -->
 <template>
-  <div class="modification-container">
-    <div class="not-found-container" v-show="notFoundMessageVisible">
+  <div class="summary-container">
+    <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
       <h3>No event found for address: {{ this.$route.query.address }}.</h3>
       <md-button class="go-back-button md-primary" @click="routeToEventList()"
         >Go Back</md-button
       >
-    </div>
+    </div> -->
     <EventModificationCard
       v-if="eventSet"
       v-bind:event="event"
@@ -28,7 +30,7 @@ import TicketStats from "../components/TicketStats";
 import idb from "../util/db/idb";
 
 export default {
-  name: "Stats",
+  name: "Summary",
   components: {
     EventModificationCard,
     BlockchainStatsCard,
@@ -54,6 +56,8 @@ export default {
       }
     }, 5000);
     console.log("modification view created executed");
+    let address = this.$route.query.address;
+    await this.$store.dispatch("loadTicketsOfExistingEvent", address);
     this.$root.$on("eventsFullyLoaded", async () => {
       this.event = await idb.getEvent(address);
       if (this.event != null) {
@@ -61,7 +65,6 @@ export default {
         this.notFoundMessageVisible = false;
       }
     });
-    let address = this.$route.query.address;
     this.event = await idb.getEvent(address);
     if (this.event != null) {
       this.eventSet = true;

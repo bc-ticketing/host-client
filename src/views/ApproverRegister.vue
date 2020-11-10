@@ -1,3 +1,4 @@
+<!-- This view contains a form to register as an approver. -->
 <template>
   <div class="approver-container">
     <ApproverRegisterForm />

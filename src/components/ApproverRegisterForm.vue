@@ -1,3 +1,4 @@
+<!-- This component is a form to register as an identity approver. -->
 <template>
   <div class="approver-register-form-container">
     <form
@@ -140,11 +141,11 @@
 
           <div class="md-layout-item md-small-size-100">
             <md-field>
-              <label for="approver-url">URL</label>
+              <label for="approver-website">URL</label>
               <md-input
-                name="approver-url"
-                id="approver-url"
-                v-model="form.approverURL"
+                name="approver-website"
+                id="approver-website"
+                v-model="form.approverWebsite"
               />
             </md-field>
           </div>
@@ -175,6 +176,43 @@
         </md-card-actions>
       </md-card>
     </form>
+    <div v-if="pinningToIpfs" class="awaiting-signature-message">
+      <md-progress-bar
+        md-mode="indeterminate"
+        :md-value="100"
+      ></md-progress-bar>
+      <p class="process-message">
+        Please wait - your data is being pinned to IPFS.
+      </p>
+    </div>
+    <div v-if="waitingForSignature" class="awaiting-signature-message">
+      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
+      <p class="process-message">
+        Please sign the transaction to register as Approver.
+      </p>
+    </div>
+    <div
+      v-if="waitingForReceiptApproverRegistration"
+      class="awaiting-form-response"
+    >
+      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
+      <p class="process-message">
+        Please wait - Your registration is being processed.
+      </p>
+    </div>
+    <div
+      v-if="showSuccessFulMessageApproverRegistration"
+      class="awaiting-form-response"
+    >
+      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
+      <p class="process-message">
+        You were successfully registered as Approver!
+      </p>
+    </div>
+    <div v-if="errorState" class="awaiting-form-response">
+      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
+      <p class="process-message">Something went wrong...</p>
+    </div>
   </div>
 </template>
 
@@ -186,38 +224,55 @@ import {
   minLength,
   maxLength
 } from "vuelidate/lib/validators";
+import sleep from "await-sleep";
+const pinataSDK = require("@pinata/sdk");
+const pinata = pinataSDK(
+  process.env.VUE_APP_PINATA_API_KEY,
+  process.env.VUE_APP_PINATA_SECRET_API_KEY
+);
 
 // project internal imports
-import { NETWORKS } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
+import {
+  AVERAGE_BLOCKTIME,
+  AVERAGE_BLOCKTIME_LOCAL,
+  NETWORKS,
+  NULL_ADDRESS
+} from "../util/constants/constants.js";
 
 export default {
   name: "ApproverRegisterForm",
-  data() {
-    return {
-      showNumberOfLevelsDialog: false,
-      ipfsHash: "QmYWGJaqiYUPu5JnuUhVVbyXB6g6ydxcie3iwrbC7vxnNP",
-      ipfsArgs: null,
-      ipfsData: null,
-      ipfsString: null,
-      form: {
-        // ipfs info
-        approverTitle: "Idetix",
-        methods: [],
-        firstLevel: "email",
-        secondLevel: "mobile phone",
-        thirdLevel: "kyc",
-        fourthLevel: "",
-        fifthLevel: "",
-        approverURL: "http://www.idetix.ch",
-        approverTwitter: "",
-        // blockchain info
-        numberOfLevels: 1
-      },
-      sending: false,
-      showNrLevels: false
-    };
-  },
+  data: () => ({
+    // invocation states
+    waitingForSignature: false,
+    invokingStateApproverRegistration: false,
+    waitingForReceiptApproverRegistration: false,
+    showSuccessFulMessageApproverRegistration: false,
+    errorState: false,
+    pinningToIpfs: false,
+
+    showNumberOfLevelsDialog: false,
+    IpfsHash: null,
+    ipfsArgs: null,
+    ipfsData: null,
+    ipfsString: null,
+    form: {
+      // ipfs info
+      approverTitle: "",
+      methods: [],
+      firstLevel: "",
+      secondLevel: "",
+      thirdLevel: "",
+      fourthLevel: "",
+      fifthLevel: "",
+      approverWebsite: "",
+      approverTwitter: "",
+      // blockchain info
+      numberOfLevels: 1
+    },
+    sending: false,
+    showNrLevels: false
+  }),
   computed: {
     web3() {
       return this.$store.state.web3;
@@ -271,59 +326,81 @@ export default {
         approver: {
           title: this.form.approverTitle,
           methods: methods,
-          url: this.form.approverURL,
+          website: this.form.approverWebsite,
           twitter: this.form.approverTwitter
         }
       });
       console.log(json);
       return json;
     },
-    async uploadToIpfs() {
-      this.ipfsString = this.createIpfsString();
-      this.sending = true;
-      const response = await this.ipfsInstance.add(this.ipfsString);
-      this.ipfsHash = response.path;
-      console.log("http://ipfs.io/ipfs/" + this.ipfsHash);
 
-      // Instead of this timeout, here you can call your API
-      window.setTimeout(() => {
-        this.ipfsArgs = cidToArgs(this.ipfsHash);
-        this.sending;
-      }, 1500);
-    },
-    async downloadFromIpfs() {
-      console.log("downloading from ipfs...");
-      for await (const chunk of this.ipfs.cat(this.ipfsHash)) {
-        this.ipfsData = Buffer(chunk, "utf8").toString();
-      }
-    },
-    addApproverMethod(lvl, val) {
-      this.approverMethods.push({
-        level: lvl,
-        value: val
-      });
+    /**
+     * Creates the metadata Json and pins it to IPFS with Pinata
+     */
+    async uploadToIpfs() {
+      this.pinningToIpfs = true;
+      this.ipfsString = this.createIpfsString();
+      const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
+      this.IpfsHash = result.IpfsHash;
+      this.pinningToIpfs = false;
     },
     isApproverRegisterFormComplete() {
       return true;
     },
     async registerAsApprover() {
       await this.uploadToIpfs();
-      if (this.ipfsArgs === null) {
-        this.ipfsArgs = cidToArgs(this.ipfsHash);
-      }
+      this.invokingStateApproverRegistration = true;
+      let ipfsArgs = cidToArgs(this.IpfsHash);
+      this.waitingForSignature = true;
       let register = await this.identityContract.methods
-        .registerApprover(
-          this.ipfsArgs.hashFunction,
-          this.ipfsArgs.size,
-          this.ipfsArgs.digest
-        )
-        .send({ from: this.web3.account });
+        .registerApprover(ipfsArgs.hashFunction, ipfsArgs.size, ipfsArgs.digest)
+        .send({ from: this.web3.account }, async (error, transactionHash) => {
+          this.waitingForSignature = false;
+          this.waitingForDeploymentReceipt = true;
+          if (transactionHash) {
+            console.log(
+              "submitted approver register invocation: ",
+              transactionHash
+            );
+          }
+          let transactionReceipt = null;
+          while (transactionReceipt == null) {
+            transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
+              transactionHash
+            );
+            await sleep(AVERAGE_BLOCKTIME);
+          }
+          if (transactionReceipt) {
+            console.log("Got the transaction receipt: ", transactionReceipt);
+            this.waitingForReceiptApproverRegistration = false;
+            this.showSuccessFulMessageApproverRegistration = true;
+          }
+          await this.$store.dispatch("loadEvents");
+        })
+        .catch(async e => {
+          // Transaction rejected or failed
+          this.waitingForSignature = false;
+          this.waitingForDeploymentReceipt = false;
+          this.deployingContractState = false;
+          this.showSuccessFulMessageApproverRegistration = false;
+          this.errorState = true;
+          console.log(e);
+          const result = await pinata.unpin(this.IpfsHash);
+          console.log(result);
+        });
 
       console.log(register);
     }
+  },
+  async created() {
+    const pinataAuth = await pinata.testAuthentication();
+    console.log(pinataAuth);
   }
 };
 </script>
 
 <style>
+.process-message {
+  text-align: center;
+}
 </style>

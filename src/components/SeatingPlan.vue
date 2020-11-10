@@ -1,3 +1,4 @@
+<!-- This component contains the seating plan that is used in the ticket form. -->
 <template>
   <div class="seating-plan">
     <div class="md-layout md-gutter">

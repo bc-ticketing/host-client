@@ -5,6 +5,9 @@ npm-debug.log
 yarn-error.log
 .babelrc
 .editorconfig
+.env
+.firebase*
+firebase*
 
 src/abi/
 

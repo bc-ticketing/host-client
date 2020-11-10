@@ -1,3 +1,4 @@
+<!-- CURRENTLY UNUSED -->
 <template>
   <div class="tickets-container">
     <h3>Ticket List</h3>
