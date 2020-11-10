@@ -34,6 +34,7 @@ export const MONTHS = {
 };
 
 // General constants
+export const IPFS_TIMEOUT = 400 // in ms
 export const STARTING_BLOCK = 7400000;
 export const AVERAGE_BLOCKTIME = 15000; // in ms
 export const AVERAGE_BLOCKTIME_LOCAL = 100; // in ms
