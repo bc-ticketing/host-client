@@ -723,6 +723,16 @@ export default {
     },
     fillFormFromEvent() {
       this.form.title = this.event.title;
+      this.form.location = this.event.location;
+      this.form.category = this.event.category;
+      this.form.eventDescription = this.event.description;
+      // fill time
+      this.form.website = this.event.website.url;
+      this.form.twitter = this.event.twitter.url;
+      this.form.image = this.event.image;
+
+      // time: this.startTimeUnix,
+      // image: this.imageData
     },
     leaveEditMode: function() {
       this.$emit("setEditMode", false);
@@ -752,6 +762,7 @@ export default {
       let nowSeconds = Date.parse(now) / 1000;
       if (this.dateSeconds < nowSeconds) {
         this.errors = true;
+        return;
       }
       this.uiState = "form submitted";
       this.sending = true;
@@ -770,14 +781,6 @@ export default {
       this.ipfsString = this.createIpfsString();
       this.uploadingToIpfs = true;
       const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
-      // .then(result => {
-      //   this.IpfsHash = result.IpfsHash;
-      //   this.uploadingToIpfs = false;
-      //   console.log(result);
-      // })
-      // .catch(err => {
-      //   console.log(err);
-      // });
       this.IpfsHash = result.IpfsHash;
       this.uploadingToIpfs = false;
       console.log(this.IpfsHash);
