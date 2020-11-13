@@ -280,6 +280,12 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "ticketType",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -540,6 +546,12 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "ticketType",
+        "type": "uint256"
+      },
       {
         "indexed": true,
         "internalType": "address",
@@ -1390,25 +1402,6 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
         "type": "uint256"
       }
     ],
-    "name": "nfsForSale",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
     "name": "nonces",
     "outputs": [
       {
@@ -1572,6 +1565,25 @@ const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
       }
     ],
     "name": "totalInSelling",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "totalTickets",
     "outputs": [
       {
         "internalType": "uint256",

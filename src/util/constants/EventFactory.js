@@ -50,7 +50,7 @@ const EVENT_FACTORY_ABI = [
     "name": "identityContract",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract Identity",
         "name": "",
         "type": "address"
       }
