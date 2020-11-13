@@ -45,7 +45,7 @@ import getEvent from "../util/utility";
 import { printQueues } from "idetix-utils";
 
 export default {
-  name: "Tickets",
+  name: "TicketSummary",
   components: {
     TicketDetails,
   },
@@ -82,7 +82,7 @@ export default {
     },
   },
   created() {
-    console.log("TicketStats created executed");
+    console.log("TicketSummary created executed");
     this.tickets = this.event.fungibleTickets.concat(
       this.event.nonFungibleTickets
     );

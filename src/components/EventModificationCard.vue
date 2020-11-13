@@ -9,7 +9,7 @@
         v-bind:event="event"
         v-bind:inListView="false"
         v-bind:inModificationView="true"
-        v-bind:inStatsView="false"
+        v-bind:inSummaryView="false"
       ></EventCard>
     </div>
     <div class="event-form-container">
@@ -32,17 +32,17 @@ export default {
   name: "EventModificationCard",
   components: {
     EventCard,
-    EventForm
+    EventForm,
   },
   data: () => ({
-    editMode: false
+    editMode: false,
   }),
   props: { event: Object },
   methods: {
     setEditMode(mode) {
       this.editMode = mode;
-    }
-  }
+    },
+  },
 };
 </script>
 

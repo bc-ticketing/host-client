@@ -9,9 +9,7 @@
               {{ title }}
             </div>
             <div v-if="!title">
-              <h4>
-                Sadly there could no title be found for this event...
-              </h4>
+              <h4>Sadly there could no title be found for this event...</h4>
             </div>
             <div v-if="date" class="event-card-date">{{ date }}</div>
             <div v-if="location" class="md-subhead">{{ location }}</div>
@@ -91,26 +89,26 @@ export default {
     event: Object,
     inListView: Boolean,
     inModificationView: Boolean,
-    inStatsView: Boolean
+    inSummaryView: Boolean,
   },
   methods: {
-    openNewTicketView: function() {
+    openNewTicketView: function () {
       this.$router.push({
         path: `new-ticket`,
-        query: { address: this.event.contractAddress }
+        query: { address: this.event.contractAddress },
       });
     },
-    openSummary: function() {
+    openSummary: function () {
       if (this.inListView) {
         this.$router.push({
           path: `summary`,
-          query: { address: this.event.contractAddress }
+          query: { address: this.event.contractAddress },
         });
       }
     },
-    enterEditMode: function() {
+    enterEditMode: function () {
       this.$emit("setEditMode", true);
-    }
+    },
   },
   computed: {
     title() {
@@ -155,12 +153,12 @@ export default {
     },
     image() {
       return this.event.image ? this.event.image : "no image found";
-    }
+    },
   },
   created() {
     console.log("eventcard created executed");
     console.log(this.event);
-  }
+  },
 };
 </script>
 

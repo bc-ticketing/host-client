@@ -17,7 +17,7 @@
       v-bind:event="event"
     ></BlockchainStatsCard>
     <LiveStatsCard v-if="eventSet" v-bind:event="event"></LiveStatsCard>
-    <TicketStats v-if="eventSet" v-bind:event="event"></TicketStats>
+    <TicketSummary v-if="eventSet" v-bind:event="event"></TicketSummary>
   </div>
 </template>
 
@@ -26,7 +26,7 @@ import EventModificationCard from "../components/EventModificationCard";
 // import TicketModificationCard from "../components/TicketModificationCard";
 import BlockchainStatsCard from "../components/BlockchainStatsCard";
 import LiveStatsCard from "../components/LiveStatsCard";
-import TicketStats from "../components/TicketStats";
+import TicketSummary from "../components/TicketSummary";
 import idb from "../util/db/idb";
 
 export default {
@@ -35,19 +35,19 @@ export default {
     EventModificationCard,
     BlockchainStatsCard,
     LiveStatsCard,
-    TicketStats
+    TicketSummary,
   },
   data: () => ({
     eventSet: false,
-    notFoundMessageVisible: false
+    notFoundMessageVisible: false,
     // showTickets: false
   }),
   methods: {
     routeToEventList() {
       this.$router.push({
-        name: `Events`
+        name: `Events`,
       });
-    }
+    },
   },
   async created() {
     setTimeout(() => {
@@ -69,7 +69,7 @@ export default {
     if (this.event != null) {
       this.eventSet = true;
     }
-  }
+  },
 };
 </script>
 

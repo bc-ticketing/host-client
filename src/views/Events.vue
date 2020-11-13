@@ -7,7 +7,7 @@
       v-bind:event="event"
       v-bind:inListView="true"
       v-bind:inModificationView="false"
-      v-bind:inStatsView="false"
+      v-bind:inSummaryView="false"
     ></EventCard>
     <h3 v-if="this.$store.state.events.size == 0">
       No events found for your active address: {{ web3.account }}.
@@ -21,7 +21,7 @@ import EventCard from "../components/EventCard";
 export default {
   name: "Events",
   components: {
-    EventCard
+    EventCard,
   },
   data: () => ({}),
   computed: {
@@ -30,8 +30,8 @@ export default {
     },
     eventFactory() {
       return this.$store.state.eventFactory;
-    }
-  }
+    },
+  },
 };
 </script>
 
