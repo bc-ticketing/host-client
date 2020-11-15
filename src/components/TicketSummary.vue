@@ -1,10 +1,15 @@
 <template>
-  <div class="modification-container">
+  <div class="ticket-summary-container">
     <md-card>
       <md-toolbar md-elevation="0">
         <h3 class="md-title" style="flex: 1">Tickets</h3>
-        <md-button>Refresh</md-button>
-        <md-button class="md-primary">Add New Ticket Category</md-button>
+        <!-- <md-button>Refresh</md-button> -->
+        <md-button
+          class="md-primary"
+          v-if="!ticketFormOpen"
+          @click="openTicketForm"
+          >Add New Ticket Category</md-button
+        >
       </md-toolbar>
       <md-card-content>
         <md-app>
@@ -51,6 +56,7 @@ export default {
   },
   props: {
     event: Object,
+    ticketFormOpen: Boolean,
   },
   data: () => ({
     tickets: null,
@@ -61,6 +67,9 @@ export default {
     },
   }),
   methods: {
+    openTicketForm() {
+      this.$emit("openTicketForm");
+    },
     eventHasTickets() {
       if (
         this.event.fungibleTickets.length != 0 ||
@@ -95,4 +104,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.ticket-summary-container {
+  padding-bottom: 4px;
+}
+</style>

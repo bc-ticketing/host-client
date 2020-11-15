@@ -13,12 +13,16 @@
       v-bind:event="event"
       @updatedEventMetadata="updateEvent"
     ></EventModificationCard>
-    <BlockchainStatsCard
+    <!-- <BlockchainStatsCard
       v-if="eventSet"
       v-bind:event="event"
     ></BlockchainStatsCard>
-    <LiveStatsCard v-if="eventSet" v-bind:event="event"></LiveStatsCard>
-    <TicketSummary v-if="eventSet" v-bind:event="event"></TicketSummary>
+    <LiveStatsCard v-if="eventSet" v-bind:event="event"></LiveStatsCard> -->
+    <Tickets
+      v-if="eventSet"
+      v-bind:event="event"
+      @updatedEventTickets="updateEvent"
+    ></Tickets>
   </div>
 </template>
 
@@ -27,16 +31,16 @@ import EventModificationCard from "../components/EventModificationCard";
 // import TicketModificationCard from "../components/TicketModificationCard";
 import BlockchainStatsCard from "../components/BlockchainStatsCard";
 import LiveStatsCard from "../components/LiveStatsCard";
-import TicketSummary from "../components/TicketSummary";
+import Tickets from "../components/Tickets";
 import idb from "../util/db/idb";
 
 export default {
   name: "Summary",
   components: {
     EventModificationCard,
-    BlockchainStatsCard,
-    LiveStatsCard,
-    TicketSummary,
+    // BlockchainStatsCard,
+    // LiveStatsCard,
+    Tickets,
   },
   data: () => ({
     eventSet: false,
