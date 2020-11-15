@@ -65,6 +65,7 @@ export default {
     let address = this.$route.query.address;
     this.$root.$on("web3Injected", async () => {
       await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+      await this.$store.dispatch("loadTicketsOfEvent", address);
     });
     if (this.$store.state.web3.web3Instance) {
       await this.$store.dispatch("loadTicketsOfEvent", address);

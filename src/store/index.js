@@ -81,9 +81,7 @@ export default new Vuex.Store({
       }
       if (event) {
         console.log("saving following event to db");
-        console.log(event);
-        let save = await idb.saveEvent(event);
-        console.log(save);
+        await idb.saveEvent(event);
         console.log("saved event to db");
         commit("UPDATE_EVENT_IN_STORE", event);
       }
@@ -200,24 +198,21 @@ export default new Vuex.Store({
      */
     async loadTicketsOfEvent({ commit }, address) {
       console.log("loadTickets action executed for event contract address: " + address);
-      let events = [];
-      for (let i = 0; i < state.events.length; i++) {
-        if (state.events[i].contractAddress === address) {
-          let inDb = await idb.getEvent(address);
-          let event = new Event(inDb);
-          let currentBlock = state.web3.currentBlock;
-          let loaded = await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          console.log(loaded);
-          if (loaded) {
-            event.setLastFetchedBlockTickets(currentBlock);
-            await idb.saveEvent(event);
-            events.push(event);
-          }
-        }
+      const currentBlock = state.web3.currentBlock;
+      const inDb = await idb.getEvent(address);
+      let event;
+      if (!inDb) {
+        console.log("event not in db - saving to db");
+        event = new Event(address);
+        await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+      } else {
+        console.log("in db");
+        event = new Event(inDb);
+        await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
       }
-      console.log(events)
-      if (events.length > 0) {
-        commit("updateEvents", events);
+      if (event) {
+        await idb.saveEvent(event);
+        commit("UPDATE_EVENT_IN_STORE", event);
       }
     },
 
