@@ -19,6 +19,7 @@
         v-bind:event="event"
         v-bind:inNewMode="false"
         v-bind:inEditMode="true"
+        @updatedEventMetadata="updateEvent"
       />
     </div>
   </div>
@@ -41,6 +42,9 @@ export default {
   methods: {
     setEditMode(mode) {
       this.editMode = mode;
+    },
+    updateEvent() {
+      this.$emit("updatedEventMetadata");
     },
   },
 };

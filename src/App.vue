@@ -25,22 +25,22 @@ Vue.use(VueMaterial);
 export default {
   name: "IdetixHost",
   components: {
-    Navigation
+    Navigation,
   },
   methods: {
-    loadEvents: async function() {
+    loadEvents: async function () {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
     },
-    loadApprovers: async function() {
+    loadApprovers: async function () {
       await this.$store.dispatch("loadApprovers");
       this.$root.$emit("loadedApprovers");
     },
-    updateEventsMetadata: async function() {
+    updateEventsMetadata: async function () {
       await this.$store.dispatch("updateMetadataOfExistingEvents");
       this.$root.$emit("updatedMetadataOfExistingEvents");
     },
-    loadEventsAndApproversInterval: function() {
+    loadEventsAndApproversInterval: function () {
       setInterval(async () => {
         console.log("loadEventsAndApprovers - loadEvents");
         await this.loadEvents();
@@ -48,12 +48,12 @@ export default {
         // await this.loadApprovers();
       }, 20000);
     },
-    updateEventsMetadataInterval: async function() {
+    updateEventsMetadataInterval: async function () {
       setInterval(async () => {
         console.log("updateEventsMetadata");
         await this.updateEventsMetadata();
       }, 40000);
-    }
+    },
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
@@ -74,7 +74,7 @@ export default {
     this.$root.$emit("identityContractCreated");
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
-  }
+  },
 };
 </script>
 

@@ -132,7 +132,7 @@
           </div>
 
           <div class="md-layout md-gutter" v-if="inNewMode">
-            <div class="md-layout-item md-small-size-100" style="display:flex">
+            <div class="md-layout-item md-small-size-100" style="display: flex">
               <!-- <md-field
                 :class="getValidationClass('idApprover')"
                 style="margin-right: 24px"
@@ -167,7 +167,7 @@
                   >
                 </p>
               </md-field>
-              <md-field style="max-width:250px">
+              <md-field style="max-width: 250px">
                 <label for="idLevel">Identification level</label>
                 <md-select
                   id="idLevel"
@@ -483,9 +483,7 @@
 
     <div v-if="waitingForSignature" class="awaiting-signature-message">
       <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">
-        Please sign the transaction to deploy this event contract.
-      </p>
+      <p class="process-message">Please sign the transaction.</p>
     </div>
     <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
@@ -520,7 +518,7 @@ import {
   email,
   url,
   minLength,
-  maxLength
+  maxLength,
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
@@ -537,12 +535,12 @@ import {
   AVERAGE_BLOCKTIME,
   AVERAGE_BLOCKTIME_LOCAL,
   NETWORKS,
-  NULL_ADDRESS
+  NULL_ADDRESS,
 } from "../util/constants/constants.js";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
-  EVENT_FACTORY_ADDRESS
+  EVENT_FACTORY_ADDRESS,
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
@@ -558,7 +556,7 @@ export default {
   props: {
     event: Object,
     inEditMode: Boolean,
-    inNewMode: Boolean
+    inNewMode: Boolean,
   },
   data: () => ({
     uiState: "submit not clicked",
@@ -596,69 +594,69 @@ export default {
       erc20Token: ERC20TESTTOKEN,
       startTime: {
         HH: "18",
-        mm: "00"
+        mm: "00",
       },
       website: "",
       twitter: "",
       idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
       selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
-      granularity: 2
+      granularity: 2,
     },
     noApprover: {
       title: "No approver",
-      approverAddress: NULL_ADDRESS
+      approverAddress: NULL_ADDRESS,
     },
     zeroApproverLevel: {
       level: 0,
-      value: "No identity approval required"
+      value: "No identity approval required",
     },
     approverLevels: [{ level: 0, value: "No identity approval required" }],
     useERC20Token: false,
     erc20Tokens: {
       testToken: ERC20TESTTOKEN,
-      dai: DAI
+      dai: DAI,
     },
     imageData: "",
-    disabledDates: date => {
+    disabledDates: (date) => {
       const day = date.getDay();
       return day >= 0;
     },
-    dateUponSending: null
+    dateUponSending: null,
   }),
   validations: {
     form: {
       title: {
-        required
+        required,
       },
       location: {
-        required
+        required,
       },
       date: {
-        required
+        required,
       },
       eventDescription: {
-        required
+        required,
       },
       erc20Token: {
-        required
+        required,
       },
       selectedApproverLevel: {
-        required
+        required,
       },
       idApprover: {
-        required
+        required,
       },
       granularity: {
-        required
+        required,
       },
       website: {
-        url
+        url,
       },
       twitter: {
-        url
-      }
-    }
+        url,
+      },
+    },
   },
   computed: {
     web3() {
@@ -685,7 +683,8 @@ export default {
     },
     getApproverLevel() {
       return this.approverLevels.find(
-        approverLevel => approverLevel.level === this.form.selectedApproverLevel
+        (approverLevel) =>
+          approverLevel.level === this.form.selectedApproverLevel
       );
     },
     selectedApprover() {
@@ -695,17 +694,17 @@ export default {
     },
     approverRegistered() {
       return this.form.selectedApproverAddress != NULL_ADDRESS;
-    }
+    },
   },
   watch: {
-    showErrorMessage: function(val) {
+    showErrorMessage: function (val) {
       setTimeout(() => {
         this.showErrorMessage = false;
       }, 3000);
     },
-    sending: function(val) {
+    sending: function (val) {
       this.dateUponSending = this.form.date;
-    }
+    },
   },
   async created() {
     const pinataAuth = await pinata.testAuthentication();
@@ -734,7 +733,7 @@ export default {
       // time: this.startTimeUnix,
       // image: this.imageData
     },
-    leaveEditMode: function() {
+    leaveEditMode: function () {
       this.$emit("setEditMode", false);
     },
     getValidationClass(fieldName) {
@@ -746,7 +745,7 @@ export default {
         if (this.errors) {
           return {
             "md-invalid": field.$invalid,
-            "md-required": field.$required
+            "md-required": field.$required,
           };
         }
       }
@@ -799,8 +798,8 @@ export default {
           duration: "",
           website: this.form.website,
           twitter: this.form.twitter,
-          image: this.imageData
-        }
+          image: this.imageData,
+        },
       });
     },
     validateForm() {
@@ -842,13 +841,17 @@ export default {
               this.waitingForMetadataChangeReceipt = false;
               this.invokingMetadataChangeState = false;
               this.showSuccessfulMetadataChangeMessage = true;
+              await this.$store.dispatch(
+                "loadMetadataUpdatesOfEvent",
+                this.$route.query.address
+              );
+              this.$emit("updatedEventMetadata");
             }
-            await this.$store.dispatch("loadEvents");
             await sleep(2000);
             this.leaveEditMode();
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
           this.waitingForMetadataChangeReceipt = false;
@@ -903,14 +906,18 @@ export default {
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.waitingForDeploymentReceipt = false;
               this.showSuccessfulDeploymentMessage = true;
+              await this.$store.dispatch("loadEvents");
+              await this.$store.dispatch(
+                "loadMetadataUpdatesOfEvent",
+                this.$route.query.address
+              );
             }
-            await this.$store.dispatch("loadEvents");
             this.$router.push({
-              path: `/`
+              path: `/`,
             });
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
           this.waitingForDeploymentReceipt = false;
@@ -933,7 +940,7 @@ export default {
         // create a new FileReader to read this image and convert to base64 format
         var reader = new FileReader();
         // Define a callback function to run, when FileReader finishes its job
-        reader.onload = e => {
+        reader.onload = (e) => {
           // Note: arrow function used here, so that "this.imageData" refers to the imageData of Vue component
           // Read image as base64 and set to imageData
           this.imageData = e.target.result;
@@ -959,7 +966,7 @@ export default {
         this.approverLevels.push(this.zeroApproverLevel);
         this.form.selectedApproverLevel = 0;
       }
-    }
+    },
     // Called on change in approver field
     // chaeckIfApproverRegistered() {
     //   this.approverLevels = [this.zeroApproverLevel];
@@ -982,7 +989,7 @@ export default {
     //   this.approverRegistered = false;
     //   return false;
     // }
-  }
+  },
 };
 </script>
 

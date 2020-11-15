@@ -61,6 +61,9 @@ export class Event {
     this.location = "";
     this.title = "";
     this.image = "";
+    this.description = "";
+    this.category = "";
+    this.timestamp = "";
     this.ipfsHash = "";
     this.currency = 0;
     this.currencySymbol = "";
@@ -75,21 +78,25 @@ export class Event {
       verification: false
     }
   }
+  async update(web3Instance, ABI, currentBlock) {
+    await this.loadMetadata(web3Instance, ABI, currentBlock);
+    // await this
+  }
 
-  // async tryUpdateMetadata(web3Instance, ABI, ipfsInstance) {}
+  async updateTicketsOfEvent(web3Instance, ABI, currentBlock) {
+
+  }
 
   /**
    * Loads the metadata from ipfs for this event.
-   * Only call this method, when there is metadata to be fetched.
+   * Returns false, only if hash or data could not be retrieved from
+   * the blockchain or IPFS respectively.
    * 
    * @param {*} web3Instance
    * @param {*} ABI
    * @param {*} ipfsInstance
    */
   async loadMetadata(web3Instance, ABI, currentBlock) {
-    if (this.loadedMetadata) {
-      return true;
-    }
     try {
       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
       console.log("hashRetrieved? " + hashRetrieved);
@@ -109,8 +116,13 @@ export class Event {
     return false;
   }
 
-    /**
+  /**
+   * /**
    * Fetches the last ipfs hash of the latest metadata change.
+   * 
+   * @param {*} ABI 
+   * @param {*} web3Instance 
+   * @returns whether a new hash was retrieved
    */
   async fetchIPFSHash(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
@@ -119,17 +131,27 @@ export class Event {
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
       fromBlock: this.lastFetchedBlockMetadata + 1
     });
-    console.log(eventMetadata);
 
-    var metadataObject = eventMetadata[0].returnValues;
+    if (eventMetadata.length == 0) {
+      // no update found
+      return true;
+    }
+
+    var metadataObject = eventMetadata[eventMetadata.length - 1].returnValues;
     if (metadataObject == null) {
       return false;
     }
-    this.ipfsHash = argsToCid(
+    let currentHash = argsToCid(
       metadataObject.hashFunction,
       metadataObject.size,
       metadataObject.digest
     );
+
+    if (this.ipfsHash == currentHash) {
+      return false;
+    }
+    
+    this.ipfsHash = currentHash;
     console.log(this.ipfsHash);
     return true;
   }
@@ -395,6 +417,9 @@ export class Event {
       : false;
   }
 
+  /**
+   * Loads new fungible ticket types of this event and adds them to the list of tickets.
+   */
   async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
@@ -407,6 +432,7 @@ export class Event {
           this.lastFetchedBlockTickets + 1,
           typeIdentifier
         );
+        console.log(changed);
         if (changed) {
           const exists = this.hasFungibleTicketType(i);
           let ticketType = exists
@@ -434,6 +460,9 @@ export class Event {
     }
   }
 
+  /**
+   * Loads new non-fungible ticket types of this event and adds them to the list of tickets.
+   */
   async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();

@@ -11,6 +11,7 @@
     <EventModificationCard
       v-if="eventSet"
       v-bind:event="event"
+      @updatedEventMetadata="updateEvent"
     ></EventModificationCard>
     <BlockchainStatsCard
       v-if="eventSet"
@@ -40,9 +41,14 @@ export default {
   data: () => ({
     eventSet: false,
     notFoundMessageVisible: false,
+    event: "",
     // showTickets: false
   }),
   methods: {
+    async updateEvent() {
+      console.log("updateEvent triggered in Summary view");
+      this.event = await idb.getEvent(this.$route.query.address);
+    },
     routeToEventList() {
       this.$router.push({
         name: `Events`,
@@ -50,23 +56,31 @@ export default {
     },
   },
   async created() {
-    setTimeout(() => {
-      if (!this.eventSet) {
-        this.notFoundMessageVisible = true;
-      }
-    }, 5000);
-    console.log("modification view created executed");
+    // setTimeout(() => {
+    //   if (!this.eventSet) {
+    //     this.notFoundMessageVisible = true;
+    //   }
+    // }, 5000);
+    console.log("summary view created executed");
     let address = this.$route.query.address;
-    await this.$store.dispatch("loadTicketsOfExistingEvent", address);
+    this.$root.$on("web3Injected", async () => {
+      await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+    });
+    if (this.$store.state.web3.web3Instance) {
+      await this.$store.dispatch("loadTicketsOfEvent", address);
+      await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+    }
     this.$root.$on("eventsFullyLoaded", async () => {
       this.event = await idb.getEvent(address);
       if (this.event != null) {
+        console.log(this.event);
         this.eventSet = true;
         this.notFoundMessageVisible = false;
       }
     });
     this.event = await idb.getEvent(address);
     if (this.event != null) {
+      console.log(this.event);
       this.eventSet = true;
     }
   },

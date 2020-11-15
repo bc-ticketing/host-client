@@ -157,7 +157,6 @@ export default {
   },
   created() {
     console.log("eventcard created executed");
-    console.log(this.event);
   },
 };
 </script>

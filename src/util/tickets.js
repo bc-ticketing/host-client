@@ -217,9 +217,10 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
         fromBlock: 1
     });
     if (ticketMetadata.length < 1) {
-        return;
+        return true; // no new metadata
     }
-    var metadataObject = ticketMetadata[0].returnValues;
+    // get latest TicketMetadata event and its hash.
+    var metadataObject = ticketMetadata[ticketMetadata.length - 1].returnValues;
     const ipfsHash = argsToCid(
         metadataObject.hashFunction,
         metadataObject.size,
