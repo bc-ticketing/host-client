@@ -41,7 +41,7 @@ import { requestTwitterVerification, requestWebsiteVerification, getHandle } fro
 import { getJSONFromIpfs } from "../util/getIpfs";
 import { getCurrencySymbol } from "./constants/ERC20Tokens";
 
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
 
 export class Event {
   constructor(contractAddress) {
@@ -200,6 +200,7 @@ export class Event {
   // loading ticket types
   async loadTickets(web3Instance, ABI, ipfsInstance) {
     try {
+      console.log("loading tickets");
       await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
       await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
     } catch (e) {
@@ -421,6 +422,7 @@ export class Event {
    * Loads new fungible ticket types of this event and adds them to the list of tickets.
    */
   async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
+    console.log("loading fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
@@ -430,7 +432,7 @@ export class Event {
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlockTickets + 1,
-          typeIdentifier
+          typeIdentifier.toFixed()
         );
         console.log(changed);
         if (changed) {
@@ -439,7 +441,7 @@ export class Event {
             ? exists
             : new FungibleTicketType(this.contractAddress, i);
           const ticketMapping = await eventSC.methods
-            .ticketTypeMeta(typeIdentifier)
+            .ticketTypeMeta(typeIdentifier.toFixed())
             .call();
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
@@ -464,16 +466,19 @@ export class Event {
    * Loads new non-fungible ticket types of this event and adds them to the list of tickets.
    */
   async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
+    console.log("loading non-fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
+        console.log(nonce);
         const typeIdentifier = getIdAsBigNumber(false, i);
+        console.log(typeIdentifier);
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlockTickets + 1,
-          typeIdentifier
+          typeIdentifier.toFixed()
         );
         if (changed) {
           const exists = this.hasNonFungibleTicketType(i);
@@ -540,6 +545,7 @@ export class Event {
   }
 
   async loadOwnerShipChanges(web3Instance, ABI) {
+    console.log("loading ownership changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintNonFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
@@ -556,6 +562,7 @@ export class Event {
   }
 
   async loadTicketsSoldChanges(web3Instance, ABI) {
+    console.log("loading tickets sold changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
@@ -617,6 +624,7 @@ export class Event {
   }
 
   async loadAftermarketChanges(web3Instance, ABI) {
+    console.log("loading aftermarket changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
 
     const buyOrdersPlaced = await BuyOrderPlaced(
