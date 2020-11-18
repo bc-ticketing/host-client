@@ -257,14 +257,15 @@ import {
   required,
   email,
   minLength,
-  maxLength
+  maxLength,
 } from "vuelidate/lib/validators";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 import sleep from "await-sleep";
 import { getJSONFromIpfs } from "../util/getIpfs";
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
+
 const pinataSDK = require("@pinata/sdk");
 const pinata = pinataSDK(
   process.env.VUE_APP_PINATA_API_KEY,
@@ -275,11 +276,11 @@ const pinata = pinataSDK(
 import {
   NETWORKS,
   TICKETS_CREATING_PRESALE,
-  WAITING_FOR_SIGNATURE_PRESALE
+  WAITING_FOR_SIGNATURE_PRESALE,
 } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
-  EVENT_FACTORY_ADDRESS
+  EVENT_FACTORY_ADDRESS,
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ERC20_ABI } from "../util/abi/ERC20";
@@ -296,7 +297,7 @@ import {
   TICKETS_CREATED,
   TICKETS_CREATED_PRESALE,
   AVERAGE_BLOCKTIME,
-  AVERAGE_BLOCKTIME_LOCAL
+  AVERAGE_BLOCKTIME_LOCAL,
 } from "../util/constants/constants";
 import idb from "../util/db/idb";
 import getDecimals from "../util/utility.js";
@@ -306,7 +307,7 @@ export default {
   name: "TicketForm",
   components: {
     SeatingPlan,
-    VueTimepicker
+    VueTimepicker,
   },
   data: () => ({
     sending: false,
@@ -335,26 +336,26 @@ export default {
       price: "2",
       finalizationTime: {
         HH: "10",
-        mm: "00"
+        mm: "00",
       },
       presaleClosingTime: {
         HH: "10",
-        mm: "00"
+        mm: "00",
       },
-      fungibleSupply: 400
+      fungibleSupply: 400,
     },
-    disabledDates: date => {
+    disabledDates: (date) => {
       const day = date.getDay();
       return day >= 0;
     },
     presaleClosingDateUponSending: null,
-    finalizationDateUponSending: null
+    finalizationDateUponSending: null,
   }),
   watch: {
-    sending: function(val) {
+    sending: function (val) {
       this.presaleClosingDateUponSending = this.presaleClosingDate;
       this.finalizationDateUponSending = this.finalizationDate;
-    }
+    },
   },
   methods: {
     /**
@@ -423,8 +424,8 @@ export default {
             description: type.description,
             color: type.color,
             event: this.$route.query.address,
-            mapping: map
-          }
+            mapping: map,
+          },
         });
         if (presale) {
           this.presaleTypeIpfsStrings.push(json);
@@ -570,7 +571,7 @@ export default {
             await this.$store.dispatch("loadEvents");
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           console.log(e);
           this.showErrorMessage();
@@ -625,7 +626,7 @@ export default {
             }
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           console.log(e);
           this.showErrorMessage();
@@ -683,7 +684,7 @@ export default {
         finalization: this.finalizationUnixSeconds,
         description: this.form.description,
         seats: seats,
-        color: color
+        color: color,
       };
     },
     async getTypeAsPresale(seats, color) {
@@ -698,7 +699,7 @@ export default {
         description: this.form.description,
         seats: seats,
         presaleBlock: presaleBlock,
-        color: color
+        color: color,
       };
     },
 
@@ -721,7 +722,7 @@ export default {
     },
     async fetchIpfsHashesOfExistingTypes() {
       let pastEvents = await this.contract.getPastEvents("TicketMetadata", {
-        fromBlock: 1
+        fromBlock: 1,
       });
       let cids = [];
       var i;
@@ -746,8 +747,8 @@ export default {
           title: type.title,
           description: type.description,
           event: this.$route.query.address,
-          mapping: type.seats
-        }
+          mapping: type.seats,
+        },
       });
     },
     async downloadFromIpfs(cid) {
@@ -763,13 +764,13 @@ export default {
       var field = this.form.fieldName;
       if (field) {
         return {
-          "md-invalid": false //field.$invalid && field.$dirty,
+          "md-invalid": false, //field.$invalid && field.$dirty,
         };
       }
     },
     routeToEventList() {
       this.$router.push({
-        name: `Events`
+        name: `Events`,
       });
     },
     getDateAfterMonths(n) {
@@ -816,7 +817,7 @@ export default {
       setTimeout(() => {
         this.hideStatus();
       }, 5000);
-    }
+    },
   },
   computed: {
     currencyDecimalFactor() {
@@ -824,7 +825,9 @@ export default {
     },
 
     fractionPrice() {
-      return BigNumber(this.form.price * this.currencyDecimalFactor).toFixed();
+      return BigNumber(this.form.price)
+        .multipliedBy(this.currencyDecimalFactor)
+        .toFixed();
     },
     nonFungibleSupply() {
       return this.amountOfSelectedSeats;
@@ -878,7 +881,7 @@ export default {
     },
     allSavedTypes() {
       return this.savedTypes.concat(this.savedPresaleTypes);
-    }
+    },
   },
   async created() {
     console.log("ticket form created executed");
@@ -918,13 +921,13 @@ export default {
     form: {
       title: {
         // required,
-        minLength: minLength(3)
+        minLength: minLength(3),
         // },
         // finalization: {
         //   required
-      }
-    }
-  }
+      },
+    },
+  },
 };
 </script>
 
