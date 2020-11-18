@@ -994,6 +994,9 @@ export default {
 </script>
 
 <style>
+.create-event-form-container {
+  padding-bottom: 20px;
+}
 .location-container {
   justify-content: center;
   display: flex;

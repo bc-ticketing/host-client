@@ -44,8 +44,8 @@ export default {
       setInterval(async () => {
         console.log("loadEventsAndApprovers - loadEvents");
         await this.loadEvents();
-        // console.log("loadEventsAndApprovers - loadApprovers");
-        // await this.loadApprovers();
+        console.log("loadEventsAndApprovers - loadApprovers");
+        await this.loadApprovers();
       }, 20000);
     },
     updateEventsMetadataInterval: async function () {
@@ -61,7 +61,6 @@ export default {
       await this.loadEvents();
       await this.loadApprovers();
       this.loadEventsAndApproversInterval();
-      // this.updateEventsMetadataInterval();
       console.log("eventfactory created ended");
     });
     console.log("dispatching addNullAddressApproverToStore");

@@ -2,7 +2,7 @@
 <template>
   <div class="event-card-container">
     <div class="event-card-router-container">
-      <md-card md-with-hover>
+      <md-card class="event-card" md-with-hover>
         <div md-with-hover @click="openSummary()">
           <md-card-header>
             <div v-if="title" class="md-title event-card-title">
@@ -53,9 +53,9 @@
               </div>
             </div>
             <div class="image-content-wrapper">
-              <div v-if="image" class="content-entry-image">
-                <img class="image-content" :src="image" />
-              </div>
+              <!-- <div v-if="image" class="content-entry-image"> -->
+              <img v-if="image" class="image-content" :src="image" />
+              <!-- </div> -->
             </div>
           </md-card-content>
         </div>
@@ -163,16 +163,10 @@ export default {
 
 <style>
 .event-card-container {
-  padding-bottom: 10px;
+  margin-bottom: 10px;
 }
 .content-entry {
   display: block;
-}
-.image-content {
-  position: relative;
-  padding: 16px;
-  bottom: 10px;
-  overflow: hidden;
 }
 .md-card-content.card-content {
   padding-bottom: 0;
@@ -183,9 +177,15 @@ export default {
 .text-content {
   min-width: 50%;
 }
-/* .image-content-wrapper {
+.image-content {
   position: absolute;
-  right: 20px;
-  top: 20px;
-} */
+  top: 0;
+  right: 0;
+  max-width: 100%;
+  max-height: 100%;
+  z-index: -1;
+}
+.image-content-wrapper {
+  height: 100%;
+}
 </style>
