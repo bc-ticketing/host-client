@@ -104,7 +104,7 @@ export default {
     async invokeChange() {
       this.sending = true;
       if (this.maxTickets == this.event.maxTicketsPerPerson) {
-        this.showStatusMessage(
+        this.showStatus(
           PROGRESS_DETERMINATE,
           "This number is already active, please choose a different one or cancel this process."
         );
@@ -112,10 +112,7 @@ export default {
         return false;
       }
       if (this.maxTickets <= 0) {
-        this.showStatusMessage(
-          PROGRESS_DETERMINATE,
-          "Please choose a valid number."
-        );
+        this.showStatus(PROGRESS_DETERMINATE, "Please choose a valid number.");
         this.sending = false;
         return false;
       }
@@ -164,6 +161,9 @@ export default {
         .catch(async (e) => {
           // Transaction rejected or failed
           this.showErrorMessage();
+          await sleep(3000);
+          this.sending = false;
+          this.hideStatus();
         });
     },
     showStatus(processBarMode, message) {

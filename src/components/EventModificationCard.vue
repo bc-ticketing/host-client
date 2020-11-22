@@ -55,6 +55,11 @@ export default {
   methods: {
     setMode(mode) {
       this.mode = mode;
+      if (this.mode != "card") {
+        this.$emit("enterEdit");
+      } else {
+        this.$emit("leaveEdit");
+      }
     },
     updateEvent() {
       this.$emit("updatedEvent");
