@@ -84,13 +84,13 @@ export default {
   },
   computed: {
     topPadding() {
-      return this.ticketType.created ? "" : "10px";
+      return this.created ? "0" : "10px";
     },
     topMargin() {
-      return this.ticketType.created ? "" : "20px";
+      return this.created ? "0" : "20px";
     },
     topBorder() {
-      return this.ticketType.created ? "" : "black solid 1px";
+      return this.created ? "" : "black solid 1px";
     },
     seatColor() {
       return this.ticketType.seatColor;
