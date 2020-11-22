@@ -11,14 +11,12 @@ let state = {
         error: null,
         currentBlock: null
     },
-    eventAddresses: [],
     events: [],
     eventFactory: null,
     identity: null,
     approvers: [],
     lastFetchedBlockEvents: STARTING_BLOCK,
     lastFetchedBlockApprovers: STARTING_BLOCK,
-    ipfsInstance: null
 };
 
 export default state;

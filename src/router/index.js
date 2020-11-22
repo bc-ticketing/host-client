@@ -1,10 +1,8 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import Events from "../views/Events.vue"
-import Modification from "../views/Modification.vue"
 import Summary from "../views/Summary.vue"
 import NewEvent from "../views/NewEvent.vue"
-import NewTicket from "../views/NewTicket.vue"
 import ApproverRegister from "../views/ApproverRegister.vue"
 import ApproveIdentity from "../views/ApproveIdentity.vue"
 
@@ -17,11 +15,6 @@ const routes = [
     component: Events
   },
   {
-    path: "/modification",
-    name: "Modification",
-    component: Modification
-  },
-  {
     path: "/summary",
     name: "Summary",
     component: Summary
@@ -30,11 +23,6 @@ const routes = [
     path: "/new-event",
     name: "NewEvent",
     component: NewEvent
-  },
-  {
-    path: "/new-ticket",
-    name: "NewTicket",
-    component: NewTicket
   },
   {
     path: "/register",
