@@ -474,7 +474,13 @@
       </p>
     </div> -->
 
-    <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
+    <div v-if="showStatusMessage" class="status-message">
+      <md-progress-bar :md-mode="processBarMode"></md-progress-bar>
+      <p class="process-message">
+        {{ processMessage }}
+      </p>
+    </div>
+    <!-- <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
       <p class="process-message">
         Please wait - The Event metadata is uploaded to IPFS.
@@ -505,7 +511,7 @@
     </div>
     <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
       <p class="process-message">Something went wrong...</p>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -532,11 +538,27 @@ const pinata = pinataSDK(
 
 // project internal imports
 import {
-  AVERAGE_BLOCKTIME,
-  AVERAGE_BLOCKTIME_LOCAL,
   NETWORKS,
   NULL_ADDRESS,
-} from "../util/constants/constants.js";
+  PROCESSING,
+  WAITING_FOR_SIGNATURE,
+  UPLOADING_TO_IPFS,
+  UPLOADED_TO_IPFS,
+  TRANSACTION_DENIED,
+  DEFAULT_ERROR,
+  PROGRESS_DETERMINATE,
+  PROGRESS_INDETERMINATE,
+  TICKETS_CREATING,
+  TICKETS_CREATED,
+  TICKETS_CREATED_PRESALE,
+  TICKETS_CREATED_ALL,
+  AVERAGE_TIME_PER_BLOCK,
+  AVERAGE_TIME_PER_BLOCK_LOCAL,
+  EVENT_DEPLOYED,
+  EVENT_DEPLOYING,
+  EVENT_METADATA_CHANGE,
+  EVENT_METADATA_CHANGE_SUCCESSFUL,
+} from "../util/constants/constants";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
@@ -559,18 +581,22 @@ export default {
     inNewMode: Boolean,
   },
   data: () => ({
+    sending: false,
+    showStatusMessage: false,
+    processBarMode: PROGRESS_DETERMINATE,
+    processMessage: DEFAULT_ERROR,
+
     uiState: "submit not clicked",
     errors: false,
-    sending: false,
-    waitingForSignature: false,
-    waitingForDeploymentReceipt: false,
-    waitingForMetadataChangeReceipt: false,
+    // waitingForSignature: false,
+    // waitingForDeploymentReceipt: false,
+    // waitingForMetadataChangeReceipt: false,
     deployingContractState: false,
     invokingMetadataChangeState: false,
-    uploadingToIpfs: false,
-    showSuccessfulDeploymentMessage: false,
-    showSuccessfulMetadataChangeMessage: false,
-    showErrorMessage: false,
+    // uploadingToIpfs: false,
+    // showSuccessfulDeploymentMessage: false,
+    // showSuccessfulMetadataChangeMessage: false,
+    // showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
@@ -665,9 +691,6 @@ export default {
     eventFactory() {
       return this.$store.state.eventFactory;
     },
-    ipfsInstance() {
-      return this.$store.state.ipfsInstance;
-    },
     dateSeconds() {
       return Number(Date.parse(this.form.date) / 1000);
     },
@@ -715,6 +738,26 @@ export default {
     }
   },
   methods: {
+    showStatus(processBarMode, message) {
+      this.processBarMode = processBarMode;
+      this.processMessage = message;
+      this.showStatusMessage = true;
+    },
+    showErrorMessage() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
+    },
+    hideStatus() {
+      this.showStatusMessage = false;
+    },
+    showErrorStatus() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
+    },
     getDateAfterMonths(n) {
       let d = new Date();
       d.setMonth(d.getMonth() + n);
@@ -729,17 +772,11 @@ export default {
       this.form.website = this.event.website.url;
       this.form.twitter = this.event.twitter.url;
       this.form.image = this.event.image;
-
-      // time: this.startTimeUnix,
-      // image: this.imageData
     },
     leaveEditMode: function () {
-      this.$emit("setEditMode", false);
+      this.$emit("finishEditing");
     },
     getValidationClass(fieldName) {
-      // return {
-      //   "md-invalid": false
-      // };
       const field = this.$v.form[fieldName];
       if (field) {
         if (this.errors) {
@@ -765,6 +802,7 @@ export default {
       }
       this.uiState = "form submitted";
       this.sending = true;
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       await this.uploadToIpfs();
       await this.deployEventContract();
       this.sending = false;
@@ -772,16 +810,15 @@ export default {
     async modifyEvent() {
       // todo: add checks to compare to current ipfs hash
       this.sending = true;
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       await this.uploadToIpfs();
       await this.invokeMetadataChange();
       this.sending = false;
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
-      this.uploadingToIpfs = true;
       const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
       this.IpfsHash = result.IpfsHash;
-      this.uploadingToIpfs = false;
       console.log(this.IpfsHash);
       console.log(this.ipfsString);
     },
@@ -814,14 +851,13 @@ export default {
         this.event.contractAddress
       );
       this.invokingMetadataChangeState = true;
-      this.waitingForSignature = true;
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       const updateMetadata = await eventContract.methods
         .updateEventMetadata(args.hashFunction, args.size, args.digest)
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
-            this.waitingForMetadataChangeReceipt = true;
+            this.showStatus(PROGRESS_INDETERMINATE, EVENT_METADATA_CHANGE);
             if (transactionHash) {
               console.log(
                 "submitted metadata change invocation: ",
@@ -833,31 +869,32 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               await sleep(5000);
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForMetadataChangeReceipt = false;
               this.invokingMetadataChangeState = false;
-              this.showSuccessfulMetadataChangeMessage = true;
+              this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
               await this.$store.dispatch(
                 "loadMetadataUpdatesOfEvent",
                 this.$route.query.address
               );
               this.$emit("updatedEventMetadata");
             }
+            this.showStatus(
+              PROGRESS_DETERMINATE,
+              EVENT_METADATA_CHANGE_SUCCESSFUL
+            );
             await sleep(2000);
+            this.hideStatus();
             this.leaveEditMode();
           }
         )
         .catch(async (e) => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForMetadataChangeReceipt = false;
           this.invokingMetadataChangeState = false;
-          this.showSuccessfulMetadataChangeMessage = false;
-          this.showErrorMessage = true;
+          this.showErrorMessage();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
@@ -872,8 +909,7 @@ export default {
       console.log(this.form.selectedApproverLevel);
       console.log(this.usedToken);
       console.log(this.form.granularity);
-      this.deployingContractState = true;
-      this.waitingForSignature = true;
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
@@ -887,8 +923,7 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
-            this.waitingForDeploymentReceipt = true;
+            this.showStatus(PROGRESS_INDETERMINATE, EVENT_DEPLOYING);
             if (transactionHash) {
               console.log(
                 "submitted event contract deployment invocation: ",
@@ -900,17 +935,15 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForDeploymentReceipt = false;
-              this.showSuccessfulDeploymentMessage = true;
+              this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
               await this.$store.dispatch("loadEvents");
-              await this.$store.dispatch(
-                "loadMetadataUpdatesOfEvent",
-                this.$route.query.address
-              );
+              this.showStatus(PROGRESS_DETERMINATE, EVENT_DEPLOYED);
+              await sleep(2000);
+              this.hideStatus();
             }
             this.$router.push({
               path: `/`,
@@ -919,18 +952,12 @@ export default {
         )
         .catch(async (e) => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForDeploymentReceipt = false;
           this.deployingContractState = false;
-          this.showSuccessfulDeploymentMessage = false;
-          this.showErrorMessage = true;
+          this.showErrorMessage();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
         });
-
-      const eventAddresses = await this.eventFactory.methods.getEvents().call();
-      console.log(eventAddresses);
     },
     readImageFile(event) {
       // Reference to the DOM input element
