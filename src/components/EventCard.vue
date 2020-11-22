@@ -59,19 +59,11 @@
               </div>
             </div>
             <div class="image-content-wrapper">
-              <!-- <div v-if="image" class="content-entry-image"> -->
               <img v-if="image" class="image-content" :src="image" />
-              <!-- </div> -->
             </div>
           </md-card-content>
         </div>
         <div class="button-container">
-          <!-- <md-button
-            v-if="inModificationView"
-            class="md-primary"
-            @click="editMetadata()"
-            >Change Metadata</md-button
-          > -->
           <md-button
             v-if="inModificationView"
             class="md-primary"
@@ -196,7 +188,7 @@ export default {
   display: block;
 }
 .md-card-content.card-content {
-  padding-bottom: 0;
+  padding-bottom: 16px;
 }
 .card-content {
   display: flex;

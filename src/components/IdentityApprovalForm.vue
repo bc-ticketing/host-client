@@ -57,9 +57,9 @@ export default {
   data() {
     return {
       form: {
-        address: "0x83c2738dafac18e64e5ddc6008fe323ac5c489a5",
-        approvalLevel: 1
-      }
+        address: "",
+        approvalLevel: 1,
+      },
     };
   },
   computed: {
@@ -68,7 +68,7 @@ export default {
     },
     identityContract() {
       return this.$store.state.identity;
-    }
+    },
   },
   methods: {
     async approveIdentity() {
@@ -83,8 +83,8 @@ export default {
         .getSecurityLevel(this.$store.state.web3.account, this.form.address)
         .call();
       console.log(secLevel);
-    }
-  }
+    },
+  },
 };
 </script>
 

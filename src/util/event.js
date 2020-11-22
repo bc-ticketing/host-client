@@ -16,7 +16,7 @@ import {
   removeBuyOrders,
   addSellOrders,
   removeSellOrders,
-  getLowestSellOrder
+  getLowestSellOrder,
 } from "./tickets";
 import axios from "axios";
 import {
@@ -463,6 +463,7 @@ export class Event {
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
           ticketType.supply = Number(ticketMapping.supply);
+          ticketType.finalizationTime = Number(ticketMapping.finalizationTime);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
@@ -508,6 +509,7 @@ export class Event {
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = ticketMapping.ticketsSold;
           ticketType.supply = ticketMapping.supply;
+          ticketType.finalizationTime = Number(ticketMapping.finalizationTime);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           for (let j = 1; j <= ticketType.supply; j++) {
@@ -583,7 +585,6 @@ export class Event {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
-      //const owner = event.returnValues.owner;
       const ticketType = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)
