@@ -34,13 +34,15 @@ export const MONTHS = {
 };
 
 // General constants
-export const IPFS_TIMEOUT = 400 // in ms
+export const IPFS_TIMEOUT = 2000 // in ms
 export const STARTING_BLOCK = 7400000;
-export const AVERAGE_BLOCKTIME = 15000; // in ms
-export const AVERAGE_BLOCKTIME_LOCAL = 100; // in ms
+export const AVERAGE_TIME_PER_BLOCK = 15000; // in ms
+export const AVERAGE_TIME_PER_BLOCK_LOCAL = 100; // in ms
+export const MAX_TICKETS_PER_PERSON = 5;
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-// General error messages
+// General messages
+export const PROCESSING = 'Processing...';
 export const WAITING_FOR_SIGNATURE = 'Please sign the transaction.';
 export const TRANSACTION_DENIED = 'Transaction denied due to user interruption';
 export const DEFAULT_ERROR = 'Oops! Looks like we hit a roadblock!';
@@ -56,12 +58,17 @@ export const PROGRESS_INDETERMINATE = 'indeterminate';
 // Events
 export const EVENT_DEPLOYING = 'Please wait - The Event contract is being deployed...';
 export const EVENT_DEPLOYED = 'The event was successfully deployed.';
+export const EVENT_METADATA_CHANGE = 'Please wait - The invocation is being processed.';
+export const EVENT_METADATA_CHANGE_SUCCESSFUL = 'The metadata change was successful.';
+export const EVENT_MAX_TICKETS_CHANGE = 'Please wait - The invocation is being processed.'
+export const EVENT_MAX_TICKETS_CHANGE_SUCCESSFUL = 'The change of the maximal number of tickets per person was successfully changed.'
 
 // Tickets
 export const TICKETS_CREATING = 'Please wait - The non-presale tickets are being created.';
 export const TICKETS_CREATING_PRESALE = 'Please wait - The presale tickets are being created.';
 export const TICKETS_CREATED = 'The non-presale tickets were successfully created.';
 export const TICKETS_CREATED_PRESALE = 'The presale tickets were successfully created.';
+export const TICKETS_CREATED_ALL = 'All tickets were successfully created';
 export const TICKETS_WAITING_FOR_SIGNATURE = 'Please sign the transaction for the non-presale tickets.';
 export const TICKETS_WAITING_FOR_SIGNATURE_PRESALE = 'Please sign the transaction for the presale tickets.';
 

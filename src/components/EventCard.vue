@@ -23,7 +23,8 @@
                 <b>Currency: </b>{{ currency }}
               </div>
               <div v-if="website" class="content-entry">
-                <b>Website: </b>{{ website.url }}
+                <b>Website: </b
+                >{{ website.url ? website.url : "None provided" }}
                 <span class="danger"
                   ><md-icon class="danger" v-if="website.verification == false"
                     >warning</md-icon
@@ -36,7 +37,8 @@
                 >
               </div>
               <div v-if="twitter" class="content-entry">
-                <b>Twitter: </b>{{ twitter.url }}
+                <b>Twitter: </b
+                >{{ twitter.url ? twitter.url : "None provided" }}
                 <span class="danger"
                   ><md-icon class="danger" v-if="twitter.verification == false"
                     >warning</md-icon
@@ -47,6 +49,10 @@
                     >done</md-icon
                   ></span
                 >
+              </div>
+              <div v-if="maxTicketsPerPerson" class="content-entry">
+                <b>Maximum allowed tickets per person: </b
+                >{{ maxTicketsPerPerson }}
               </div>
               <div v-if="description" class="content-entry">
                 <b>Description: </b>{{ description }}
@@ -59,32 +65,51 @@
             </div>
           </md-card-content>
         </div>
-        <md-button
-          v-if="inModificationView"
-          class="md-primary"
-          @click="enterEditMode()"
-          >Edit</md-button
-        >
-        <!-- <md-button
-          v-if="inListView"
-          class="md-primary"
-          @click="openNewTicketView()"
-          >Create ticket</md-button
-        > -->
-        <!-- </md-card-actions> -->
-        <!-- </md-ripple> -->
+        <div class="button-container">
+          <!-- <md-button
+            v-if="inModificationView"
+            class="md-primary"
+            @click="editMetadata()"
+            >Change Metadata</md-button
+          > -->
+          <md-button
+            v-if="inModificationView"
+            class="md-primary"
+            @click="showEditDialog = true"
+            >Edit event</md-button
+          >
+        </div>
+
+        <md-dialog :md-active.sync="showEditDialog">
+          <md-dialog-title>What do you want to change?</md-dialog-title>
+          <md-button class="md-primary" @click="editMetadata()"
+            >Metadata</md-button
+          >
+          <md-button class="md-primary" @click="editMaxTicketsPerPerson()"
+            >Maximum tickets per person</md-button
+          >
+          <md-button class="md-accent" @click="editMetadata()"
+            >Cancel</md-button
+          >
+        </md-dialog>
       </md-card>
     </div>
   </div>
 </template>
 
 <script>
-import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
+import {
+  WEEKDAYS,
+  MONTHS,
+  MAX_TICKETS_PER_PERSON,
+} from "../util/constants/constants.js";
 import { getCurrencySymbol } from "../util/constants/ERC20Tokens.js";
 
 export default {
   name: "EventCard",
-  data: () => ({}),
+  data: () => ({
+    showEditDialog: false,
+  }),
   props: {
     event: Object,
     inListView: Boolean,
@@ -92,12 +117,6 @@ export default {
     inSummaryView: Boolean,
   },
   methods: {
-    openNewTicketView: function () {
-      this.$router.push({
-        path: `new-ticket`,
-        query: { address: this.event.contractAddress },
-      });
-    },
     openSummary: function () {
       if (this.inListView) {
         this.$router.push({
@@ -106,8 +125,11 @@ export default {
         });
       }
     },
-    enterEditMode: function () {
-      this.$emit("setEditMode", true);
+    editMetadata: function () {
+      this.$emit("editMetadata");
+    },
+    editMaxTicketsPerPerson: function () {
+      this.$emit("editMaxTicketsPerPerson");
     },
   },
   computed: {
@@ -124,6 +146,11 @@ export default {
       return this.event.currencySymbol
         ? this.event.currencySymbol
         : this.event.currency;
+    },
+    maxTicketsPerPerson() {
+      return this.event.maxTicketsPerPerson
+        ? this.event.maxTicketsPerPerson
+        : MAX_TICKETS_PER_PERSON;
     },
     date() {
       if (this.event.timestamp) {

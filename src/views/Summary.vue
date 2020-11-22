@@ -2,16 +2,10 @@
 <!-- Events can be edited in the form contained in this view. -->
 <template>
   <div class="summary-container">
-    <!-- <div class="not-found-container" v-show="notFoundMessageVisible">
-      <h3>No event found for address: {{ this.$route.query.address }}.</h3>
-      <md-button class="go-back-button md-primary" @click="routeToEventList()"
-        >Go Back</md-button
-      >
-    </div> -->
     <EventModificationCard
       v-if="eventSet"
       v-bind:event="event"
-      @updatedEventMetadata="updateEvent"
+      @updatedEvent="updateEvent"
     ></EventModificationCard>
     <Tickets
       v-if="eventSet"
@@ -36,7 +30,6 @@ export default {
     eventSet: false,
     notFoundMessageVisible: false,
     event: "",
-    // showTickets: false
   }),
   methods: {
     async updateEvent() {
@@ -50,11 +43,6 @@ export default {
     },
   },
   async created() {
-    // setTimeout(() => {
-    //   if (!this.eventSet) {
-    //     this.notFoundMessageVisible = true;
-    //   }
-    // }, 5000);
     console.log("summary view created executed");
     let address = this.$route.query.address;
     this.$root.$on("web3Injected", async () => {
