@@ -73,18 +73,13 @@ export class IdentityApprover {
     return true;
   }
 
-  async loadIPFSMetadata(ipfsInstance) {
+  async loadIPFSMetadata() {
     var ipfsData = null;
     ipfsData = await getJSONFromIpfs(this.ipfsHash);
     if (ipfsData == null) {
       return false;
     }
     console.log(ipfsData);
-    // for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-    //   timeout: 2000,
-    // })) {
-    //   ipfsData = Buffer(chunk, "utf8").toString();
-    // }
     const metadata = ipfsData;
     this.title = metadata.approver.title;
     this.website.url = metadata.approver.website;
@@ -121,7 +116,7 @@ export class IdentityApprover {
   //       if (hashRetrieved) {
   //         const loaded = await this.loadIPFSMetadata();
   //         // this.requestTwitterVerification();
-  //         // this.requestUrlVerification();
+  //         // this.requestWebsiteVerification();
   //         console.log("metadata loaded? " + loaded);
   //         if (!loaded) {
   //           changed = false;
@@ -147,7 +142,7 @@ export class IdentityApprover {
     }
   }
 
-  async requestUrlVerification() {
+  async requestWebsiteVerification() {
     this.website.verification = await requestWebsiteVerification(
       this.website.url
     );
@@ -180,6 +175,7 @@ export function getHandle(url) {
 }
 
 export async function requestTwitterVerification(handle) {
+  console.log("request twitter verification");
   console.log(handle);
   const VERIFIER_URL = process.env.VUE_APP_TRUST_CERTIFICATES_API_URL;
   const VERIFIER_PORT = process.env.VUE_APP_TRUST_CERTIFICATES_API_PORT;

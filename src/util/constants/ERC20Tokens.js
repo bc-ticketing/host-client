@@ -13,3 +13,12 @@ const erc20TokenMap = {ETH: ETH, DAI: DAI, "ERC20 Test Token": ERC20TESTTOKEN};
 export function getCurrencySymbol(tokenAddress) {
   return Object.keys(erc20TokenMap).find(key => erc20TokenMap[key] === tokenAddress);
 }
+
+export function getCurrencyDecimals(tokenAddress) {
+  if (tokenAddress === ERC20TESTTOKEN) {
+    return ERC20TESTTOKEN_DECIMALS;
+  } else if (tokenAddress === DAI) {
+    return DAI_DECIMALS;
+  }
+  return ETH_DECIMALS;
+}

@@ -16,7 +16,7 @@ import {
   removeBuyOrders,
   addSellOrders,
   removeSellOrders,
-  getLowestSellOrder
+  getLowestSellOrder,
 } from "./tickets";
 import axios from "axios";
 import {
@@ -33,15 +33,16 @@ import {
   SellOrderNonFungibleWithdrawn,
   BuyOrderWithdrawn,
   SellOrderFungibleFilled,
-  eventMetadataChanged
+  eventMetadataChanged,
+  getPresaleBlock
 } from "./blockchainEventHandler";
-import { NULL_ADDRESS, STARTING_BLOCK } from "./constants/constants";
+import { NULL_ADDRESS, STARTING_BLOCK, MAX_TICKETS_PER_PERSON } from "./constants/constants";
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
 import { getJSONFromIpfs } from "../util/getIpfs";
 import { getCurrencySymbol } from "./constants/ERC20Tokens";
 
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
 
 export class Event {
   constructor(contractAddress) {
@@ -56,11 +57,15 @@ export class Event {
     this.lastFetchedBlockTickets = STARTING_BLOCK;
     this.lastFetchedBlockAftermarket = STARTING_BLOCK;
     this.contractAddress = contractAddress;
+    this.maxTicketsPerPerson = MAX_TICKETS_PER_PERSON;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
     this.location = "";
     this.title = "";
     this.image = "";
+    this.description = "";
+    this.category = "";
+    this.timestamp = "";
     this.ipfsHash = "";
     this.currency = 0;
     this.currencySymbol = "";
@@ -76,20 +81,16 @@ export class Event {
     }
   }
 
-  // async tryUpdateMetadata(web3Instance, ABI, ipfsInstance) {}
-
   /**
    * Loads the metadata from ipfs for this event.
-   * Only call this method, when there is metadata to be fetched.
+   * Returns false, only if hash or data could not be retrieved from
+   * the blockchain or IPFS respectively.
    * 
-   * @param {*} web3Instance
-   * @param {*} ABI
-   * @param {*} ipfsInstance
+   * @param {*} web3Instance the web3 instance
+   * @param {*} ABI the abi of the event contract
+   * @param {*} currentBlock the current block on the network
    */
   async loadMetadata(web3Instance, ABI, currentBlock) {
-    if (this.loadedMetadata) {
-      return true;
-    }
     try {
       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
       console.log("hashRetrieved? " + hashRetrieved);
@@ -109,8 +110,12 @@ export class Event {
     return false;
   }
 
-    /**
+  /**
    * Fetches the last ipfs hash of the latest metadata change.
+   * 
+   * @param {*} ABI 
+   * @param {*} web3Instance 
+   * @returns whether a new hash was retrieved
    */
   async fetchIPFSHash(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
@@ -119,17 +124,27 @@ export class Event {
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
       fromBlock: this.lastFetchedBlockMetadata + 1
     });
-    console.log(eventMetadata);
 
-    var metadataObject = eventMetadata[0].returnValues;
+    if (eventMetadata.length == 0) {
+      // no update found
+      return true;
+    }
+
+    var metadataObject = eventMetadata[eventMetadata.length - 1].returnValues;
     if (metadataObject == null) {
       return false;
     }
-    this.ipfsHash = argsToCid(
+    let currentHash = argsToCid(
       metadataObject.hashFunction,
       metadataObject.size,
       metadataObject.digest
     );
+
+    if (this.ipfsHash == currentHash) {
+      return false;
+    }
+    
+    this.ipfsHash = currentHash;
     console.log(this.ipfsHash);
     return true;
   }
@@ -175,11 +190,21 @@ export class Event {
     }
   }
 
-  // loading ticket types
-  async loadTickets(web3Instance, ABI, ipfsInstance) {
+  /**
+   * Loads the maximal tickets allowed per person for this event.
+   */
+  async loadMaxTicketsPerPerson(web3Instance, ABI) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    this.maxTicketsPerPerson = await eventSC.methods.maxTicketsPerPerson().call();
+  }
+
+  // Loads all ticket types for this event.
+  async loadTickets(web3Instance, ABI, currentBlock) {
     try {
-      await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
-      await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
+      console.log("loading tickets");
+      await this.loadFungibleTickets(web3Instance, ABI, currentBlock);
+      await this.loadNonFungibleTickets(web3Instance, ABI, currentBlock);
+
     } catch (e) {
       console.log(e);
       return false;
@@ -379,7 +404,7 @@ export class Event {
     this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
   }
 
-  async requestUrlVerification() {
+  async requestWebsiteVerification() {
     this.website.verification = await requestWebsiteVerification(this.website.url);
   }
 
@@ -395,7 +420,11 @@ export class Event {
       : false;
   }
 
-  async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
+  /**
+   * Loads new fungible ticket types of this event and adds them to the list of tickets.
+   */
+  async loadFungibleTickets(web3Instance, ABI, currentBlock) {
+    console.log("loading fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
@@ -405,24 +434,41 @@ export class Event {
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlockTickets + 1,
-          typeIdentifier
+          typeIdentifier.toFixed()
         );
+        console.log(changed);
         if (changed) {
           const exists = this.hasFungibleTicketType(i);
           let ticketType = exists
             ? exists
             : new FungibleTicketType(this.contractAddress, i);
+          const presaleBlock = await getPresaleBlock(eventSC, 1, typeIdentifier.toFixed());
+          ticketType.hasPresale = presaleBlock != 0;
+          if (ticketType.hasPresale) {
+            ticketType.presaleBlock = presaleBlock;
+            ticketType.presalePassed = new BigNumber(ticketType.presaleBlock).comparedTo(currentBlock) < 1;
+          }
           const ticketMapping = await eventSC.methods
-            .ticketTypeMeta(typeIdentifier)
+            .ticketTypeMeta(typeIdentifier.toFixed())
             .call();
+          console.log(ticketMapping);
+          const lottery = await eventSC.methods
+            .lotteries(typeIdentifier.toFixed())
+            .call();
+          console.log("lottery")
+          console.log(lottery.block);
+          if (lottery.block != 0) {
+            ticketType.hasPresale = true;
+          }
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
           ticketType.supply = Number(ticketMapping.supply);
+          ticketType.finalizationTime = Number(ticketMapping.finalizationTime);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
           if (hashRetrieved) {
-            await loadIPFSMetadata(ticketType, ipfsInstance);
+            await loadIPFSMetadata(ticketType);
             //await loadSellOrders(ticketType, web3Instance, ABI);
             //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
@@ -434,17 +480,23 @@ export class Event {
     }
   }
 
-  async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
+  /**
+   * Loads new non-fungible ticket types of this event and adds them to the list of tickets.
+   */
+  async loadNonFungibleTickets(web3Instance, ABI, currentBlock) {
+    console.log("loading non-fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
+        console.log(nonce);
         const typeIdentifier = getIdAsBigNumber(false, i);
+        console.log(typeIdentifier);
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlockTickets + 1,
-          typeIdentifier
+          typeIdentifier.toFixed()
         );
         if (changed) {
           const exists = this.hasNonFungibleTicketType(i);
@@ -457,6 +509,7 @@ export class Event {
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = ticketMapping.ticketsSold;
           ticketType.supply = ticketMapping.supply;
+          ticketType.finalizationTime = Number(ticketMapping.finalizationTime);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           for (let j = 1; j <= ticketType.supply; j++) {
@@ -473,7 +526,7 @@ export class Event {
           }
           const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
           if (hashRetrieved) {
-            await loadIPFSMetadata(ticketType, ipfsInstance);
+            await loadIPFSMetadata(ticketType);
             //await loadSellOrders(ticketType, web3Instance, ABI);
             //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
@@ -511,6 +564,7 @@ export class Event {
   }
 
   async loadOwnerShipChanges(web3Instance, ABI) {
+    console.log("loading ownership changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintNonFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
@@ -527,10 +581,10 @@ export class Event {
   }
 
   async loadTicketsSoldChanges(web3Instance, ABI) {
+    console.log("loading tickets sold changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
-      //const owner = event.returnValues.owner;
       const ticketType = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)
@@ -588,6 +642,7 @@ export class Event {
   }
 
   async loadAftermarketChanges(web3Instance, ABI) {
+    console.log("loading aftermarket changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
 
     const buyOrdersPlaced = await BuyOrderPlaced(

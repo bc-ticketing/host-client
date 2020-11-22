@@ -2,16 +2,14 @@
 <template>
   <div class="event-card-container">
     <div class="event-card-router-container">
-      <md-card md-with-hover>
+      <md-card class="event-card" md-with-hover>
         <div md-with-hover @click="openSummary()">
           <md-card-header>
             <div v-if="title" class="md-title event-card-title">
               {{ title }}
             </div>
             <div v-if="!title">
-              <h4>
-                Sadly there could no title be found for this event...
-              </h4>
+              <h4>Sadly there could no title be found for this event...</h4>
             </div>
             <div v-if="date" class="event-card-date">{{ date }}</div>
             <div v-if="location" class="md-subhead">{{ location }}</div>
@@ -25,7 +23,8 @@
                 <b>Currency: </b>{{ currency }}
               </div>
               <div v-if="website" class="content-entry">
-                <b>Website: </b>{{ website.url }}
+                <b>Website: </b
+                >{{ website.url ? website.url : "None provided" }}
                 <span class="danger"
                   ><md-icon class="danger" v-if="website.verification == false"
                     >warning</md-icon
@@ -38,7 +37,8 @@
                 >
               </div>
               <div v-if="twitter" class="content-entry">
-                <b>Twitter: </b>{{ twitter.url }}
+                <b>Twitter: </b
+                >{{ twitter.url ? twitter.url : "None provided" }}
                 <span class="danger"
                   ><md-icon class="danger" v-if="twitter.verification == false"
                     >warning</md-icon
@@ -50,67 +50,79 @@
                   ></span
                 >
               </div>
+              <div v-if="maxTicketsPerPerson" class="content-entry">
+                <b>Maximum allowed tickets per person: </b
+                >{{ maxTicketsPerPerson }}
+              </div>
               <div v-if="description" class="content-entry">
                 <b>Description: </b>{{ description }}
               </div>
             </div>
             <div class="image-content-wrapper">
-              <div v-if="image" class="content-entry-image">
-                <img class="image-content" :src="image" />
-              </div>
+              <img v-if="image" class="image-content" :src="image" />
             </div>
           </md-card-content>
         </div>
-        <md-button
-          v-if="inModificationView"
-          class="md-primary"
-          @click="enterEditMode()"
-          >Edit</md-button
-        >
-        <!-- <md-button
-          v-if="inListView"
-          class="md-primary"
-          @click="openNewTicketView()"
-          >Create ticket</md-button
-        > -->
-        <!-- </md-card-actions> -->
-        <!-- </md-ripple> -->
+        <div class="button-container">
+          <md-button
+            v-if="inModificationView"
+            class="md-primary"
+            @click="showEditDialog = true"
+            >Edit event</md-button
+          >
+        </div>
+
+        <md-dialog :md-active.sync="showEditDialog">
+          <md-dialog-title>What do you want to change?</md-dialog-title>
+          <md-button class="md-primary" @click="editMetadata()"
+            >Metadata</md-button
+          >
+          <md-button class="md-primary" @click="editMaxTicketsPerPerson()"
+            >Maximum tickets per person</md-button
+          >
+          <md-button class="md-accent" @click="editMetadata()"
+            >Cancel</md-button
+          >
+        </md-dialog>
       </md-card>
     </div>
   </div>
 </template>
 
 <script>
-import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
+import {
+  WEEKDAYS,
+  MONTHS,
+  MAX_TICKETS_PER_PERSON,
+} from "../util/constants/constants.js";
 import { getCurrencySymbol } from "../util/constants/ERC20Tokens.js";
 
 export default {
   name: "EventCard",
-  data: () => ({}),
+  data: () => ({
+    showEditDialog: false,
+  }),
   props: {
     event: Object,
     inListView: Boolean,
     inModificationView: Boolean,
-    inStatsView: Boolean
+    inSummaryView: Boolean,
   },
   methods: {
-    openNewTicketView: function() {
-      this.$router.push({
-        path: `new-ticket`,
-        query: { address: this.event.contractAddress }
-      });
-    },
-    openSummary: function() {
+    openSummary: function () {
       if (this.inListView) {
         this.$router.push({
           path: `summary`,
-          query: { address: this.event.contractAddress }
+          query: { address: this.event.contractAddress },
         });
       }
     },
-    enterEditMode: function() {
-      this.$emit("setEditMode", true);
-    }
+    editMetadata: function () {
+      this.$emit("editMetadata");
+    },
+    editMaxTicketsPerPerson: function () {
+      this.$emit("editMaxTicketsPerPerson");
+    },
   },
   computed: {
     title() {
@@ -126,6 +138,11 @@ export default {
       return this.event.currencySymbol
         ? this.event.currencySymbol
         : this.event.currency;
+    },
+    maxTicketsPerPerson() {
+      return this.event.maxTicketsPerPerson
+        ? this.event.maxTicketsPerPerson
+        : MAX_TICKETS_PER_PERSON;
     },
     date() {
       if (this.event.timestamp) {
@@ -155,30 +172,23 @@ export default {
     },
     image() {
       return this.event.image ? this.event.image : "no image found";
-    }
+    },
   },
   created() {
     console.log("eventcard created executed");
-    console.log(this.event);
-  }
+  },
 };
 </script>
 
 <style>
 .event-card-container {
-  padding-bottom: 10px;
+  margin-bottom: 10px;
 }
 .content-entry {
   display: block;
 }
-.image-content {
-  position: relative;
-  padding: 16px;
-  bottom: 10px;
-  overflow: hidden;
-}
 .md-card-content.card-content {
-  padding-bottom: 0;
+  padding-bottom: 16px;
 }
 .card-content {
   display: flex;
@@ -186,9 +196,15 @@ export default {
 .text-content {
   min-width: 50%;
 }
-/* .image-content-wrapper {
+.image-content {
   position: absolute;
-  right: 20px;
-  top: 20px;
-} */
+  top: 0;
+  right: 0;
+  max-width: 100%;
+  max-height: 100%;
+  z-index: -1;
+}
+.image-content-wrapper {
+  height: 100%;
+}
 </style>

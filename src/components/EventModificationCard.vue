@@ -4,21 +4,31 @@
   <div class="event-modification-card-container">
     <div class="event-card-container">
       <EventCard
-        @setEditMode="setEditMode"
-        v-if="!editMode"
+        @editMetadata="setMode('metadata')"
+        @editMaxTicketsPerPerson="setMode('maxTicketsPerPerson')"
+        v-if="mode == 'card'"
         v-bind:event="event"
         v-bind:inListView="false"
         v-bind:inModificationView="true"
-        v-bind:inStatsView="false"
+        v-bind:inSummaryView="false"
       ></EventCard>
+    </div>
+    <div class="event-card-container">
+      <EventMaxTicketsPerPersonForm
+        @finishEditing="setMode('card')"
+        v-if="mode == 'maxTicketsPerPerson'"
+        v-bind:event="event"
+        @updatedEventMaxTickets="updateEvent"
+      ></EventMaxTicketsPerPersonForm>
     </div>
     <div class="event-form-container">
       <EventForm
-        @setEditMode="setEditMode"
-        v-if="editMode"
+        @finishEditing="setMode('card')"
+        v-if="mode == 'metadata'"
         v-bind:event="event"
         v-bind:inNewMode="false"
         v-bind:inEditMode="true"
+        @updatedEventMetadata="updateEvent"
       />
     </div>
   </div>
@@ -27,22 +37,34 @@
 <script>
 import EventCard from "../components/EventCard";
 import EventForm from "../components/EventForm";
+import EventMaxTicketsPerPersonForm from "../components/EventMaxTicketsPerPersonForm";
 
 export default {
   name: "EventModificationCard",
   components: {
     EventCard,
-    EventForm
+    EventForm,
+    EventMaxTicketsPerPersonForm,
   },
   data: () => ({
-    editMode: false
+    mode: "card",
+    editMode: false,
+    changingMaxTickets: false,
   }),
   props: { event: Object },
   methods: {
-    setEditMode(mode) {
-      this.editMode = mode;
-    }
-  }
+    setMode(mode) {
+      this.mode = mode;
+      if (this.mode != "card") {
+        this.$emit("enterEdit");
+      } else {
+        this.$emit("leaveEdit");
+      }
+    },
+    updateEvent() {
+      this.$emit("updatedEvent");
+    },
+  },
 };
 </script>
 

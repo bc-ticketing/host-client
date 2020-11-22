@@ -3,6 +3,12 @@
   <div class="app-container">
     <Navigation />
     <md-content class="container">
+      <div class="welcome-message-container">
+        <h2 v-if="welcome">Welcome to the Idetix Event-Host App</h2>
+      </div>
+      <div class="welcome-message-container">
+        <h3 v-if="!anyEvent">No events found for your active account.</h3>
+      </div>
       <router-view />
     </md-content>
   </div>
@@ -25,56 +31,51 @@ Vue.use(VueMaterial);
 export default {
   name: "IdetixHost",
   components: {
-    Navigation
+    Navigation,
   },
+  data: () => ({
+    welcome: true,
+    anyEvent: true,
+  }),
   methods: {
-    loadEvents: async function() {
+    loadEvents: async function () {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
+      this.welcome = false;
     },
-    loadApprovers: async function() {
+    loadApprovers: async function () {
       await this.$store.dispatch("loadApprovers");
       this.$root.$emit("loadedApprovers");
     },
-    updateEventsMetadata: async function() {
-      await this.$store.dispatch("updateMetadataOfExistingEvents");
-      this.$root.$emit("updatedMetadataOfExistingEvents");
-    },
-    loadEventsAndApproversInterval: function() {
+    loadApproversInterval: function () {
       setInterval(async () => {
-        console.log("loadEventsAndApprovers - loadEvents");
-        await this.loadEvents();
-        // console.log("loadEventsAndApprovers - loadApprovers");
-        // await this.loadApprovers();
-      }, 20000);
+        console.log("loading approvers");
+        await this.loadApprovers();
+      }, 30000);
     },
-    updateEventsMetadataInterval: async function() {
-      setInterval(async () => {
-        console.log("updateEventsMetadata");
-        await this.updateEventsMetadata();
-      }, 40000);
-    }
+    anyEventPresent: function () {
+      if (this.$store.state.events.length > 0) {
+        this.anyEvent = true;
+      } else {
+        this.anyEvent = false;
+      }
+    },
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
-      console.log("eventfactory created started");
       await this.loadEvents();
       await this.loadApprovers();
-      this.loadEventsAndApproversInterval();
-      // this.updateEventsMetadataInterval();
-      console.log("eventfactory created ended");
+      this.loadApproversInterval();
     });
-    console.log("dispatching addNullAddressApproverToStore");
     await this.$store.dispatch("addNullAddressApproverToStore");
     this.$root.$emit("addedNullAddressApproverToStore");
-    // await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
     await this.$store.dispatch("createIdentity");
     this.$root.$emit("identityContractCreated");
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
-  }
+  },
 };
 </script>
 
@@ -88,6 +89,14 @@ export default {
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(#000, 0.12);
+}
+.welcome-message-container {
+  margin: auto;
+  text-align: center;
+}
+.loading-message-container {
+  margin: auto;
+  text-align: center;
 }
 .md-content {
   padding: 16px;

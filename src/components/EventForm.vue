@@ -132,7 +132,7 @@
           </div>
 
           <div class="md-layout md-gutter" v-if="inNewMode">
-            <div class="md-layout-item md-small-size-100" style="display:flex">
+            <div class="md-layout-item md-small-size-100" style="display: flex">
               <!-- <md-field
                 :class="getValidationClass('idApprover')"
                 style="margin-right: 24px"
@@ -167,7 +167,7 @@
                   >
                 </p>
               </md-field>
-              <md-field style="max-width:250px">
+              <md-field style="max-width: 250px">
                 <label for="idLevel">Identification level</label>
                 <md-select
                   id="idLevel"
@@ -474,7 +474,13 @@
       </p>
     </div> -->
 
-    <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
+    <div v-if="showStatusMessage" class="status-message">
+      <md-progress-bar :md-mode="processBarMode"></md-progress-bar>
+      <p class="process-message">
+        {{ processMessage }}
+      </p>
+    </div>
+    <!-- <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
       <p class="process-message">
         Please wait - The Event metadata is uploaded to IPFS.
@@ -483,9 +489,7 @@
 
     <div v-if="waitingForSignature" class="awaiting-signature-message">
       <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">
-        Please sign the transaction to deploy this event contract.
-      </p>
+      <p class="process-message">Please sign the transaction.</p>
     </div>
     <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
       <md-progress-bar md-mode="indeterminate"></md-progress-bar>
@@ -507,7 +511,7 @@
     </div>
     <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
       <p class="process-message">Something went wrong...</p>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -520,7 +524,7 @@ import {
   email,
   url,
   minLength,
-  maxLength
+  maxLength,
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
@@ -534,15 +538,31 @@ const pinata = pinataSDK(
 
 // project internal imports
 import {
-  AVERAGE_BLOCKTIME,
-  AVERAGE_BLOCKTIME_LOCAL,
   NETWORKS,
-  NULL_ADDRESS
-} from "../util/constants/constants.js";
+  NULL_ADDRESS,
+  PROCESSING,
+  WAITING_FOR_SIGNATURE,
+  UPLOADING_TO_IPFS,
+  UPLOADED_TO_IPFS,
+  TRANSACTION_DENIED,
+  DEFAULT_ERROR,
+  PROGRESS_DETERMINATE,
+  PROGRESS_INDETERMINATE,
+  TICKETS_CREATING,
+  TICKETS_CREATED,
+  TICKETS_CREATED_PRESALE,
+  TICKETS_CREATED_ALL,
+  AVERAGE_TIME_PER_BLOCK,
+  AVERAGE_TIME_PER_BLOCK_LOCAL,
+  EVENT_DEPLOYED,
+  EVENT_DEPLOYING,
+  EVENT_METADATA_CHANGE,
+  EVENT_METADATA_CHANGE_SUCCESSFUL,
+} from "../util/constants/constants";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
-  EVENT_FACTORY_ADDRESS
+  EVENT_FACTORY_ADDRESS,
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
@@ -558,21 +578,25 @@ export default {
   props: {
     event: Object,
     inEditMode: Boolean,
-    inNewMode: Boolean
+    inNewMode: Boolean,
   },
   data: () => ({
+    sending: false,
+    showStatusMessage: false,
+    processBarMode: PROGRESS_DETERMINATE,
+    processMessage: DEFAULT_ERROR,
+
     uiState: "submit not clicked",
     errors: false,
-    sending: false,
-    waitingForSignature: false,
-    waitingForDeploymentReceipt: false,
-    waitingForMetadataChangeReceipt: false,
+    // waitingForSignature: false,
+    // waitingForDeploymentReceipt: false,
+    // waitingForMetadataChangeReceipt: false,
     deployingContractState: false,
     invokingMetadataChangeState: false,
-    uploadingToIpfs: false,
-    showSuccessfulDeploymentMessage: false,
-    showSuccessfulMetadataChangeMessage: false,
-    showErrorMessage: false,
+    // uploadingToIpfs: false,
+    // showSuccessfulDeploymentMessage: false,
+    // showSuccessfulMetadataChangeMessage: false,
+    // showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
@@ -596,69 +620,69 @@ export default {
       erc20Token: ERC20TESTTOKEN,
       startTime: {
         HH: "18",
-        mm: "00"
+        mm: "00",
       },
       website: "",
       twitter: "",
       idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
       selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
-      granularity: 2
+      granularity: 2,
     },
     noApprover: {
       title: "No approver",
-      approverAddress: NULL_ADDRESS
+      approverAddress: NULL_ADDRESS,
     },
     zeroApproverLevel: {
       level: 0,
-      value: "No identity approval required"
+      value: "No identity approval required",
     },
     approverLevels: [{ level: 0, value: "No identity approval required" }],
     useERC20Token: false,
     erc20Tokens: {
       testToken: ERC20TESTTOKEN,
-      dai: DAI
+      dai: DAI,
     },
     imageData: "",
-    disabledDates: date => {
+    disabledDates: (date) => {
       const day = date.getDay();
       return day >= 0;
     },
-    dateUponSending: null
+    dateUponSending: null,
   }),
   validations: {
     form: {
       title: {
-        required
+        required,
       },
       location: {
-        required
+        required,
       },
       date: {
-        required
+        required,
       },
       eventDescription: {
-        required
+        required,
       },
       erc20Token: {
-        required
+        required,
       },
       selectedApproverLevel: {
-        required
+        required,
       },
       idApprover: {
-        required
+        required,
       },
       granularity: {
-        required
+        required,
       },
       website: {
-        url
+        url,
       },
       twitter: {
-        url
-      }
-    }
+        url,
+      },
+    },
   },
   computed: {
     web3() {
@@ -666,9 +690,6 @@ export default {
     },
     eventFactory() {
       return this.$store.state.eventFactory;
-    },
-    ipfsInstance() {
-      return this.$store.state.ipfsInstance;
     },
     dateSeconds() {
       return Number(Date.parse(this.form.date) / 1000);
@@ -685,7 +706,8 @@ export default {
     },
     getApproverLevel() {
       return this.approverLevels.find(
-        approverLevel => approverLevel.level === this.form.selectedApproverLevel
+        (approverLevel) =>
+          approverLevel.level === this.form.selectedApproverLevel
       );
     },
     selectedApprover() {
@@ -695,17 +717,17 @@ export default {
     },
     approverRegistered() {
       return this.form.selectedApproverAddress != NULL_ADDRESS;
-    }
+    },
   },
   watch: {
-    showErrorMessage: function(val) {
+    showErrorMessage: function (val) {
       setTimeout(() => {
         this.showErrorMessage = false;
       }, 3000);
     },
-    sending: function(val) {
+    sending: function (val) {
       this.dateUponSending = this.form.date;
-    }
+    },
   },
   async created() {
     const pinataAuth = await pinata.testAuthentication();
@@ -716,6 +738,26 @@ export default {
     }
   },
   methods: {
+    showStatus(processBarMode, message) {
+      this.processBarMode = processBarMode;
+      this.processMessage = message;
+      this.showStatusMessage = true;
+    },
+    showErrorMessage() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
+    },
+    hideStatus() {
+      this.showStatusMessage = false;
+    },
+    showErrorStatus() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
+    },
     getDateAfterMonths(n) {
       let d = new Date();
       d.setMonth(d.getMonth() + n);
@@ -730,23 +772,17 @@ export default {
       this.form.website = this.event.website.url;
       this.form.twitter = this.event.twitter.url;
       this.form.image = this.event.image;
-
-      // time: this.startTimeUnix,
-      // image: this.imageData
     },
-    leaveEditMode: function() {
-      this.$emit("setEditMode", false);
+    leaveEditMode: function () {
+      this.$emit("finishEditing");
     },
     getValidationClass(fieldName) {
-      // return {
-      //   "md-invalid": false
-      // };
       const field = this.$v.form[fieldName];
       if (field) {
         if (this.errors) {
           return {
             "md-invalid": field.$invalid,
-            "md-required": field.$required
+            "md-required": field.$required,
           };
         }
       }
@@ -766,6 +802,7 @@ export default {
       }
       this.uiState = "form submitted";
       this.sending = true;
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       await this.uploadToIpfs();
       await this.deployEventContract();
       this.sending = false;
@@ -773,16 +810,15 @@ export default {
     async modifyEvent() {
       // todo: add checks to compare to current ipfs hash
       this.sending = true;
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       await this.uploadToIpfs();
       await this.invokeMetadataChange();
       this.sending = false;
     },
     async uploadToIpfs() {
       this.ipfsString = this.createIpfsString();
-      this.uploadingToIpfs = true;
       const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
       this.IpfsHash = result.IpfsHash;
-      this.uploadingToIpfs = false;
       console.log(this.IpfsHash);
       console.log(this.ipfsString);
     },
@@ -799,8 +835,8 @@ export default {
           duration: "",
           website: this.form.website,
           twitter: this.form.twitter,
-          image: this.imageData
-        }
+          image: this.imageData,
+        },
       });
     },
     validateForm() {
@@ -815,14 +851,13 @@ export default {
         this.event.contractAddress
       );
       this.invokingMetadataChangeState = true;
-      this.waitingForSignature = true;
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       const updateMetadata = await eventContract.methods
         .updateEventMetadata(args.hashFunction, args.size, args.digest)
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
-            this.waitingForMetadataChangeReceipt = true;
+            this.showStatus(PROGRESS_INDETERMINATE, EVENT_METADATA_CHANGE);
             if (transactionHash) {
               console.log(
                 "submitted metadata change invocation: ",
@@ -834,27 +869,32 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               await sleep(5000);
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForMetadataChangeReceipt = false;
               this.invokingMetadataChangeState = false;
-              this.showSuccessfulMetadataChangeMessage = true;
+              this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
+              await this.$store.dispatch(
+                "loadMetadataUpdatesOfEvent",
+                this.$route.query.address
+              );
+              this.$emit("updatedEventMetadata");
             }
-            await this.$store.dispatch("loadEvents");
+            this.showStatus(
+              PROGRESS_DETERMINATE,
+              EVENT_METADATA_CHANGE_SUCCESSFUL
+            );
             await sleep(2000);
+            this.hideStatus();
             this.leaveEditMode();
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForMetadataChangeReceipt = false;
           this.invokingMetadataChangeState = false;
-          this.showSuccessfulMetadataChangeMessage = false;
-          this.showErrorMessage = true;
+          this.showErrorMessage();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
@@ -869,8 +909,7 @@ export default {
       console.log(this.form.selectedApproverLevel);
       console.log(this.usedToken);
       console.log(this.form.granularity);
-      this.deployingContractState = true;
-      this.waitingForSignature = true;
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       const createEvent = await this.eventFactory.methods
         .createEvent(
           args.hashFunction,
@@ -884,8 +923,7 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForSignature = false;
-            this.waitingForDeploymentReceipt = true;
+            this.showStatus(PROGRESS_INDETERMINATE, EVENT_DEPLOYING);
             if (transactionHash) {
               console.log(
                 "submitted event contract deployment invocation: ",
@@ -897,33 +935,29 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.waitingForDeploymentReceipt = false;
-              this.showSuccessfulDeploymentMessage = true;
+              this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
+              await this.$store.dispatch("loadEvents");
+              this.showStatus(PROGRESS_DETERMINATE, EVENT_DEPLOYED);
+              await sleep(2000);
+              this.hideStatus();
             }
-            await this.$store.dispatch("loadEvents");
             this.$router.push({
-              path: `/`
+              path: `/`,
             });
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForDeploymentReceipt = false;
           this.deployingContractState = false;
-          this.showSuccessfulDeploymentMessage = false;
-          this.showErrorMessage = true;
+          this.showErrorMessage();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
         });
-
-      const eventAddresses = await this.eventFactory.methods.getEvents().call();
-      console.log(eventAddresses);
     },
     readImageFile(event) {
       // Reference to the DOM input element
@@ -933,7 +967,7 @@ export default {
         // create a new FileReader to read this image and convert to base64 format
         var reader = new FileReader();
         // Define a callback function to run, when FileReader finishes its job
-        reader.onload = e => {
+        reader.onload = (e) => {
           // Note: arrow function used here, so that "this.imageData" refers to the imageData of Vue component
           // Read image as base64 and set to imageData
           this.imageData = e.target.result;
@@ -959,7 +993,7 @@ export default {
         this.approverLevels.push(this.zeroApproverLevel);
         this.form.selectedApproverLevel = 0;
       }
-    }
+    },
     // Called on change in approver field
     // chaeckIfApproverRegistered() {
     //   this.approverLevels = [this.zeroApproverLevel];
@@ -982,11 +1016,14 @@ export default {
     //   this.approverRegistered = false;
     //   return false;
     // }
-  }
+  },
 };
 </script>
 
 <style>
+.create-event-form-container {
+  padding-bottom: 20px;
+}
 .location-container {
   justify-content: center;
   display: flex;

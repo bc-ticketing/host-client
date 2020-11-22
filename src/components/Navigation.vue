@@ -20,7 +20,7 @@
           </div>
           <div class="account-info-refresh-container">
             <md-icon>account_balance</md-icon>
-            <md-button class="md-icon-button" @click="reloadWeb3AndEvents()">
+            <md-button class="md-icon-button" @click="reloadWeb3AndApprovers()">
               <md-icon>refresh</md-icon>
             </md-button>
           </div>
@@ -70,7 +70,7 @@ export default {
   name: "Navigation",
   data() {
     return {
-      showSidebar: false
+      showSidebar: false,
     };
   },
   methods: {
@@ -81,11 +81,20 @@ export default {
       this.$router.push(route);
       this.showSidebar = false;
     },
-    reloadWeb3AndEvents() {
-      this.$root.$on("updatedWeb3", async () => {
-        this.reloadEvents();
-      });
-      this.reloadWeb3();
+    /**
+     * Reloads web3 instance and registered approvers.
+     * If the active account was changed, the events are cleared
+     * and loaded for the now active account.
+     */
+    async reloadWeb3AndApprovers() {
+      const currentAccount = this.$store.state.web3.account;
+      await this.reloadWeb3();
+      if (this.accountAddress !== currentAccount) {
+        console.log("account changed - clearing old and loading new events");
+        await this.$store.dispatch("clearEvents");
+        await this.$store.dispatch("loadEvents");
+      }
+      await this.loadApprovers();
     },
     async reloadWeb3() {
       await this.$store.dispatch("updateWeb3");
@@ -93,6 +102,9 @@ export default {
     },
     async reloadEvents() {
       await this.$store.dispatch("loadEvents");
+    },
+    async loadApprovers() {
+      await this.$store.dispatch("loadApprovers");
     },
     prettyAddress(address) {
       const start = address.substring(0, 4);
@@ -109,7 +121,7 @@ export default {
       } else {
         return balance;
       }
-    }
+    },
   },
   computed: {
     web3() {
@@ -125,8 +137,8 @@ export default {
       return this.web3.balance
         ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
         : "";
-    }
-  }
+    },
+  },
 };
 </script>
 

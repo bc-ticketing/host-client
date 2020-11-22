@@ -1,17 +1,12 @@
-/* 
+/*
  * This file contains data classes for all ticket types and utility functions for state alterations. All functions that interact with the blockchain for buying/selling tickets are contained here as well as helper functions to get infos from ticket objects
  */
 import { argsToCid, getIdAsBigNumber } from "idetix-utils";
 import {
     NULL_ADDRESS,
     TRANSACTION_DENIED,
-    TICKET_BOUGHT,
     DEFAULT_ERROR,
-    MAX_TICKETS_ALLOWED,
-    SELLORDER_PLACED,
-    SELLORDER_WITHDRAWN
 } from "./constants/constants";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "./../util/abi/EventMintableAftermarketPresale";
 import { getJSONFromIpfs } from "../util/getIpfs"
 
 const BigNumber = require("bignumber.js");
@@ -131,7 +126,7 @@ export function getHighestBuyOrder(ticket) {
 }
 
 /**
- * Checks for the lowst available sell order for a ticketType or NF Ticket
+ * Checks for the lowest available sell order for a ticketType or NF Ticket
  * @param {FungibleTicketType} ticket
  * @returns lowestSellOrder or 0 if none
  */
@@ -151,11 +146,6 @@ function decodeError(e) {
         message: TRANSACTION_DENIED,
         status: -1
         };
-    } else if (e.code === -32603) {
-        return {
-            message: MAX_TICKETS_ALLOWED,
-            status: -1
-        };
     }
     return {
         message: DEFAULT_ERROR,
@@ -163,13 +153,11 @@ function decodeError(e) {
     };
 }
 
-/*
 /**
  * loads Metadata stored on IPFS for a ticketType
  * @param {TicketType} ticket
- * @param {ipfsInstance} ipfsInstance
  */
-export async function loadIPFSMetadata(ticket, ipfsInstance) {
+export async function loadIPFSMetadata(ticket) {
     if (ticket.ipfsHash === "") {
         return;
     }
@@ -179,12 +167,7 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
         console.log("ipfs data null for hash: " + this.ipfsHash);
         return;
     }
-    console.log(ipfsData)
-    // for await (const chunk of ipfsInstance.cat(ticket.ipfsHash, {
-    //     timeout: 2000
-    // })) {
-    //     ipfsData = Buffer(chunk, "utf8").toString();
-    // }
+    console.log(ipfsData);
     const metadata = ipfsData;
     ticket.description = metadata.ticket.description;
     ticket.seatMapping = metadata.ticket.mapping;
@@ -217,9 +200,10 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
         fromBlock: 1
     });
     if (ticketMetadata.length < 1) {
-        return;
+        return true; // no new metadata
     }
-    var metadataObject = ticketMetadata[0].returnValues;
+    // get latest TicketMetadata event and its hash.
+    var metadataObject = ticketMetadata[ticketMetadata.length - 1].returnValues;
     const ipfsHash = argsToCid(
         metadataObject.hashFunction,
         metadataObject.size,
@@ -359,9 +343,9 @@ export class FungibleTicketType {
     constructor(eventContractAddress, typeId) {
         this.eventContractAddress = eventContractAddress;
         this.typeId = typeId;
+        this.isNf = false;
         this.price = 0;
         this.supply = 0;
-        this.ticketsSold = 0;
         this.aftermarketGranularity = 0;
         this.title = "";
         this.description = "";
@@ -370,8 +354,14 @@ export class FungibleTicketType {
         this.sellOrders = [];
         this.buyOrders = [];
         this.seatMapping = [];
-        this.isNf = false;
         this.seatColor = "";
+        this.ticketsSold = 0;
+        this.finalizationTime = BigNumber(0);
+        this.hasPresale = false;
+        this.presaleBlock = 0;
+        this.presalePassed = false;
+        this.lotteryNeeded = false; // false, if less tickets were bought than supply
+        this.luckyNumber = 0;
     }
 }
 /**
@@ -394,6 +384,12 @@ export class NonFungibleTicketType {
         this.tickets = [];
         this.isNf = true;
         this.seatColor = "";
+        this.finalizationTime = BigNumber(0);
+        this.hasPresale = false;
+        this.presaleBlock = 0;
+        this.presalePassed = false;
+        this.lotteryNeeded = false; // false, if less tickets were bought than supply
+        this.luckyNumber = 0;
     }
 }
 

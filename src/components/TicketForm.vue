@@ -232,17 +232,34 @@
             v-on:savetickettype="saveTicketType"
             v-on:updateamountofselected="updateAmountOfSelected"
           ></SeatingPlan>
+          <div v-for="ticketType in allSavedTypes" :key="ticketType.title">
+            <TicketDetails
+              v-bind:created="false"
+              v-bind:event="event"
+              v-bind:ticketType="ticketType"
+            >
+              {{ ticketType.title }}
+            </TicketDetails>
+            <!-- <TicketType v-bind:ticket="ticketType"></TicketType> -->
+          </div>
         </md-card-content>
 
         <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="createTypes"
+          <md-button class="md-accent" v-if="!sending" @click="cancel"
+            >Cancel</md-button
+          >
+          <md-button
+            v-if="anySavedType && !sending"
+            type="submit"
+            class="md-primary"
+            @click="createTypes"
             >Create tickets</md-button
           >
         </md-card-actions>
       </md-card>
     </form>
     <div v-if="showStatusMessage" class="status-message">
-      <md-progress-bar :md-mode="progressBarMode"></md-progress-bar>
+      <md-progress-bar :md-mode="processBarMode"></md-progress-bar>
       <p class="process-message">
         {{ processMessage }}
       </p>
@@ -257,14 +274,15 @@ import {
   required,
   email,
   minLength,
-  maxLength
+  maxLength,
 } from "vuelidate/lib/validators";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
 import sleep from "await-sleep";
 import { getJSONFromIpfs } from "../util/getIpfs";
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
+
 const pinataSDK = require("@pinata/sdk");
 const pinata = pinataSDK(
   process.env.VUE_APP_PINATA_API_KEY,
@@ -275,16 +293,20 @@ const pinata = pinataSDK(
 import {
   NETWORKS,
   TICKETS_CREATING_PRESALE,
-  WAITING_FOR_SIGNATURE_PRESALE
+  TICKETS_WAITING_FOR_SIGNATURE,
+  WAITING_FOR_SIGNATURE_PRESALE,
 } from "../util/constants/constants.js";
 import {
   EVENT_FACTORY_ABI,
-  EVENT_FACTORY_ADDRESS
+  EVENT_FACTORY_ADDRESS,
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ERC20_ABI } from "../util/abi/ERC20";
 import SeatingPlan from "../components/SeatingPlan";
+// import TicketType from "../components/TicketType";
+import TicketDetails from "../components/TicketDetails";
 import {
+  PROCESSING,
   WAITING_FOR_SIGNATURE,
   UPLOADING_TO_IPFS,
   UPLOADED_TO_IPFS,
@@ -295,8 +317,9 @@ import {
   TICKETS_CREATING,
   TICKETS_CREATED,
   TICKETS_CREATED_PRESALE,
-  AVERAGE_BLOCKTIME,
-  AVERAGE_BLOCKTIME_LOCAL
+  TICKETS_CREATED_ALL,
+  AVERAGE_TIME_PER_BLOCK,
+  AVERAGE_TIME_PER_BLOCK_LOCAL,
 } from "../util/constants/constants";
 import idb from "../util/db/idb";
 import getDecimals from "../util/utility.js";
@@ -306,12 +329,17 @@ export default {
   name: "TicketForm",
   components: {
     SeatingPlan,
-    VueTimepicker
+    VueTimepicker,
+    TicketDetails,
+    // TicketType,
+  },
+  props: {
+    event: Object,
   },
   data: () => ({
     sending: false,
     showStatusMessage: false,
-    progressBarMode: PROGRESS_DETERMINATE,
+    processBarMode: PROGRESS_DETERMINATE,
     processMessage: DEFAULT_ERROR,
 
     contract: null,
@@ -335,54 +363,70 @@ export default {
       price: "2",
       finalizationTime: {
         HH: "10",
-        mm: "00"
+        mm: "00",
       },
       presaleClosingTime: {
         HH: "10",
-        mm: "00"
+        mm: "00",
       },
-      fungibleSupply: 400
+      fungibleSupply: 400,
     },
-    disabledDates: date => {
+    disabledDates: (date) => {
       const day = date.getDay();
       return day >= 0;
     },
     presaleClosingDateUponSending: null,
-    finalizationDateUponSending: null
+    finalizationDateUponSending: null,
   }),
   watch: {
-    sending: function(val) {
+    sending: function (val) {
       this.presaleClosingDateUponSending = this.presaleClosingDate;
       this.finalizationDateUponSending = this.finalizationDate;
-    }
+    },
   },
   methods: {
+    cancel() {
+      this.clearSavedTypes();
+      this.clearForm();
+      this.$emit("cancelTicketCreation");
+    },
     /**
      * Create all saved ticket types
      */
     async createTypes() {
       this.sending = true;
+      let success = true;
       if (this.savedTypes.length > 0) {
-        this.createNonPresaleTypes();
+        success = await this.createNonPresaleTypes();
       }
-      if (this.savedPresaleTypes.length > 0) {
-        this.createPresaleTypes();
+      if (this.savedPresaleTypes.length > 0 && success) {
+        success = await this.createPresaleTypes();
       }
-
-      this.sending = false;
+      if (success) {
+        this.sending = false;
+        this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATED_ALL);
+        setTimeout(async () => {
+          this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
+          await this.$store.dispatch(
+            "loadTicketsOfEvent",
+            this.$route.query.address
+          );
+          this.$emit("createdTickets");
+          this.hideStatus();
+        }, 2000);
+      }
     },
     async createPresaleTypes() {
       this.createIpfsStrings(true); // creating ipfs strings for presale types
-      this.showStatus("indeterminate");
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       let ipfsStatus = await this.uploadToIpfs(true);
       if (!ipfsStatus) {
         this.sending = false;
         this.showErrorMessage();
         return false;
       }
-      let response = await this.invokeCreatePresaleTypes(
-        this.prepareInvocationParametersPresale()
-      );
+      const presaleParams = this.prepareInvocationParametersPresale();
+      let response = await this.invokeCreatePresaleTypes(presaleParams);
       return true;
     },
     async createNonPresaleTypes() {
@@ -394,9 +438,9 @@ export default {
         this.showErrorStatus();
         return false;
       }
-      let response = await this.invokeCreateTypes(
-        this.prepareInvocationParameters()
-      );
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
+      const params = this.prepareInvocationParameters();
+      let response = await this.invokeCreateTypes(params);
       return true;
     },
 
@@ -421,10 +465,10 @@ export default {
           ticket: {
             title: type.title,
             description: type.description,
-            color: type.color,
+            color: type.seatColor,
             event: this.$route.query.address,
-            mapping: map
-          }
+            mapping: map,
+          },
         });
         if (presale) {
           this.presaleTypeIpfsStrings.push(json);
@@ -479,9 +523,9 @@ export default {
         hashFunctions.push(args.hashFunction);
         sizes.push(args.size);
         digests.push(args.digest);
-        isNFs.push(type.isNF);
+        isNFs.push(type.isNf);
         prices.push(type.price);
-        finalizations.push(type.finalization);
+        finalizations.push(type.finalizationTime);
         supplies.push(type.supply);
       }
       let parameterArrays = [];
@@ -511,9 +555,9 @@ export default {
         hashFunctions.push(args.hashFunction);
         sizes.push(args.size);
         digests.push(args.digest);
-        isNFs.push(type.isNF);
+        isNFs.push(type.isNf);
         prices.push(type.price);
-        finalizations.push(type.finalization);
+        finalizations.push(type.finalizationTime);
         supplies.push(type.supply);
         presaleBlocks.push(type.presaleBlock);
       }
@@ -549,7 +593,7 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.waitingForDeploymentReceipt = true;
+            this.showStatus(PROGRESS_INDETERMINATE, TICKETS_CREATING_PRESALE);
             if (transactionHash) {
               console.log(
                 "submitted invocation to create presale tickets: ",
@@ -561,16 +605,15 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATED_PRESALE);
             }
             await this.$store.dispatch("loadEvents");
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           console.log(e);
           this.showErrorMessage();
@@ -591,7 +634,7 @@ export default {
      * Invokes the method `createTypes` on the event contract.
      */
     async invokeCreateTypes(params) {
-      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
+      this.showStatus(PROGRESS_DETERMINATE, TICKETS_WAITING_FOR_SIGNATURE);
       let response = await this.contract.methods
         .createTypes(
           params[0], // hash function
@@ -605,19 +648,22 @@ export default {
         .send(
           { from: this.$store.state.web3.account },
           async (error, transactionHash) => {
-            this.showStatus(PROGRESS_DETERMINATE, TICKETS_CREATING_PRESALE);
+            this.showStatus(PROGRESS_INDETERMINATE, TICKETS_CREATING);
             if (transactionHash) {
               console.log(
                 "submitted invocation to create non-presale tickets: ",
                 transactionHash
               );
+            } else {
+              this.showErrorMessage();
+              return;
             }
             let transactionReceipt = null;
             while (transactionReceipt == null) {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_BLOCKTIME);
+              await sleep(AVERAGE_TIME_PER_BLOCK);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -625,7 +671,7 @@ export default {
             }
           }
         )
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           console.log(e);
           this.showErrorMessage();
@@ -677,13 +723,14 @@ export default {
       let supply = this.getSupply();
       return {
         title: this.form.title,
-        isNF: this.form.isNF,
+        isNf: this.form.isNF,
         supply: supply,
         price: this.fractionPrice,
-        finalization: this.finalizationUnixSeconds,
+        finalizationTime: this.finalizationUnixSeconds,
         description: this.form.description,
         seats: seats,
-        color: color
+        hasPresale: false,
+        seatColor: color,
       };
     },
     async getTypeAsPresale(seats, color) {
@@ -691,37 +738,38 @@ export default {
       let presaleBlock = await this.computePresaleBlock();
       return {
         title: this.form.title,
-        isNF: this.form.isNF,
+        isNf: this.form.isNF,
         supply: supply,
         price: this.fractionPrice,
-        finalization: this.finalizationUnixSeconds,
+        finalizationTime: this.finalizationUnixSeconds,
         description: this.form.description,
         seats: seats,
         presaleBlock: presaleBlock,
-        color: color
+        hasPresale: true,
+        seatColor: color,
       };
     },
 
-    async fetchOccupiedSeats() {
-      let existingCids = await this.fetchIpfsHashesOfExistingTypes();
-      console.log(existingCids);
-      var i;
-      let map = [];
-      for (i = 0; i < existingCids.length; i++) {
-        let ipfsData = await this.downloadFromIpfs(existingCids[i]);
-        let typeJson = JSON.parse(ipfsData);
-        let mapping = typeJson.ticket.mapping;
-        var j;
-        for (j = 0; j < mapping.length; j++) {
-          map.push(mapping[j]);
-        }
-      }
-      console.log(map);
-      this.occupiedSeats = map;
-    },
+    // async fetchOccupiedSeats() {
+    //   let existingCids = await this.fetchIpfsHashesOfExistingTypes();
+    //   console.log(existingCids);
+    //   var i;
+    //   let map = [];
+    //   for (i = 0; i < existingCids.length; i++) {
+    //     let ipfsData = await this.downloadFromIpfs(existingCids[i]);
+    //     let typeJson = JSON.parse(ipfsData);
+    //     let mapping = typeJson.ticket.mapping;
+    //     var j;
+    //     for (j = 0; j < mapping.length; j++) {
+    //       map.push(mapping[j]);
+    //     }
+    //   }
+    //   console.log(map);
+    //   this.occupiedSeats = map;
+    // },
     async fetchIpfsHashesOfExistingTypes() {
       let pastEvents = await this.contract.getPastEvents("TicketMetadata", {
-        fromBlock: 1
+        fromBlock: 1,
       });
       let cids = [];
       var i;
@@ -731,13 +779,24 @@ export default {
       }
       return cids;
     },
+    clearSavedTypes() {
+      this.presaleTypeIpfsHashes = [];
+      this.presaleTypeIpfsStrings = [];
+      this.nonPresaleTypeIpfsHashes = [];
+      this.nonPresaleTypeIpfsStrings = [];
+      this.savedTypes = [];
+      this.savedPresaleTypes = [];
+    },
     clearForm() {
-      // this.$v.$reset();
-      this.form.title = null;
-      this.form.description = null;
-      // this.form.ticketIsNonFungible = null;
-      // this.form.finalization = null;
-      // this.form.ticketInitialSupply = null;
+      this.form.title = "";
+      this.form.description = "";
+      this.form.isNF = false;
+      this.form.price = "";
+      this.form.finalizationTime.HH = "10";
+      this.form.finalizationTime.mm = "00";
+      this.form.presaleClosingTime.HH = "10";
+      this.form.presaleClosingTime.mm = "00";
+      this.form.fungibleSupply = 0;
     },
     createIpfsString(type) {
       return JSON.stringify({
@@ -746,15 +805,9 @@ export default {
           title: type.title,
           description: type.description,
           event: this.$route.query.address,
-          mapping: type.seats
-        }
+          mapping: type.seats,
+        },
       });
-    },
-    async downloadFromIpfs(cid) {
-      console.log("downloading from ipfs...");
-      for await (const chunk of this.ipfsInstance.cat(cid)) {
-        return Buffer(chunk, "utf8").toString();
-      }
     },
     isTicketFormComplete() {
       return true;
@@ -763,13 +816,13 @@ export default {
       var field = this.form.fieldName;
       if (field) {
         return {
-          "md-invalid": false //field.$invalid && field.$dirty,
+          "md-invalid": false, //field.$invalid && field.$dirty,
         };
       }
     },
     routeToEventList() {
       this.$router.push({
-        name: `Events`
+        name: `Events`,
       });
     },
     getDateAfterMonths(n) {
@@ -787,7 +840,9 @@ export default {
       let nowUnixInSeconds = BigNumber(new Date().getTime()).dividedBy(
         BigNumber(1000)
       );
-      let avgBlockTimeInSeconds = BigNumber(AVERAGE_BLOCKTIME).dividedBy(1000);
+      let avgBlockTimeInSeconds = BigNumber(AVERAGE_TIME_PER_BLOCK).dividedBy(
+        1000
+      );
       return this.presaleClosingTimeUnixSeconds
         .minus(nowUnixInSeconds)
         .dividedBy(avgBlockTimeInSeconds)
@@ -816,15 +871,22 @@ export default {
       setTimeout(() => {
         this.hideStatus();
       }, 5000);
-    }
+    },
   },
   computed: {
+    savedTypes() {
+      return this.savedTypes.concat(this.savedPresaleTypes);
+    },
+    anySavedType() {
+      return this.savedTypes.length != 0 || this.savedPresaleTypes.length != 0;
+    },
     currencyDecimalFactor() {
       return Math.pow(10, this.currencyDecimals);
     },
-
     fractionPrice() {
-      return BigNumber(this.form.price * this.currencyDecimalFactor).toFixed();
+      return BigNumber(this.form.price)
+        .multipliedBy(this.currencyDecimalFactor)
+        .toFixed();
     },
     nonFungibleSupply() {
       return this.amountOfSelectedSeats;
@@ -873,12 +935,9 @@ export default {
     web3() {
       return this.$store.state.web3;
     },
-    ipfsInstance() {
-      return this.$store.state.ipfsInstance;
-    },
     allSavedTypes() {
       return this.savedTypes.concat(this.savedPresaleTypes);
-    }
+    },
   },
   async created() {
     console.log("ticket form created executed");
@@ -918,13 +977,13 @@ export default {
     form: {
       title: {
         // required,
-        minLength: minLength(3)
+        minLength: minLength(3),
         // },
         // finalization: {
         //   required
-      }
-    }
-  }
+      },
+    },
+  },
 };
 </script>
 

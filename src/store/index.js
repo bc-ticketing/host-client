@@ -10,7 +10,7 @@ import { IDENTITY_ABI, IDENTITY_ADDRESS } from "../util/abi/Identity";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { IdentityApprover } from "../util/identity";
 import idb from "./../util/db/idb";
-import { NULL_ADDRESS } from "../util/constants/constants";
+import { NULL_ADDRESS, STARTING_BLOCK } from "../util/constants/constants";
 
 Vue.use(Vuex);
 
@@ -20,7 +20,7 @@ export default new Vuex.Store({
 
   // Mutations
   mutations: {
-    updateWeb3(state, web3) {
+    UPDATE_WEB3(state, web3) {
       state.web3.isInjected = web3.injectedWeb3;
       state.web3.web3Instance = web3.web3Instance;
       state.web3.networkId = web3.networkId;
@@ -28,47 +28,91 @@ export default new Vuex.Store({
       state.web3.balance = parseInt(web3.balance, 10);
       state.web3.currentBlock = web3.currentBlock;
     },
-    setEventFactory(state, factory) {
+    SET_EVENT_FACTORY(state, factory) {
       state.eventFactory = factory;
     },
-    setIdentity(state, identity) {
+    SET_IDENTITY(state, identity) {
       state.identity = identity;
     },
-    addNewEventsToStore(state, newEvents) {
+    ADD_EVENTS_TO_STORE(state, newEvents) {
       for (let i = 0; i < newEvents.length; i++) {
         state.events.push(newEvents[i]);
       }
     },
-    addNewApproversToStore(state, newApprovers) {
+    ADD_APPROVERS_TO_STORE(state, newApprovers) {
       for (let i = 0; i < newApprovers.length; i++) {
         state.approvers.push(newApprovers[i]);
       }
     },
-    updateEvents(state, eventsToUpdate) {
-      state.events.indexOf()
-      for (let i = 0; i < eventsToUpdate.length; i++) {
-        let currentEvent = eventsToUpdate[i];
-        let e = state.events.filter(event => event.address === currentEvent.address);
-        console.log(e);
-        let index = state.events.indexOf(e);
-        state.events[index] = e;
+    UPDATE_EVENT_IN_STORE(state, payload) {
+      console.log("starting UPDATE_EVENT_IN_STORE");
+      const events = state.events;
+      const index = events.indexOf(events.find(e => e.contractAddress === payload.contractAddress));
+      // mutate events by replacing the event with the updated event object
+      if (index != -1) {
+        state.events.splice(index, 1, payload);
       }
+      console.log("ending UPDATE_EVENT_IN_STORE");
     },
-
-    // Only needed when using own ipfs instance.
-    registerIpfsInstance(state, payload) {
-      state.ipfsInstance = payload;
+    CLEAR_EVENTS(state) {
+      state.lastFetchedBlockEvents = STARTING_BLOCK;
+      state.events = [];
+      console.log("CLEAR_EVENTS mutation executed");
     }
   },
 
   // Actions
   actions: {
+    async loadMetadataUpdatesOfEvent({ commit }, address) {
+      console.log("action loadMetadataUpdatesOfEvent");
+      const currentBlock = state.web3.currentBlock;
+      const inDb = await idb.getEvent(address); // whether this event is present in the db
+      let event;
+      if (!inDb) {
+        console.log("event not in db - saving to db");
+        event = new Event(address);
+        await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+      } else {
+        console.log("in db");
+        event = new Event(inDb);
+        await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+      }
+      if (event) {
+        console.log("saving following event to db");
+        await idb.saveEvent(event);
+        console.log("saved event to db");
+        commit("UPDATE_EVENT_IN_STORE", event);
+      }
+    },
+
+    async loadMaxTicketsChange({ commit }, address) {
+        console.log("action loadMaxTicketsChange");
+        const currentBlock = state.web3.currentBlock;
+        const inDb = await idb.getEvent(address); // whether this event is present in the db
+        let event;
+        if (!inDb) {
+          console.log("event not in db - saving to db");
+          event = new Event(address);
+          await event.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
+        } else {
+          console.log("in db");
+          event = new Event(inDb);
+          await event.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
+        }
+        if (event) {
+          console.log("saving following event to db");
+          await idb.saveEvent(event);
+          console.log("saved event to db");
+          commit("UPDATE_EVENT_IN_STORE", event);
+        }
+    },
+
     /**
      * Register Web3 in the state.
      */
     async registerWeb3({ commit }) {
       const web3 = await getWeb3();
-      commit("updateWeb3", web3);
+      commit("UPDATE_WEB3", web3);
     },
 
     /**
@@ -76,7 +120,7 @@ export default new Vuex.Store({
      */
     async updateWeb3({ commit }) {
       const web3 = await updateWeb3();
-      commit("updateWeb3", web3);
+      commit("UPDATE_WEB3", web3);
     },
 
     /**
@@ -87,7 +131,7 @@ export default new Vuex.Store({
         EVENT_FACTORY_ABI,
         EVENT_FACTORY_ADDRESS
       );
-      commit("setEventFactory", eventFactory);
+      commit("SET_EVENT_FACTORY", eventFactory);
     },
 
     /**
@@ -98,7 +142,11 @@ export default new Vuex.Store({
         IDENTITY_ABI,
         IDENTITY_ADDRESS
       );
-      commit("setIdentity", identity);
+      commit("SET_IDENTITY", identity);
+    },
+
+    async clearEvents({ commit }) {
+      commit("CLEAR_EVENTS");
     },
 
     /**
@@ -129,14 +177,15 @@ export default new Vuex.Store({
             console.log("event not in db - saving to db");
             newEvent = new Event(address);
             await newEvent.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+            await newEvent.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
+            await newEvent.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
           } else {
             console.log("in db");
             newEvent = new Event(inDb);
+            await newEvent.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
+            await newEvent.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             if (!newEvent.loadedMetadata) {
               await newEvent.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
-            }
-            if (newEvent.currency == 0) {
-              await newEvent.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             }
           }
           await idb.saveEvent(newEvent);
@@ -144,77 +193,72 @@ export default new Vuex.Store({
         }
       }
       state.lastFetchedBlockEvents = currentBlock;
-      commit("addNewEventsToStore", newEvents);
+      if (newEvents.length > 0) {
+        console.log("new events found - committing ADD_EVENTS_TO_STORE mutation");
+        commit("ADD_EVENTS_TO_STORE", newEvents);
+      }
     },
-
-    // async updateMetadataOfExistingEvents({ commit }) {
-    //   let events = [];
-    //   for (let i = 0; i < state.events.length; i++) {
-    //     const address = state.events[i].contractAddress;
-    //     let inDb = await idb.getEvent(address);
-    //     let event = new Event(inDb);
-    //     let changed = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-    //     console.log("updateMetadataOfExistingEvents");
-    //     console.log(changed);
-    //     if (!changed) {
-    //       console.log("no changes to events metadata");
-    //       return;
-    //     }
-    //     event.setLastFetchedBlockMetadata(state.web3.currentBlock);
-    //     console.log("saving changes");
-    //     await idb.saveEvent(event);
-    //     events.push(event);
-    //   }
-    //   commit("addNewEventsToStore", events);
-    // },
 
     /**
      * Loads all tickets of an event and their metadata.
      * 
      * @param {String} address the contract address from which to load the tickets.
      */
-    async loadTicketsOfExistingEvent({ commit }, address) {
+    async loadTicketsOfEvent({ commit }, address) {
       console.log("loadTickets action executed for event contract address: " + address);
-      let events = [];
-      for (let i = 0; i < state.events.length; i++) {
-        if (state.events[i].contractAddress === address) {
-          let inDb = await idb.getEvent(address);
-          let event = new Event(inDb);
-          let currentBlock = state.web3.currentBlock;
-          let loaded = await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          console.log(loaded);
-          if (loaded) {
-            event.setLastFetchedBlockTickets(currentBlock);
-            await idb.saveEvent(event);
-            events.push(event);
-          }
-        }
+      const currentBlock = state.web3.currentBlock;
+      const inDb = await idb.getEvent(address);
+      let event;
+      if (!inDb) {
+        console.log("event not in db - saving to db");
+        event = new Event(address);
+      } else {
+        console.log("in db");
+        event = new Event(inDb);
       }
-      console.log(events)
-      if (events.length > 0) {
-        commit("updateEvents", events);
+      if (event) {
+        await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+        await idb.saveEvent(event);
+        commit("UPDATE_EVENT_IN_STORE", event);
       }
     },
 
-    async loadAftermarketOfExistingEvent({ commit }, address) {
-      console.log("loadAftermarket action executed");
-      let events = [];
-      for (let i = 0; i < state.events.length; i++) {
-        if (state.events[i].contractAddress == address) {
-          let inDb = await idb.getEvent(address);
-          let event = new Event(inDb);
-          await event.loadAftermarket(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-          event.setLastFetchedBlockAftermarket(state.web3.currentBlock);
-          await idb.saveEvent(event);
-          events.push(event);
-        } else {
-          let inDb = await idb.getEvent(address);
-          let event = new Event(inDb);
-          events.push(event);
-        }
-      }
-      commit("updateEventStore", events);
-    },
+    // async fetchingVerification({ commit }, address) {
+    //   const inDb = await idb.getEvent(address);
+    //   let event;
+    //   if (!inDb) {
+    //     console.log("event not in db - saving to db");
+    //     event = new Event(address);
+    //   } else {
+    //     console.log("in db");
+    //     event = new Event(inDb);
+    //   }
+    //   if (event) {
+    //     await event.requestWebsiteVerification();
+    //     await event.requestTwitterVerification();
+    //     await idb.saveEvent(event);
+    //     commit("UPDATE_EVENT_IN_STORE", event);
+    //   }
+    // },
+    // async loadAftermarketOfExistingEvent({ commit }, address) {
+    //   console.log("loadAftermarket action executed");
+    //   let events = [];
+    //   for (let i = 0; i < state.events.length; i++) {
+    //     if (state.events[i].contractAddress == address) {
+    //       let inDb = await idb.getEvent(address);
+    //       let event = new Event(inDb);
+    //       await event.loadAftermarket(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
+    //       event.setLastFetchedBlockAftermarket(state.web3.currentBlock);
+    //       await idb.saveEvent(event);
+    //       events.push(event);
+    //     } else {
+    //       let inDb = await idb.getEvent(address);
+    //       let event = new Event(inDb);
+    //       events.push(event);
+    //     }
+    //   }
+    //   commit("updateEventStore", events);
+    // },
 
     // event area end
     // approver area start
@@ -233,7 +277,7 @@ export default new Vuex.Store({
       nullAddressApprover.title = "No approver";
       approvers.push(nullAddressApprover);
       idb.saveApprover(nullAddressApprover);
-      commit("addNewApproversToStore", approvers);
+      commit("ADD_APPROVERS_TO_STORE", approvers);
     },
 
     /**
@@ -244,25 +288,20 @@ export default new Vuex.Store({
      */
     async loadApprovers({ commit }) {
       const currentBlock = state.web3.currentBlock;
-      let highestFetchedBlock = state.web3.currentBlock;
       let newApprovers = [];
       let newApprover;
       // Fetching register events that occured since the last fetched block and store the approvers
       const registerEvents = await state.identity.getPastEvents("ApproverRegistered", {
         fromBlock: state.lastFetchedBlockApprovers + 1
       });
-      console.log("ApproverRegistered bc-events:")
-      console.log(registerEvents);
       // Add all newly registered approvers to the store and the db
       for (let i = 0; i < registerEvents.length; i++) {
-        console.log(registerEvents)
-        let address = registerEvents[i].returnValues[0];
-        if (registerEvents[i].blockNumber > highestFetchedBlock) {
-          highestFetchedBlock = registerEvents[i].blockNumber;
-        }
+        const address = registerEvents[i].returnValues[0];
+        // if (registerEvents[i].blockNumber > highestFetchedBlock) {
+        //   highestFetchedBlock = registerEvents[i].blockNumber;
+        // }
         const inDb = await idb.getApprover(address); // whether this approver is present
         console.log("approver inDb? " + inDb);
-        console.log(state.identity)
         if (!inDb) {
           console.log("approver not in db - fetching approver data");
           newApprover = new IdentityApprover(address);
@@ -277,8 +316,10 @@ export default new Vuex.Store({
         await idb.saveApprover(newApprover);
         newApprovers.push(newApprover);
       }
-      state.lastFetchedBlockApprovers = highestFetchedBlock; // highestFetchedBlock is the highest block nr of the ApproverRegistered bc-events
-      commit("addNewApproversToStore", newApprovers);
+      state.lastFetchedBlockApprovers = currentBlock;
+      if (newApprovers.length > 0) {
+        commit("ADD_APPROVERS_TO_STORE", newApprovers, currentBlock);
+      }
     },
 
     // approver area end
@@ -286,47 +327,12 @@ export default new Vuex.Store({
 
     /**
      * Only needed when using own ipfs instance.
-     * 
-     * @param {*} param0 
      */
     async registerIpfs({ commit }) {
       const ipfs = await getIpfs();
-      commit("registerIpfsInstance", ipfs);
+      commit("REGISTER_IPFS", ipfs);
     }
 
     // general area end
-
-    /* 
-      Updates a specific event in the same manner as described in 'updateEvents'.
-      This is used, e.g., when a user buys a ticket, in order to display
-      the changes in ownership live, without reloading the page.
-    */
-    // async updateEvent({ commit }, address) {
-    //   let event = state.events.find((e) => e.contractAddress === address);
-    //   let fetch = await event.loadData(
-    //     EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI,
-    //     state.ipfsInstance,
-    //     state.web3.web3Instance
-    //   );
-    //   if (fetch) {
-    //     event.lastFetchedBlock = state.web3.currentBlock;
-    //   }
-    //   await idb.saveEvent(event);
-    //   commit("updateEventStore", state.events);
-    // }
-
-    // async loadFungibleTickets({ commit }) {
-    //   for (let i = 0; i < state.events.length; i++) {
-    //     let e = state.events[i];
-    //     await e.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-    //   }
-    // },
-    // async loadNonFungibleTickets({ commit }) {
-    //   for (let i = 0; i < state.events.length; i++) {
-    //     let e = state.events[i];
-    //     await e.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, state.ipfsInstance);
-    //   }
-    // }
-  // }
   }
 });

@@ -222,7 +222,7 @@ import {
   required,
   email,
   minLength,
-  maxLength
+  maxLength,
 } from "vuelidate/lib/validators";
 import sleep from "await-sleep";
 const pinataSDK = require("@pinata/sdk");
@@ -234,10 +234,10 @@ const pinata = pinataSDK(
 // project internal imports
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
-  AVERAGE_BLOCKTIME,
-  AVERAGE_BLOCKTIME_LOCAL,
+  AVERAGE_TIME_PER_BLOCK,
+  AVERAGE_TIME_PER_BLOCK_LOCAL,
   NETWORKS,
-  NULL_ADDRESS
+  NULL_ADDRESS,
 } from "../util/constants/constants.js";
 
 export default {
@@ -268,10 +268,10 @@ export default {
       approverWebsite: "",
       approverTwitter: "",
       // blockchain info
-      numberOfLevels: 1
+      numberOfLevels: 1,
     },
     sending: false,
-    showNrLevels: false
+    showNrLevels: false,
   }),
   computed: {
     web3() {
@@ -280,43 +280,40 @@ export default {
     identityContract() {
       return this.$store.state.identity;
     },
-    ipfsInstance() {
-      return this.$store.state.ipfsInstance;
-    },
     approverMethods() {
       let methodArray = [];
       if (this.form.firstLevel != "") {
         methodArray.push({
           level: 1,
-          value: this.form.firstLevel
+          value: this.form.firstLevel,
         });
       }
       if (this.form.secondLevel != "") {
         methodArray.push({
           level: 2,
-          value: this.form.secondLevel
+          value: this.form.secondLevel,
         });
       }
       if (this.form.thirdLevel != "") {
         methodArray.push({
           level: 3,
-          value: this.form.thirdLevel
+          value: this.form.thirdLevel,
         });
       }
       if (this.form.fourthLevel != "") {
         methodArray.push({
           level: 4,
-          value: this.form.fourthLevel
+          value: this.form.fourthLevel,
         });
       }
       if (this.form.fifthLevel != "") {
         methodArray.push({
           level: 5,
-          value: this.form.fifthLevel
+          value: this.form.fifthLevel,
         });
       }
       return methodArray;
-    }
+    },
   },
   methods: {
     createIpfsString() {
@@ -327,8 +324,8 @@ export default {
           title: this.form.approverTitle,
           methods: methods,
           website: this.form.approverWebsite,
-          twitter: this.form.approverTwitter
-        }
+          twitter: this.form.approverTwitter,
+        },
       });
       console.log(json);
       return json;
@@ -368,7 +365,7 @@ export default {
             transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
               transactionHash
             );
-            await sleep(AVERAGE_BLOCKTIME);
+            await sleep(AVERAGE_TIME_PER_BLOCK);
           }
           if (transactionReceipt) {
             console.log("Got the transaction receipt: ", transactionReceipt);
@@ -377,7 +374,7 @@ export default {
           }
           await this.$store.dispatch("loadEvents");
         })
-        .catch(async e => {
+        .catch(async (e) => {
           // Transaction rejected or failed
           this.waitingForSignature = false;
           this.waitingForDeploymentReceipt = false;
@@ -390,12 +387,12 @@ export default {
         });
 
       console.log(register);
-    }
+    },
   },
   async created() {
     const pinataAuth = await pinata.testAuthentication();
     console.log(pinataAuth);
-  }
+  },
 };
 </script>
 
