@@ -37,7 +37,6 @@ async function getLatestEvent(contract, name, fromBlock) {
     return events.length > 0;
 }
 
-
 /* event */
 export async function eventMetadataChanged(contract, fromBlock) {
     return await getLatestEvent(contract, 'EventMetadata', fromBlock);
@@ -54,10 +53,17 @@ export async function ticketMetadataChanged(contract, fromBlock, ticketId) {
     return events.length > 0;
 }
 
-// export async function approverMetadataChanged(contract, fromBlock) {
-//     return await getLatestEvent(contract, `ApproverMetadata`, fromBlock)
-// }
-
+export async function getPresaleBlock(contract, fromBlock, ticketId) {
+    const allEvents = await contract.getPastEvents('PresaleCreated', {
+        fromBlock: fromBlock,
+    });
+    const event = allEvents.filter(e => e.returnValues.ticketType === ticketId);
+    if (event.length == 0) {
+        return 0;
+    } else {
+        return event[event.length - 1].returnValues.block;
+    }
+}
 
 /* aftermarket */
 export async function ticketTransferred(contract, fromBlock, filter = '', filterValue = '') {
