@@ -2,23 +2,22 @@
 <!-- It is used in the overview of an event. -->
 <template>
   <div class="tickets-container">
-    <div class="ticket-summary-container">
+    <div class="summary-container">
       <TicketSummary
         v-bind:event="event"
-        v-bind:ticketFormOpen="addTicketMode"
+        v-bind:ticketFormOpen="createMode"
         @updatedEventTickets="updateEvent"
-        @openTicketForm="addTicketMode = true"
+        @openTicketForm="setCreateModeTrue"
+        @closeTicketForm="setCreateModeFalse"
       ></TicketSummary>
     </div>
-    <div class="ticket-form-container">
-      <TicketForm v-if="addTicketMode" />
-      <!-- @setEditMode="setEditMode"
-        v-if="editMode"
+    <div class="form-container">
+      <TicketForm
         v-bind:event="event"
-        v-bind:inNewMode="false"
-        v-bind:inEditMode="true"
-        @updatedEventMetadata="updateEvent"
-      /> -->
+        v-if="createMode"
+        @createdTickets="setCreateModeFalse"
+        @cancelTicketCreation="setCreateModeFalse"
+      />
     </div>
   </div>
 </template>
@@ -34,10 +33,18 @@ export default {
     TicketForm,
   },
   data: () => ({
-    addTicketMode: false,
+    createMode: false,
   }),
   props: { event: Object },
   methods: {
+    setCreateModeFalse() {
+      this.createMode = false;
+      this.$emit("leavingTicketCreationMode");
+    },
+    setCreateModeTrue() {
+      this.createMode = true;
+      this.$emit("enteringTicketCreationMode");
+    },
     setEditMode(mode) {
       this.editMode = mode;
     },
@@ -49,6 +56,9 @@ export default {
 </script>
 
 <style>
+.summary-container {
+  padding-bottom: 10px;
+}
 /* .router-button {
   position: absolute;
   top: 16px;

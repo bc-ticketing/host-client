@@ -2,21 +2,45 @@
 <!-- Events can be edited in the form contained in this view. -->
 <template>
   <div class="summary-container">
+    <div v-if="loading" class="loading-spinner-container">
+      <md-progress-spinner
+        class="loading-spinner"
+        :md-stroke="4"
+        :md-diameter="50"
+        md-mode="indeterminate"
+      ></md-progress-spinner>
+      <h3 class="loading-spinner-text">Loading Event Data...</h3>
+    </div>
     <EventModificationCard
       v-if="eventSet"
       v-bind:event="event"
       @updatedEvent="updateEvent"
+      @enterEdit="eventEditMode = true"
+      @leaveEdit="eventEditMode = false"
     ></EventModificationCard>
     <Tickets
-      v-if="eventSet"
+      v-if="eventSet && !eventEditMode"
       v-bind:event="event"
       @updatedEventTickets="updateEvent"
+      @enteringTicketCreationMode="ticketCreatingMode = true"
+      @leavingTicketCreationMode="ticketCreatingMode = false"
     ></Tickets>
+    <div class="seating-plan-container">
+      <SeatingPlan
+        v-if="!ticketCreatingMode && !eventEditMode && existingSeats"
+        v-bind:address="this.$route.query.address"
+        v-bind:sending="true"
+        v-bind:onlySeatingPlan="true"
+        @seatsToProcess="setExistingSeats"
+      >
+      </SeatingPlan>
+    </div>
   </div>
 </template>
 
 <script>
 import EventModificationCard from "../components/EventModificationCard";
+import SeatingPlan from "../components/SeatingPlan";
 import Tickets from "../components/Tickets";
 import idb from "../util/db/idb";
 
@@ -25,9 +49,14 @@ export default {
   components: {
     EventModificationCard,
     Tickets,
+    SeatingPlan,
   },
   data: () => ({
+    loading: true,
     eventSet: false,
+    existingSeats: false,
+    ticketCreatingMode: false,
+    eventEditMode: false,
     notFoundMessageVisible: false,
     event: "",
   }),
@@ -35,11 +64,13 @@ export default {
     async updateEvent() {
       console.log("updateEvent triggered in Summary view");
       this.event = await idb.getEvent(this.$route.query.address);
+      this.eventEditMode = false;
+      this.existingSeats = true;
     },
-    routeToEventList() {
-      this.$router.push({
-        name: `Events`,
-      });
+    setExistingSeats(existing) {
+      console.log("setExistingSeats");
+      console.log(existing);
+      this.existingSeats = existing;
     },
   },
   async created() {
@@ -48,10 +79,13 @@ export default {
     this.$root.$on("web3Injected", async () => {
       await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
       await this.$store.dispatch("loadTicketsOfEvent", address);
+      this.loading = false;
     });
     if (this.$store.state.web3.web3Instance) {
-      await this.$store.dispatch("loadTicketsOfEvent", address);
       await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+      await this.$store.dispatch("loadTicketsOfEvent", address);
+      this.loading = false;
+      this.existingSeats = true;
     }
     this.$root.$on("eventsFullyLoaded", async () => {
       this.event = await idb.getEvent(address);
@@ -59,12 +93,14 @@ export default {
         console.log(this.event);
         this.eventSet = true;
         this.notFoundMessageVisible = false;
+        this.existingSeats = true;
       }
     });
     this.event = await idb.getEvent(address);
     if (this.event != null) {
       console.log(this.event);
       this.eventSet = true;
+      this.existingSeats = true;
     }
   },
 };
@@ -84,5 +120,21 @@ export default {
 }
 .go-back-button {
   float: right;
+}
+.seating-plan-container {
+  margin: auto;
+  width: 50%;
+}
+.seating-plan-title {
+  text-align: center;
+}
+.loading-spinner-text {
+  text-align: center;
+}
+.loading-spinner {
+  width: 50px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
 }
 </style>

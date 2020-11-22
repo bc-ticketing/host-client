@@ -3,17 +3,22 @@
     <md-card>
       <md-toolbar md-elevation="0">
         <h3 class="md-title" style="flex: 1">Tickets</h3>
-        <!-- <md-button>Refresh</md-button> -->
         <md-button
           class="md-primary"
           v-if="!ticketFormOpen"
           @click="openTicketForm"
           >Add New Ticket Category</md-button
         >
+        <md-button
+          class="md-accent"
+          v-if="ticketFormOpen"
+          @click="closeTicketForm"
+          >Cancel</md-button
+        >
       </md-toolbar>
       <md-card-content>
         <md-app>
-          <md-app-drawer md-permanent="full">
+          <md-app-drawer class="md-scrollbar" md-permanent="full">
             <div v-for="(ticketType, index) in tickets" :key="index">
               <md-list>
                 <md-list-item
@@ -29,6 +34,7 @@
 
           <md-app-content>
             <TicketDetails
+              v-bind:created="true"
               v-bind:ticketType="selectedTicketType"
               v-bind:event="event"
               v-if="
@@ -70,6 +76,9 @@ export default {
     openTicketForm() {
       this.$emit("openTicketForm");
     },
+    closeTicketForm() {
+      this.$emit("closeTicketForm");
+    },
     eventHasTickets() {
       if (
         this.event.fungibleTickets.length != 0 ||
@@ -104,8 +113,4 @@ export default {
 };
 </script>
 
-<style>
-.ticket-summary-container {
-  padding-bottom: 4px;
-}
-</style>
+<style></style>
