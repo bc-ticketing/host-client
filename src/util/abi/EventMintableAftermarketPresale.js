@@ -67,21 +67,21 @@ export const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "addr",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "ticketType",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "quantity",
+        "name": "ticketType",
         "type": "uint256"
       },
       {
@@ -98,22 +98,28 @@ export const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "addr",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256[]",
-        "name": "_ids",
-        "type": "uint256[]"
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint8[]",
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
         "name": "percentage",
-        "type": "uint8[]"
+        "type": "uint8"
       }
     ],
     "name": "BuyOrderNonFungibleFilled",
@@ -304,21 +310,21 @@ export const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "addr",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "ticketType",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "seller",
+        "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "quantity",
+        "name": "ticketType",
         "type": "uint256"
       },
       {
@@ -397,22 +403,28 @@ export const EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "addr",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256[]",
-        "name": "_ids",
-        "type": "uint256[]"
+        "internalType": "address",
+        "name": "seller",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint8[]",
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
         "name": "percentage",
-        "type": "uint8[]"
+        "type": "uint8"
       }
     ],
     "name": "SellOrderNonFungibleFilled",

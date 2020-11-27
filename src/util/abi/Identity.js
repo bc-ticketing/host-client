@@ -1,6 +1,5 @@
 /* eslint no-use-before-define: 0 */ // --> OFF
-export const IDENTITY_ADDRESS = "0x067b6772E882b541121a2af3Cf947E27D1edf4E9"; // docker
-// export const IDENTITY_ADDRESS = "0x58344E4d66f335DCE8b809E1A16D374412B66F63";
+export const IDENTITY_ADDRESS = "0x2583d96704f7F0a6737b158b59739ac4b239F1dE";
 export const IDENTITY_ABI = [
   {
     "anonymous": false,
@@ -96,8 +95,7 @@ export const IDENTITY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -133,8 +131,7 @@ export const IDENTITY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -153,7 +150,6 @@ export const IDENTITY_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   }
 ];
