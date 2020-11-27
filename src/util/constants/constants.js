@@ -34,10 +34,11 @@ export const MONTHS = {
 };
 
 // General constants
-export const IPFS_TIMEOUT = 2000 // in ms
+export const IPFS_TIMEOUT = 20000 // in ms
 export const STARTING_BLOCK = 7400000;
 export const AVERAGE_TIME_PER_BLOCK = 15000; // in ms
 export const AVERAGE_TIME_PER_BLOCK_LOCAL = 100; // in ms
+export const AVERAGE_TIME_WAITING_FOR_RECEIPT = 3000; // in ms
 export const MAX_TICKETS_PER_PERSON = 5;
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -80,5 +81,5 @@ export const APPROVER_REGISTRATION = 'Please wait - Your registration is being p
 export const APPROVER_REGISTRATION_SUCCESSFUL = 'You were successfully registered as Approver.';
 
 // Identity verification
-export const IDENTITY_VERIFICATION = 'Please wait - Your registration is being processed.';
-export const IDENTITY_VERIFICATION_SUCCESSFUL = 'You were successfully registered as Approver.';
+export const IDENTITY_VERIFICATION = 'Please wait - The account verification is being processed.';
+export const IDENTITY_VERIFICATION_SUCCESSFUL = 'The account verification was successful.';
