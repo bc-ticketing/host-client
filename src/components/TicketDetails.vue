@@ -62,7 +62,7 @@
 
 <script>
 import getWeb3 from "../util/getWeb3";
-import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/constants/EventMintableAftermarketPresale";
+import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { getIdAsBigNumber } from "idetix-utils";
 import {
   getCurrencySymbol,

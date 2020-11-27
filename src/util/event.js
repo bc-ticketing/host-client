@@ -125,12 +125,14 @@ export class Event {
       fromBlock: this.lastFetchedBlockMetadata + 1
     });
 
+    console.log(eventMetadata);
     if (eventMetadata.length == 0) {
       // no update found
       return true;
     }
 
     var metadataObject = eventMetadata[eventMetadata.length - 1].returnValues;
+    console.log(metadataObject);
     if (metadataObject == null) {
       return false;
     }
@@ -140,10 +142,10 @@ export class Event {
       metadataObject.digest
     );
 
-    if (this.ipfsHash == currentHash) {
-      return false;
-    }
-    
+    // if (this.ipfsHash == currentHash) {
+    //   return false;
+    // }
+
     this.ipfsHash = currentHash;
     console.log(this.ipfsHash);
     return true;
@@ -204,11 +206,11 @@ export class Event {
       console.log("loading tickets");
       await this.loadFungibleTickets(web3Instance, ABI, currentBlock);
       await this.loadNonFungibleTickets(web3Instance, ABI, currentBlock);
-
     } catch (e) {
       console.log(e);
       return false;
     }
+    this.lastFetchedBlockTickets = currentBlock;
     return true;
   }
 
@@ -451,15 +453,6 @@ export class Event {
           const ticketMapping = await eventSC.methods
             .ticketTypeMeta(typeIdentifier.toFixed())
             .call();
-          console.log(ticketMapping);
-          const lottery = await eventSC.methods
-            .lotteries(typeIdentifier.toFixed())
-            .call();
-          console.log("lottery")
-          console.log(lottery.block);
-          if (lottery.block != 0) {
-            ticketType.hasPresale = true;
-          }
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
           ticketType.supply = Number(ticketMapping.supply);
@@ -472,6 +465,7 @@ export class Event {
             //await loadSellOrders(ticketType, web3Instance, ABI);
             //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
+          console.log(ticketType);
           if (!exists) {
             this.fungibleTickets.push(ticketType);
           }
@@ -491,8 +485,7 @@ export class Event {
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
         console.log(nonce);
-        const typeIdentifier = getIdAsBigNumber(false, i);
-        console.log(typeIdentifier);
+        const typeIdentifier = getIdAsBigNumber(true, i);
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlockTickets + 1,
@@ -503,6 +496,12 @@ export class Event {
           let ticketType = exists
             ? exists
             : new NonFungibleTicketType(this.contractAddress, i);
+          const presaleBlock = await getPresaleBlock(eventSC, 1, typeIdentifier.toFixed());
+          ticketType.hasPresale = presaleBlock != 0;
+          if (ticketType.hasPresale) {
+            ticketType.presaleBlock = presaleBlock;
+            ticketType.presalePassed = new BigNumber(ticketType.presaleBlock).comparedTo(currentBlock) < 1;
+          }
           const ticketMapping = await eventSC.methods
             .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
             .call();
@@ -530,6 +529,7 @@ export class Event {
             //await loadSellOrders(ticketType, web3Instance, ABI);
             //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
+          console.log(ticketType);
           if (!exists) {
             this.nonFungibleTickets.push(ticketType);
           }

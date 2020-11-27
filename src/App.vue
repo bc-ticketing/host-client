@@ -51,7 +51,8 @@ export default {
       setInterval(async () => {
         console.log("loading approvers");
         await this.loadApprovers();
-      }, 30000);
+        // await this.loadEvents();
+      }, 10000);
     },
     anyEventPresent: function () {
       if (this.$store.state.events.length > 0) {

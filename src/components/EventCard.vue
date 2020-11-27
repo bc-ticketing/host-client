@@ -14,15 +14,15 @@
             <div v-if="date" class="event-card-date">{{ date }}</div>
             <div v-if="location" class="md-subhead">{{ location }}</div>
           </md-card-header>
-          <md-card-content class="card-content">
-            <div class="text-content">
-              <div v-if="category" class="content-entry">
+          <md-card-content class="event-card-content">
+            <div class="event-card-content-text">
+              <div v-if="category" class="event-card-content-entry">
                 <b>Category: </b>{{ category }}
               </div>
-              <div v-if="currency" class="content-entry">
+              <div v-if="currency" class="event-card-content-entry">
                 <b>Currency: </b>{{ currency }}
               </div>
-              <div v-if="website" class="content-entry">
+              <div v-if="website" class="event-card-content-entry">
                 <b>Website: </b
                 >{{ website.url ? website.url : "None provided" }}
                 <span class="danger"
@@ -36,7 +36,7 @@
                   ></span
                 >
               </div>
-              <div v-if="twitter" class="content-entry">
+              <div v-if="twitter" class="event-card-content-entry">
                 <b>Twitter: </b
                 >{{ twitter.url ? twitter.url : "None provided" }}
                 <span class="danger"
@@ -50,11 +50,11 @@
                   ></span
                 >
               </div>
-              <div v-if="maxTicketsPerPerson" class="content-entry">
+              <div v-if="maxTicketsPerPerson" class="event-card-content-entry">
                 <b>Maximum allowed tickets per person: </b
                 >{{ maxTicketsPerPerson }}
               </div>
-              <div v-if="description" class="content-entry">
+              <div v-if="description" class="event-card-content-entry">
                 <b>Description: </b>{{ description }}
               </div>
             </div>
@@ -184,17 +184,19 @@ export default {
 .event-card-container {
   margin-bottom: 10px;
 }
-.content-entry {
-  display: block;
+.event-card-content-entry {
+  width: 80%;
+  /* display: block; */
 }
-.md-card-content.card-content {
+.md-card-content.event-card-content {
   padding-bottom: 16px;
 }
-.card-content {
+.event-card-content {
   display: flex;
 }
-.text-content {
+.event-card-content-text {
   min-width: 50%;
+  padding: 0;
 }
 .image-content {
   position: absolute;

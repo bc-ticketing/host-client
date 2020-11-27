@@ -95,7 +95,6 @@
                 class="md-icon-button md-primary"
                 @click="showStartTimeDialog = true"
                 style="margin-right: 16px"
-                :disabled="sending"
               >
                 <md-icon>help_outline</md-icon>
               </md-button>
@@ -467,12 +466,6 @@
 
       <md-progress-bar md-mode="indeterminate" v-if="sending" />
     </form>
-    <!-- <div v-if="showStatusMessage" class="status-message">
-      <md-progress-bar :md-mode="progressBarMode"></md-progress-bar>
-      <p class="process-message">
-        {{ processMessage }}
-      </p>
-    </div> -->
 
     <div v-if="showStatusMessage" class="status-message">
       <md-progress-bar :md-mode="processBarMode"></md-progress-bar>
@@ -480,38 +473,6 @@
         {{ processMessage }}
       </p>
     </div>
-    <!-- <div v-if="uploadingToIpfs" class="awaiting-ipfs-upload">
-      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p class="process-message">
-        Please wait - The Event metadata is uploaded to IPFS.
-      </p>
-    </div>
-
-    <div v-if="waitingForSignature" class="awaiting-signature-message">
-      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">Please sign the transaction.</p>
-    </div>
-    <div v-if="waitingForDeploymentReceipt" class="awaiting-form-response">
-      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p class="process-message">
-        Please wait - The Event contract is being deployed.
-      </p>
-    </div>
-    <div v-if="waitingForMetadataChangeReceipt" class="awaiting-form-response">
-      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p class="process-message">
-        Please wait - The metadata change invocation is being sent.
-      </p>
-    </div>
-    <div v-if="showSuccessfulDeploymentMessage" class="successful-message">
-      <p class="process-message">The event was successfully deployed.</p>
-    </div>
-    <div v-if="showSuccessfulMetadataChangeMessage" class="successful-message">
-      <p class="process-message">The metadata change is confirmed.</p>
-    </div>
-    <div v-if="showErrorMessage" class="unsuccessful-deployment-message">
-      <p class="process-message">Something went wrong...</p>
-    </div> -->
   </div>
 </template>
 
@@ -554,6 +515,7 @@ import {
   TICKETS_CREATED_ALL,
   AVERAGE_TIME_PER_BLOCK,
   AVERAGE_TIME_PER_BLOCK_LOCAL,
+  AVERAGE_TIME_WAITING_FOR_RECEIPT,
   EVENT_DEPLOYED,
   EVENT_DEPLOYING,
   EVENT_METADATA_CHANGE,
@@ -588,15 +550,8 @@ export default {
 
     uiState: "submit not clicked",
     errors: false,
-    // waitingForSignature: false,
-    // waitingForDeploymentReceipt: false,
-    // waitingForMetadataChangeReceipt: false,
     deployingContractState: false,
     invokingMetadataChangeState: false,
-    // uploadingToIpfs: false,
-    // showSuccessfulDeploymentMessage: false,
-    // showSuccessfulMetadataChangeMessage: false,
-    // showErrorMessage: false,
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
@@ -605,6 +560,7 @@ export default {
     ipfsArgs: null,
     ipfsCid: null,
     IpfsHash: null,
+    IpfsHashToUnpin: null,
     ipfsData: null,
     ipfsString: null,
     ipfsError: false,
@@ -720,11 +676,6 @@ export default {
     },
   },
   watch: {
-    showErrorMessage: function (val) {
-      setTimeout(() => {
-        this.showErrorMessage = false;
-      }, 3000);
-    },
     sending: function (val) {
       this.dateUponSending = this.form.date;
     },
@@ -742,12 +693,6 @@ export default {
       this.processBarMode = processBarMode;
       this.processMessage = message;
       this.showStatusMessage = true;
-    },
-    showErrorMessage() {
-      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
-      setTimeout(() => {
-        this.hideStatus();
-      }, 5000);
     },
     hideStatus() {
       this.showStatusMessage = false;
@@ -811,6 +756,7 @@ export default {
       // todo: add checks to compare to current ipfs hash
       this.sending = true;
       this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
+      this.IpfsHashToUnpin = this.event.ipfsHash;
       await this.uploadToIpfs();
       await this.invokeMetadataChange();
       this.sending = false;
@@ -824,6 +770,10 @@ export default {
     },
 
     createIpfsString() {
+      const imgData = this.event.image;
+      if (this.imageData != "") {
+        const imgData = this.imageData;
+      }
       return JSON.stringify({
         version: "1.0",
         event: {
@@ -835,7 +785,7 @@ export default {
           duration: "",
           website: this.form.website,
           twitter: this.form.twitter,
-          image: this.imageData,
+          image: imgData,
         },
       });
     },
@@ -869,10 +819,11 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_TIME_PER_BLOCK);
+              await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
-              await sleep(5000);
+              const result = await pinata.unpin(this.IpfsHashToUnpin);
+              console.log(result);
               console.log("Got the transaction receipt: ", transactionReceipt);
               this.invokingMetadataChangeState = false;
               this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
@@ -894,7 +845,7 @@ export default {
         .catch(async (e) => {
           // Transaction rejected or failed
           this.invokingMetadataChangeState = false;
-          this.showErrorMessage();
+          this.showErrorStatus();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
@@ -935,7 +886,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_TIME_PER_BLOCK);
+              await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -953,7 +904,7 @@ export default {
         .catch(async (e) => {
           // Transaction rejected or failed
           this.deployingContractState = false;
-          this.showErrorMessage();
+          this.showErrorStatus();
           console.log(e);
           const result = await pinata.unpin(this.IpfsHash);
           console.log(result);
@@ -962,6 +913,8 @@ export default {
     readImageFile(event) {
       // Reference to the DOM input element
       var input = event.target;
+      console.log("readImageFile");
+      console.log(event);
       // Ensure that you have a file before attempting to read it
       if (input.files && input.files[0]) {
         // create a new FileReader to read this image and convert to base64 format

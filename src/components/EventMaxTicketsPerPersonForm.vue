@@ -79,6 +79,7 @@ import {
   PROGRESS_INDETERMINATE,
   PROCESSING,
   AVERAGE_TIME_PER_BLOCK,
+  AVERAGE_TIME_WAITING_FOR_RECEIPT,
   DEFAULT_ERROR,
   EVENT_MAX_TICKETS_CHANGE,
   EVENT_MAX_TICKETS_CHANGE_SUCCESSFUL,
@@ -138,7 +139,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_TIME_PER_BLOCK);
+              await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);

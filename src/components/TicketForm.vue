@@ -320,6 +320,7 @@ import {
   TICKETS_CREATED_ALL,
   AVERAGE_TIME_PER_BLOCK,
   AVERAGE_TIME_PER_BLOCK_LOCAL,
+  AVERAGE_TIME_WAITING_FOR_RECEIPT,
 } from "../util/constants/constants";
 import idb from "../util/db/idb";
 import getDecimals from "../util/utility.js";
@@ -605,7 +606,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_TIME_PER_BLOCK);
+              await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
@@ -663,7 +664,7 @@ export default {
               transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
                 transactionHash
               );
-              await sleep(AVERAGE_TIME_PER_BLOCK);
+              await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
               console.log("Got the transaction receipt: ", transactionReceipt);
