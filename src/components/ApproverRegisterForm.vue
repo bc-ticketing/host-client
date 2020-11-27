@@ -1,7 +1,11 @@
 <!-- This component is a form to register as an identity approver. -->
 <template>
   <div class="approver-register-form-container">
+    <div v-if="registered" class="already-registered-container">
+      <h2>You are already registered as approver.</h2>
+    </div>
     <form
+      v-if="!registered"
       novalidate
       class="md-layout"
       @submit.prevent="isApproverRegisterFormComplete"
@@ -20,6 +24,7 @@
                   name="approver-title"
                   id="approver-title"
                   v-model="form.approverTitle"
+                  :disabled="sending"
                 />
               </md-field>
             </div>
@@ -34,6 +39,7 @@
                   id="numberOfLevels"
                   name="numberOfLevels"
                   v-model="form.numberOfLevels"
+                  :disabled="sending"
                 >
                   <md-option value="1">1</md-option>
                   <md-option value="2">2</md-option>
@@ -79,6 +85,7 @@
                 name="firstLevel"
                 id="firstLevel"
                 v-model="form.firstLevel"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -93,6 +100,7 @@
                 name="secondLevel"
                 id="secondLevel"
                 v-model="form.secondLevel"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -107,6 +115,7 @@
                 name="thirdLevel"
                 id="thirdLevel"
                 v-model="form.thirdLevel"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -121,6 +130,7 @@
                 name="fourthLevel"
                 id="fourthLevel"
                 v-model="form.fourthLevel"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -135,6 +145,7 @@
                 name="fifthLevel"
                 id="fifthLevel"
                 v-model="form.fifthLevel"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -146,6 +157,7 @@
                 name="approver-website"
                 id="approver-website"
                 v-model="form.approverWebsite"
+                :disabled="sending"
               />
             </md-field>
           </div>
@@ -157,61 +169,32 @@
                 name="twitter"
                 id="twitter"
                 v-model="form.approverTwitter"
+                :disabled="sending"
               />
             </md-field>
           </div>
         </md-card-content>
-
-        <!-- <md-card-actions>
-          <md-button type="submit" class="md-primary" @click="createIpfsString">create ipfs string</md-button>
-        </md-card-actions>-->
 
         <md-card-actions>
           <md-button
             type="submit"
             class="md-primary"
             @click="registerAsApprover"
+            :disabled="sending"
             >Register as approver</md-button
           >
         </md-card-actions>
       </md-card>
     </form>
-    <div v-if="pinningToIpfs" class="awaiting-signature-message">
+
+    <div v-if="showStatusMessage" class="status-message">
       <md-progress-bar
-        md-mode="indeterminate"
         :md-value="100"
+        :md-mode="processBarMode"
       ></md-progress-bar>
       <p class="process-message">
-        Please wait - your data is being pinned to IPFS.
+        {{ processMessage }}
       </p>
-    </div>
-    <div v-if="waitingForSignature" class="awaiting-signature-message">
-      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">
-        Please sign the transaction to register as Approver.
-      </p>
-    </div>
-    <div
-      v-if="waitingForReceiptApproverRegistration"
-      class="awaiting-form-response"
-    >
-      <md-progress-bar md-mode="indeterminate"></md-progress-bar>
-      <p class="process-message">
-        Please wait - Your registration is being processed.
-      </p>
-    </div>
-    <div
-      v-if="showSuccessFulMessageApproverRegistration"
-      class="awaiting-form-response"
-    >
-      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">
-        You were successfully registered as Approver!
-      </p>
-    </div>
-    <div v-if="errorState" class="awaiting-form-response">
-      <md-progress-bar md-mode="determinate" :md-value="100"></md-progress-bar>
-      <p class="process-message">Something went wrong...</p>
     </div>
   </div>
 </template>
@@ -236,20 +219,28 @@ import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   AVERAGE_TIME_PER_BLOCK,
   AVERAGE_TIME_PER_BLOCK_LOCAL,
+  AVERAGE_TIME_WAITING_FOR_RECEIPT,
   NETWORKS,
   NULL_ADDRESS,
+  PROGRESS_DETERMINATE,
+  PROGRESS_INDETERMINATE,
+  DEFAULT_ERROR,
+  WAITING_FOR_SIGNATURE,
+  UPLOADING_TO_IPFS,
+  APPROVER_REGISTRATION,
+  APPROVER_REGISTRATION_SUCCESSFUL,
 } from "../util/constants/constants.js";
 
 export default {
   name: "ApproverRegisterForm",
   data: () => ({
-    // invocation states
-    waitingForSignature: false,
-    invokingStateApproverRegistration: false,
-    waitingForReceiptApproverRegistration: false,
-    showSuccessFulMessageApproverRegistration: false,
-    errorState: false,
-    pinningToIpfs: false,
+    sending: false,
+    showStatusMessage: false,
+    processBarMode: PROGRESS_DETERMINATE,
+    processMessage: DEFAULT_ERROR,
+
+    registered: false,
+    exists: null,
 
     showNumberOfLevelsDialog: false,
     IpfsHash: null,
@@ -270,12 +261,14 @@ export default {
       // blockchain info
       numberOfLevels: 1,
     },
-    sending: false,
     showNrLevels: false,
   }),
   computed: {
     web3() {
       return this.$store.state.web3;
+    },
+    registeredApprovers() {
+      return this.$store.state.approvers;
     },
     identityContract() {
       return this.$store.state.identity;
@@ -316,6 +309,20 @@ export default {
     },
   },
   methods: {
+    showStatus(processBarMode, message) {
+      this.processBarMode = processBarMode;
+      this.processMessage = message;
+      this.showStatusMessage = true;
+    },
+    hideStatus() {
+      this.showStatusMessage = false;
+    },
+    showErrorStatus() {
+      this.showStatus(PROGRESS_DETERMINATE, DEFAULT_ERROR);
+      setTimeout(() => {
+        this.hideStatus();
+      }, 5000);
+    },
     createIpfsString() {
       var methods = this.approverMethods.slice(0, this.form.numberOfLevels);
       let json = JSON.stringify({
@@ -335,25 +342,23 @@ export default {
      * Creates the metadata Json and pins it to IPFS with Pinata
      */
     async uploadToIpfs() {
-      this.pinningToIpfs = true;
+      this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       this.ipfsString = this.createIpfsString();
       const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
       this.IpfsHash = result.IpfsHash;
-      this.pinningToIpfs = false;
     },
     isApproverRegisterFormComplete() {
       return true;
     },
     async registerAsApprover() {
+      this.sending = true;
       await this.uploadToIpfs();
-      this.invokingStateApproverRegistration = true;
       let ipfsArgs = cidToArgs(this.IpfsHash);
-      this.waitingForSignature = true;
+      this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       let register = await this.identityContract.methods
         .registerApprover(ipfsArgs.hashFunction, ipfsArgs.size, ipfsArgs.digest)
         .send({ from: this.web3.account }, async (error, transactionHash) => {
-          this.waitingForSignature = false;
-          this.waitingForDeploymentReceipt = true;
+          this.showStatus(PROGRESS_INDETERMINATE, APPROVER_REGISTRATION);
           if (transactionHash) {
             console.log(
               "submitted approver register invocation: ",
@@ -365,31 +370,46 @@ export default {
             transactionReceipt = await this.$store.state.web3.web3Instance.eth.getTransactionReceipt(
               transactionHash
             );
-            await sleep(AVERAGE_TIME_PER_BLOCK);
+            await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
           }
           if (transactionReceipt) {
             console.log("Got the transaction receipt: ", transactionReceipt);
-            this.waitingForReceiptApproverRegistration = false;
-            this.showSuccessFulMessageApproverRegistration = true;
+            this.showStatus(
+              PROGRESS_DETERMINATE,
+              APPROVER_REGISTRATION_SUCCESSFUL
+            );
+            this.sending = false;
+            this.$router.push({
+              path: `/`,
+            });
           }
-          await this.$store.dispatch("loadEvents");
         })
         .catch(async (e) => {
           // Transaction rejected or failed
-          this.waitingForSignature = false;
-          this.waitingForDeploymentReceipt = false;
-          this.deployingContractState = false;
-          this.showSuccessFulMessageApproverRegistration = false;
-          this.errorState = true;
           console.log(e);
+          this.sending = false;
+          this.showErrorStatus();
           const result = await pinata.unpin(this.IpfsHash);
-          console.log(result);
         });
-
-      console.log(register);
     },
   },
   async created() {
+    this.$root.$on("loadedApprovers", async () => {
+      this.exists = this.registeredApprovers.find(
+        (approver) => approver.approverAddress === this.web3.account
+      );
+      if (this.exists) {
+        this.registered = true;
+      }
+    });
+    if (this.registeredApprovers.length > 0 && this.web3.account) {
+      this.exists = this.registeredApprovers.find(
+        (approver) => approver.approverAddress === this.web3.account
+      );
+      if (this.exists) {
+        this.registered = true;
+      }
+    }
     const pinataAuth = await pinata.testAuthentication();
     console.log(pinataAuth);
   },
@@ -398,6 +418,9 @@ export default {
 
 <style>
 .process-message {
+  text-align: center;
+}
+.already-registered-container {
   text-align: center;
 }
 </style>

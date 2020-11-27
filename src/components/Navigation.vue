@@ -48,12 +48,12 @@
           </div>
 
           <div class="approver-container">
-            <md-list-item @click="navigateTo(`/register`)">
+            <md-list-item v-if="!registered" @click="navigateTo(`/register`)">
               <md-icon style="margin-right: 28px">verified_user</md-icon>
               <p class="navigationText">Approver Registration</p>
             </md-list-item>
 
-            <md-list-item @click="navigateTo(`/approve`)">
+            <md-list-item v-if="registered" @click="navigateTo(`/approve`)">
               <md-icon style="margin-right: 28px">fact_check</md-icon>
               <p class="navigationText">Approve Identity</p>
             </md-list-item>
@@ -71,6 +71,7 @@ export default {
   data() {
     return {
       showSidebar: false,
+      registered: false,
     };
   },
   methods: {
@@ -105,6 +106,8 @@ export default {
     },
     async loadApprovers() {
       await this.$store.dispatch("loadApprovers");
+      this.registered = null;
+      this.checkIfRegisteredApprover();
     },
     prettyAddress(address) {
       const start = address.substring(0, 4);
@@ -122,6 +125,16 @@ export default {
         return balance;
       }
     },
+    checkIfRegisteredApprover() {
+      if (this.accountAddress && this.approvers.length > 0) {
+        this.registered = this.approvers.find(
+          (approver) => approver.approverAddress === this.accountAddress
+        );
+      }
+    },
+    registeredAsApprover() {
+      return this.registered ? true : false;
+    },
   },
   computed: {
     web3() {
@@ -138,6 +151,14 @@ export default {
         ? this.web3.web3Instance.utils.fromWei(String(this.web3.balance))
         : "";
     },
+    approvers() {
+      return this.$store.state.approvers;
+    },
+  },
+  created() {
+    this.$root.$on("loadedApprovers", async () => {
+      this.loadApprovers();
+    });
   },
 };
 </script>
