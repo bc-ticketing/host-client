@@ -52,7 +52,7 @@ export default {
     SeatingPlan,
   },
   data: () => ({
-    loading: true,
+    loading: false,
     eventSet: false,
     existingSeats: false,
     ticketCreatingMode: false,
@@ -76,30 +76,44 @@ export default {
     console.log("summary view created executed");
     let address = this.$route.query.address;
     this.$root.$on("web3Injected", async () => {
-      await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
-      await this.$store.dispatch("loadTicketsOfEvent", address);
-      this.loading = false;
+      if (!this.loading && !this.eventSet) {
+        this.loading = true;
+        await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+        await this.$store.dispatch("loadTicketsOfEvent", address);
+        this.loading = false;
+      }
     });
     if (this.$store.state.web3.web3Instance) {
-      await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
-      await this.$store.dispatch("loadTicketsOfEvent", address);
-      this.loading = false;
-      this.existingSeats = true;
+      if (!this.loading && !this.eventSet) {
+        this.loading = true;
+        await this.$store.dispatch("loadMetadataUpdatesOfEvent", address);
+        await this.$store.dispatch("loadTicketsOfEvent", address);
+        this.loading = false;
+        this.existingSeats = true;
+      }
     }
     this.$root.$on("loadedEvents", async () => {
+      if (!this.loading && !this.eventSet) {
+        this.loading = true;
+        this.event = await idb.getEvent(address);
+        if (this.event != null) {
+          console.log(this.event);
+          this.eventSet = true;
+          this.notFoundMessageVisible = false;
+          this.existingSeats = true;
+        }
+        this.loading = false;
+      }
+    });
+    if (!this.loading) {
+      this.loading = true;
       this.event = await idb.getEvent(address);
       if (this.event != null) {
         console.log(this.event);
         this.eventSet = true;
-        this.notFoundMessageVisible = false;
         this.existingSeats = true;
       }
-    });
-    this.event = await idb.getEvent(address);
-    if (this.event != null) {
-      console.log(this.event);
-      this.eventSet = true;
-      this.existingSeats = true;
+      this.loading = false;
     }
   },
 };
