@@ -57,7 +57,10 @@
               <div v-if="description" class="event-card-content-entry">
                 <b>Description: </b>{{ description }}
               </div>
-              <div v-if="contractAddress" class="event-card-content-entry">
+              <div
+                v-if="contractAddress && inModificationView"
+                class="event-card-content-entry"
+              >
                 <b>Contract: </b>{{ contractAddress }}
               </div>
             </div>
