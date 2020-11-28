@@ -14,7 +14,7 @@ export async function getWeb3() {
     web3.web3Instance = await window.web3;
     web3.balance = await window.web3.eth.getBalance(web3.account);
     web3.eth = await window.web3.eth;
-    const block = await window.web3.eth.getBlock('latest');
+    const block = await window.web3.eth.getBlock("latest");
     web3.currentBlock = block.number;
     return web3;
   } catch (error) {
@@ -34,7 +34,7 @@ export async function updateWeb3() {
     web3.web3Instance = window.web3;
     web3.account = web3.accounts[0];
     web3.balance = await window.web3.eth.getBalance(web3.account);
-    const block = await window.web3.eth.getBlock('latest');
+    const block = await window.web3.eth.getBlock("latest");
     web3.currentBlock = block.number;
     return web3;
   } catch (error) {
@@ -48,7 +48,7 @@ async function linkWeb3(walletConnect) {
   if (walletConnect) {
     //  Create WalletConnect Provider
     const provider = new WalletConnectProvider({
-      infuraId: "a98a81d8c657449c8538f7bffbf73050", // Required
+      infuraId: process.env.VUE_APP_INFURA_ID, // Required
     });
 
     //  Enable session (triggers QR Code modal)

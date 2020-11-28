@@ -58,7 +58,7 @@ export default {
     ticketCreatingMode: false,
     eventEditMode: false,
     notFoundMessageVisible: false,
-    event: "",
+    event: null,
   }),
   methods: {
     async updateEvent() {
@@ -69,7 +69,6 @@ export default {
     },
     setExistingSeats(existing) {
       console.log("setExistingSeats");
-      console.log(existing);
       this.existingSeats = existing;
     },
   },
@@ -87,7 +86,7 @@ export default {
       this.loading = false;
       this.existingSeats = true;
     }
-    this.$root.$on("eventsFullyLoaded", async () => {
+    this.$root.$on("loadedEvents", async () => {
       this.event = await idb.getEvent(address);
       if (this.event != null) {
         console.log(this.event);

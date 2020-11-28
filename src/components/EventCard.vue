@@ -22,45 +22,142 @@
               <div v-if="currency" class="event-card-content-entry">
                 <b>Currency: </b>{{ currency }}
               </div>
-              <div v-if="website" class="event-card-content-entry">
-                <b>Website: </b
-                >{{ website.url ? website.url : "None provided" }}
-                <span class="danger"
-                  ><md-icon class="danger" v-if="website.verification == false"
-                    >warning</md-icon
-                  ></span
+              <div v-if="website.url" class="event-card-content-entry">
+                <b>Website: </b>
+                <a :href="website.url" target="_blank">{{ website.url }}</a>
+                <md-icon class="md-accent" v-if="!website.verification"
+                  >warning</md-icon
                 >
-                <span class="good"
-                  ><md-icon v-if="website.verification == true"
-                    >done</md-icon
-                  ></span
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="website.verification"
+                  >done</md-icon
                 >
               </div>
-              <div v-if="twitter" class="event-card-content-entry">
+              <div v-else class="event-card-content-entry">
+                <b>Website: </b>None provided
+              </div>
+              <div v-if="twitter.url" class="event-card-content-entry">
                 <b>Twitter: </b
-                >{{ twitter.url ? twitter.url : "None provided" }}
-                <span class="danger"
-                  ><md-icon class="danger" v-if="twitter.verification == false"
-                    >warning</md-icon
-                  ></span
+                ><a :href="twitter.url" target="_blank">{{ twitter.url }}</a>
+                <md-icon style="md-accent" v-if="!twitter.verification"
+                  >warning</md-icon
                 >
-                <span class="good"
-                  ><md-icon v-if="twitter.verification == true"
-                    >done</md-icon
-                  ></span
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="twitter.verification"
+                  >done</md-icon
                 >
+              </div>
+              <div v-if="!twitter.url" class="event-card-content-entry">
+                <b>Twitter: </b>None provided
+              </div>
+              <div
+                @click="showIdentityApproverDialog = true"
+                v-if="approver"
+                class="event-card-content-entry"
+              >
+                <b>Identity Approver: </b>{{ approver.title }}
               </div>
               <div v-if="maxTicketsPerPerson" class="event-card-content-entry">
-                <b>Maximum allowed tickets per person: </b
-                >{{ maxTicketsPerPerson }}
+                <b>Max tickets per person: </b>{{ maxTicketsPerPerson }}
               </div>
               <div v-if="description" class="event-card-content-entry">
                 <b>Description: </b>{{ description }}
+              </div>
+              <div
+                v-if="contractAddress && inModificationView"
+                class="event-card-content-entry"
+              >
+                <b>Contract: </b>{{ contractAddress }}
               </div>
             </div>
             <div class="image-content-wrapper">
               <img v-if="image" class="image-content" :src="image" />
             </div>
+
+            <md-dialog :md-active.sync="showIdentityApproverDialog">
+              <md-dialog-title>{{ approver.title }}</md-dialog-title>
+              <div class="dialog-approver-link-container">
+                <div class="dialog-approver-entry">
+                  <div class="dialog-approver-entry-title"><b>Website:</b></div>
+                  <a
+                    class="dialog-approver-link"
+                    v-if="approver.website.url"
+                    :href="approver.website.url"
+                    target="_blank"
+                    >{{ approver.website.url }}</a
+                  >
+                  <p class="dialog-text" v-if="!approver.website.url">
+                    No website provided
+                  </p>
+                  <md-icon
+                    class="verification-icon md-accent"
+                    v-if="approver.website.url && !approverWebsiteVerified"
+                    >warning</md-icon
+                  >
+                  <md-icon
+                    class="verification-icon"
+                    style="color: green"
+                    v-if="approver.website.url && approverWebsiteVerified"
+                    >done</md-icon
+                  >
+                </div>
+                <div class="dialog-approver-entry">
+                  <div class="dialog-approver-entry-title"><b>Twitter:</b></div>
+                  <a
+                    class="dialog-approver-link"
+                    v-if="approver.twitter.url"
+                    :href="approver.twitter.url"
+                    target="_blank"
+                    >{{ approver.twitter.url }}</a
+                  >
+                  <p class="dialog-text" v-if="!approver.twitter.url">
+                    No Twitter provided
+                  </p>
+                  <md-icon
+                    class="verification-icon md-accent"
+                    v-if="approver.twitter.url && !approverTwitterVerified"
+                    >warning</md-icon
+                  >
+                  <md-icon
+                    class="verification-icon"
+                    style="color: green"
+                    v-if="approver.twitter.url && approverTwitterVerified"
+                    >done</md-icon
+                  >
+                </div>
+              </div>
+              <div class="dialog-approver-entry">
+                <div class="dialog-approver-entry-title">
+                  <b>Provided Methods</b>
+                </div>
+              </div>
+              <div class="dialog-approver-methods-wrapper">
+                <div
+                  class="dialog-text dialog-approver-methods"
+                  :key="method.level"
+                  v-for="method in approver.methods"
+                  v-bind:class="{
+                    'approver-level': method.level == approverLevel,
+                  }"
+                >
+                  <p class="dialog-approver-methods-level">
+                    Level {{ method.level }}:
+                  </p>
+                  <p class="dialog-approver-methods-value">
+                    {{ method.value }}
+                  </p>
+                </div>
+              </div>
+              <md-button
+                class="md-primary"
+                @click="showIdentityApproverDialog = false"
+                >Close</md-button
+              >
+            </md-dialog>
           </md-card-content>
         </div>
         <div class="button-container">
@@ -80,7 +177,7 @@
           <md-button class="md-primary" @click="editMaxTicketsPerPerson()"
             >Maximum tickets per person</md-button
           >
-          <md-button class="md-accent" @click="editMetadata()"
+          <md-button class="md-accent" @click="showEditDialog = false"
             >Cancel</md-button
           >
         </md-dialog>
@@ -90,17 +187,14 @@
 </template>
 
 <script>
-import {
-  WEEKDAYS,
-  MONTHS,
-  MAX_TICKETS_PER_PERSON,
-} from "../util/constants/constants.js";
+import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 import { getCurrencySymbol } from "../util/constants/ERC20Tokens.js";
 
 export default {
   name: "EventCard",
   data: () => ({
     showEditDialog: false,
+    showIdentityApproverDialog: false,
   }),
   props: {
     event: Object,
@@ -113,7 +207,7 @@ export default {
       if (this.inListView) {
         this.$router.push({
           path: `summary`,
-          query: { address: this.event.contractAddress },
+          query: { address: this.contractAddress },
         });
       }
     },
@@ -125,6 +219,20 @@ export default {
     },
   },
   computed: {
+    approver() {
+      return this.$store.state.approvers.find(
+        (a) => a.approverAddress === this.event.identityApproverAddress
+      );
+    },
+    approverLevel() {
+      return this.event.identityLevel;
+    },
+    approverTwitterVerified() {
+      return this.approver.twitter.verification;
+    },
+    approverWebsiteVerified() {
+      return this.approver.website.verification;
+    },
     title() {
       return this.event.title ? this.event.title : "no title found";
     },
@@ -142,7 +250,7 @@ export default {
     maxTicketsPerPerson() {
       return this.event.maxTicketsPerPerson
         ? this.event.maxTicketsPerPerson
-        : MAX_TICKETS_PER_PERSON;
+        : "not found";
     },
     date() {
       if (this.event.timestamp) {
@@ -158,6 +266,11 @@ export default {
         );
       }
       return "no date found";
+    },
+    contractAddress() {
+      return this.event.contractAddress
+        ? this.event.contractAddress
+        : "address not found";
     },
     description() {
       return this.event.description
@@ -184,19 +297,19 @@ export default {
 .event-card-container {
   margin-bottom: 10px;
 }
-.event-card-content-entry {
-  width: 80%;
-  /* display: block; */
-}
-.md-card-content.event-card-content {
-  padding-bottom: 16px;
-}
 .event-card-content {
   display: flex;
 }
-.event-card-content-text {
-  min-width: 50%;
-  padding: 0;
+.event-card-content-entry {
+  max-width: 500px;
+  padding-bottom: 1px;
+}
+.md-icon.verification-icon {
+  padding-bottom: 4px;
+  margin-left: 5px;
+}
+.md-card-content.event-card-content {
+  padding-bottom: 16px;
 }
 .image-content {
   position: absolute;
@@ -208,5 +321,9 @@ export default {
 }
 .image-content-wrapper {
   height: 100%;
+}
+.approver-level {
+  font-weight: bold;
+  color: green;
 }
 </style>

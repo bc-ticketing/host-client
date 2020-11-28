@@ -132,22 +132,11 @@
 
           <div class="md-layout md-gutter" v-if="inNewMode">
             <div class="md-layout-item md-small-size-100" style="display: flex">
-              <!-- <md-field
-                :class="getValidationClass('idApprover')"
-                style="margin-right: 24px"
-              > -->
               <md-field style="margin-right: 24px">
-                <label for="idApprover">ID Approver</label>
-                <!-- <md-input
-                  name="idApprover"
-                  id="idApprover"
-                  v-model.lazy="$v.form.idApprover.$model"
-                  @blur="checkIfApproverRegistered"
-                  :disabled="sending"
-                /> -->
+                <label for="id-approver">ID Approver</label>
                 <md-select
-                  id="idApprover"
-                  name="idApprover"
+                  id="id-approver"
+                  name="id-approver"
                   v-model="form.selectedApproverAddress"
                   @md-selected="setApproverLevels"
                   :disabled="sending"
@@ -160,11 +149,6 @@
                     {{ approver.title }}
                   </md-option>
                 </md-select>
-                <p v-if="errors" class="error">
-                  <span class="md-error" v-if="!$v.form.idApprover.required"
-                    >An identity approver is required</span
-                  >
-                </p>
               </md-field>
               <md-field style="max-width: 250px">
                 <label for="idLevel">Identification level</label>
@@ -226,31 +210,59 @@
 
           <md-dialog :md-active.sync="showSelectedIdentityApproverDialog">
             <md-dialog-title>{{ selectedApprover.title }}</md-dialog-title>
-            <div class="dialog-approver-entry">
-              <div class="dialog-approver-entry-title"><b>Website: </b></div>
-              <a
-                class="dialog-text"
-                v-if="selectedApprover.website.url"
-                :href="selectedApprover.website.url"
-                target="_blank"
-                >{{ selectedApprover.website.url }}</a
-              >
-              <p class="dialog-text" v-if="!selectedApprover.website.url">
-                No website provided
-              </p>
-            </div>
-            <div class="dialog-approver-entry">
-              <div class="dialog-approver-entry-title"><b>Twitter: </b></div>
-              <a
-                class="dialog-text"
-                v-if="selectedApprover.twitter.url"
-                :href="selectedApprover.twitter.url"
-                target="_blank"
-                >{{ selectedApprover.twitter.url }}</a
-              >
-              <p class="dialog-text" v-if="!selectedApprover.twitter.url">
-                No Twitter provided
-              </p>
+            <div class="dialog-approver-link-container">
+              <div class="dialog-approver-entry">
+                <div class="dialog-approver-entry-title"><b>Website:</b></div>
+                <a
+                  class="dialog-approver-link"
+                  v-if="selectedApprover.website.url"
+                  :href="selectedApprover.website.url"
+                  target="_blank"
+                  >{{ selectedApprover.website.url }}</a
+                >
+                <p class="dialog-text" v-if="!selectedApprover.website.url">
+                  No website provided
+                </p>
+                <md-icon
+                  class="verification-icon md-accent"
+                  v-if="
+                    selectedApprover.website.url && !approverWebsiteVerified
+                  "
+                  >warning</md-icon
+                >
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="selectedApprover.website.url && approverWebsiteVerified"
+                  >done</md-icon
+                >
+              </div>
+              <div class="dialog-approver-entry">
+                <div class="dialog-approver-entry-title"><b>Twitter:</b></div>
+                <a
+                  class="dialog-approver-link"
+                  v-if="selectedApprover.twitter.url"
+                  :href="selectedApprover.twitter.url"
+                  target="_blank"
+                  >{{ selectedApprover.twitter.url }}</a
+                >
+                <p class="dialog-text" v-if="!selectedApprover.twitter.url">
+                  No Twitter provided
+                </p>
+                <md-icon
+                  class="verification-icon md-accent"
+                  v-if="
+                    selectedApprover.twitter.url && !approverTwitterVerified
+                  "
+                  >warning</md-icon
+                >
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="selectedApprover.twitter.url && approverTwitterVerified"
+                  >done</md-icon
+                >
+              </div>
             </div>
             <div class="dialog-approver-entry">
               <div class="dialog-approver-entry-title">
@@ -410,30 +422,48 @@
           </div>
 
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
+            <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field>
                 <label for="website">Website</label>
                 <md-input
                   name="website"
                   id="website"
                   v-model.lazy="$v.form.website.$model"
+                  @blur="handleWebsiteBlur"
                   :disabled="sending"
                 />
               </md-field>
+              <div class="info-dialog-button verification-icon">
+                <md-icon class="md-accent" v-if="!websiteVerified"
+                  >warning</md-icon
+                >
+                <md-icon style="color: green" v-if="websiteVerified"
+                  >done</md-icon
+                >
+              </div>
             </div>
           </div>
 
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
-            <div class="md-layout-item md-small-size-100">
+            <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field>
                 <label for="twitter">Twitter</label>
                 <md-input
                   name="twitter"
                   id="twitter"
-                  v-model.lazy="$v.form.twitter.$model"
+                  v-model="form.twitter"
+                  @blur="handleTwitterBlur"
                   :disabled="sending"
                 />
               </md-field>
+              <div class="info-dialog-button verification-icon">
+                <md-icon class="md-accent" v-if="!twitterVerified"
+                  >warning</md-icon
+                >
+                <md-icon style="color: green" v-if="twitterVerified"
+                  >done</md-icon
+                >
+              </div>
             </div>
           </div>
         </md-card-content>
@@ -529,9 +559,12 @@ import {
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 import idb from "../util/db/idb";
-import { IdentityApprover } from "../util/identity";
+import {
+  IdentityApprover,
+  requestTwitterVerification,
+  requestWebsiteVerification,
+} from "../util/identity";
 import { getApproverFromStore } from "../util/utility";
-import { getJSONFromIpfs } from "../util/getIpfs";
 
 export default {
   name: "EventForm",
@@ -548,30 +581,28 @@ export default {
     processBarMode: PROGRESS_DETERMINATE,
     processMessage: DEFAULT_ERROR,
 
-    uiState: "submit not clicked",
-    errors: false,
+    errors: false, // whether form is valid to be submitted
+
     deployingContractState: false,
     invokingMetadataChangeState: false,
+
     showStartTimeDialog: false,
     showTokenDialog: false,
     showIdentityApproverDialog: false,
     showSelectedIdentityApproverDialog: false,
     showGranularityDialog: false,
-    ipfsArgs: null,
-    ipfsCid: null,
+
     IpfsHash: null,
     IpfsHashToUnpin: null,
-    ipfsData: null,
     ipfsString: null,
-    ipfsError: false,
-    ipfsAdded: false,
-    eventContractDeployed: false,
-    lastEventInfo: null,
+
+    twitterVerified: false,
+    websiteVerified: false,
+
     form: {
-      // ipfs info
-      title: "title",
-      location: "Zurich",
-      category: "Music",
+      title: "",
+      location: "",
+      category: "",
       eventDescription: "",
       erc20Token: ERC20TESTTOKEN,
       startTime: {
@@ -580,7 +611,6 @@ export default {
       },
       website: "",
       twitter: "",
-      idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
       selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
       granularity: 2,
@@ -626,16 +656,10 @@ export default {
       selectedApproverLevel: {
         required,
       },
-      idApprover: {
-        required,
-      },
       granularity: {
         required,
       },
       website: {
-        url,
-      },
-      twitter: {
         url,
       },
     },
@@ -646,6 +670,24 @@ export default {
     },
     eventFactory() {
       return this.$store.state.eventFactory;
+    },
+    approverTwitterVerified() {
+      return this.selectedApprover.twitter.verification;
+    },
+    approverWebsiteVerified() {
+      return this.selectedApprover.website.verification;
+    },
+    formatTwitter() {
+      let tw = this.form.twitter;
+      if (tw.includes("https://twitter.com/")) {
+        return tw;
+      } else {
+        if (tw.includes(".com/")) {
+          return "https://twitter.com/" + tw.split(".com/")[1];
+        } else {
+          return "https://twitter.com/" + tw;
+        }
+      }
     },
     dateSeconds() {
       return Number(Date.parse(this.form.date) / 1000);
@@ -713,7 +755,6 @@ export default {
       this.form.location = this.event.location;
       this.form.category = this.event.category;
       this.form.eventDescription = this.event.description;
-      // fill time
       this.form.website = this.event.website.url;
       this.form.twitter = this.event.twitter.url;
       this.form.image = this.event.image;
@@ -732,10 +773,28 @@ export default {
         }
       }
     },
+    async handleTwitterBlur() {
+      console.log("handling twitter blur");
+      console.log(this.form.twitter);
+      this.twitterVerified = await requestTwitterVerification(
+        this.form.twitter,
+        this.$store.state.web3.account
+      );
+      console.log("twitter verified:", this.twitterVerified);
+    },
+    async handleWebsiteBlur() {
+      console.log("handling website blur");
+      console.log(this.form.website);
+      this.websiteVerified = await requestWebsiteVerification(
+        this.form.website,
+        this.$store.state.web3.account
+      );
+      console.log("website verified:", this.websiteVerified);
+    },
     async createEvent() {
+      console.log("creating event");
       this.errors = this.$v.form.$invalid;
-      console.log(this.errors);
-      this.uiState = "submit clicked";
+      console.log("errors:", this.errors);
       if (this.errors === true) {
         return;
       }
@@ -745,7 +804,6 @@ export default {
         this.errors = true;
         return;
       }
-      this.uiState = "form submitted";
       this.sending = true;
       this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       await this.uploadToIpfs();
@@ -753,7 +811,6 @@ export default {
       this.sending = false;
     },
     async modifyEvent() {
-      // todo: add checks to compare to current ipfs hash
       this.sending = true;
       this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       this.IpfsHashToUnpin = this.event.ipfsHash;
@@ -770,9 +827,11 @@ export default {
     },
 
     createIpfsString() {
-      const imgData = this.event.image;
-      if (this.imageData != "") {
-        const imgData = this.imageData;
+      let imgData = this.imageData;
+      if (this.event) {
+        if (this.event.image !== "") {
+          imgData = this.event.image;
+        }
       }
       return JSON.stringify({
         version: "1.0",
@@ -782,15 +841,14 @@ export default {
           category: this.form.category,
           description: this.form.eventDescription,
           time: this.startTimeUnix,
-          duration: "",
           website: this.form.website,
-          twitter: this.form.twitter,
+          twitter: this.formatTwitter,
           image: imgData,
         },
       });
     },
     validateForm() {
-      // check if required input fields are valid and then upload the event form to ipfs
+      // check if required input fields are valid
       this.$v.$touch();
       return !this.$v.$invalid;
     },
@@ -947,28 +1005,6 @@ export default {
         this.form.selectedApproverLevel = 0;
       }
     },
-    // Called on change in approver field
-    // chaeckIfApproverRegistered() {
-    //   this.approverLevels = [this.zeroApproverLevel];
-    //   let approvers = this.$store.state.approvers;
-    //   for (let i = 0; i < approvers.length; i++) {
-    //     let approver = approvers[i];
-    //     let address = approver.approverAddress;
-    //     if (this.form.idApprover == address) {
-    //       this.selectedApprover = approver;
-    //       for (let j = 0; j < this.selectedApprover.methods.length; j++) {
-    //         let method = this.selectedApprover.methods[j];
-    //         this.approverLevels.push(method);
-    //       }
-    //       this.approverRegistered = true;
-    //       return true;
-    //     }
-    //   }
-    //   this.form.selectedApproverLevel = 0;
-    //   this.form.selectedApprover = NULL_ADDRESS;
-    //   this.approverRegistered = false;
-    //   return false;
-    // }
   },
 };
 </script>
@@ -987,6 +1023,9 @@ export default {
 .process-message {
   text-align: center;
 }
+.dialog-approver-link-container {
+  padding-bottom: 20px;
+}
 .dialog-approver-entry {
   display: flex;
 }
@@ -995,17 +1034,22 @@ export default {
   min-width: 64px;
 }
 .dialog-approver-methods-wrapper {
-  padding-bottom: 20px;
+  padding-bottom: 10px;
 }
 .dialog-approver-methods {
+  padding-left: 10px;
+  height: 1.6em;
   display: flex;
-  text-align: center;
-  max-height: 1rem;
 }
 .dialog-approver-methods-level {
   min-width: 64px;
 }
-.dialog-approver-entry-value {
+.md-icon.verification-icon {
+  padding-bottom: 5px;
+  margin-left: 10px;
+  margin-right: 24px;
+}
+.dialog-approver-link {
   margin-left: 10px;
 }
 </style>

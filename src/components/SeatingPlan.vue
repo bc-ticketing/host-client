@@ -104,6 +104,7 @@
 <script>
 import { COLOR_ARRAY } from "../util/utility";
 import idb from "../util/db/idb";
+import sleep from "await-sleep";
 // This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue.
 // The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
 
@@ -117,8 +118,8 @@ export default {
   data() {
     return {
       amountSelected: 0,
-      rows: 26,
-      cols: 26,
+      rows: 20,
+      cols: 20,
       minRowSize: 0,
       minColSize: 0,
       blockSelection: false,
@@ -169,39 +170,7 @@ export default {
     },
   },
   methods: {
-    fetchAndUpdateGrid() {
-      var i;
-      var max_x = this.cols;
-      var max_y = this.rows;
-      for (i = 0; i < this.nonFungibleOccupiedSeats.length; i++) {
-        let cords = this.nonFungibleOccupiedSeats[i].split("/");
-        let row_cord = Number(cords[0]);
-        let col_cord = Number(cords[1]);
-        if (row_cord > max_x) {
-          max_x = row_cord;
-        }
-        if (col_cord > max_y) {
-          max_y = col_cord;
-        }
-      }
-      for (i = 0; i < this.fungibleOccupiedSeats.length; i++) {
-        let cords = this.fungibleOccupiedSeats[i].split("/");
-        let row_cord = Number(cords[0]);
-        let col_cord = Number(cords[1]);
-        if (row_cord > max_x) {
-          max_x = row_cord;
-        }
-        if (col_cord > max_y) {
-          max_y = col_cord;
-        }
-      }
-      this.cols = max_x;
-      this.rows = max_y;
-      this.minColSize = max_x;
-      this.minRowSize = max_y;
-    },
-
-    setOccupiedSeats(event) {
+    async setOccupiedSeats(event) {
       if (
         event.nonFungibleTickets.length === 0 &&
         event.fungibleTickets.length === 0
@@ -210,6 +179,7 @@ export default {
       } else {
         this.$emit("seatsToProcess", true);
       }
+      await this.computeSeatingPlanSize(event);
       let existingNfTickets = event.nonFungibleTickets;
       let currentMaxRow = 1;
       let currentMaxCol = 1;
@@ -222,16 +192,6 @@ export default {
           let col = cords[1];
           let nrRow = Number(row);
           let nrCol = Number(col);
-          if (nrRow > currentMaxRow) {
-            currentMaxRow = nrRow;
-            this.rows = nrRow;
-            this.updateGridSize();
-          }
-          if (nrCol > currentMaxCol) {
-            currentMaxCol = nrCol;
-            this.cols = nrCol;
-            this.updateGridSize();
-          }
           let seat = this.$refs[`seat_${row}_${col}`];
           seat[0].dataset.status = "occupied";
           if (c == "" || c == null) {
@@ -251,16 +211,6 @@ export default {
           let col = cords[1];
           let nrRow = Number(row);
           let nrCol = Number(col);
-          if (nrRow > currentMaxRow) {
-            currentMaxRow = nrRow;
-            this.rows = nrRow;
-            this.updateGridSize();
-          }
-          if (nrCol > currentMaxCol) {
-            currentMaxCol = nrCol;
-            this.cols = nrCol;
-            this.updateGridSize();
-          }
           let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
           seat[0].dataset.status = "occupied";
           if (c == "" || c == null) {
@@ -271,38 +221,39 @@ export default {
           seat[0].classList.add("fungible");
         }
       }
-      if (!this.onlySeatingPlan && currentMaxRow < 20) {
-        this.rows = 20;
-        this.updateGridSize();
-      }
-      if (!this.onlySeatingPlan && currentMaxCol < 20) {
-        this.cols = 20;
-        this.updateGridSize();
-      }
     },
-
-    // set status of non-fungible seats already occupied in another ticket type
-    // setNonFungibleOccupiedSeats() {
-    //   for (let i = 0; i < this.nonFungibleOccupiedSeats.length; i++) {
-    //     let cords = this.nonFungibleOccupiedSeats[i].split("/");
-    //     var seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
-    //     seat[0].dataset.status = "occupied";
-    //     seat[0].style.backgroundColor = this.occupiedColor;
-    //   }
-    // },
-
-    // set status of fungible seats already occupied in another ticket type
-    // setFungibleOccupiedSeats() {
-    //   for (let i = 0; i < this.fungibleOccupiedSeats.length; i++) {
-    //     let cords = this.fungibleOccupiedSeats[i].split("/");
-    //     let seat = this.$refs[`seat_${cords[0]}_${cords[1]}`];
-    //     seat[0].dataset.status = "occupied";
-    //     seat[0].style.backgroundColor = this.occupiedColor;
-    //   }
-    // },
+    async computeSeatingPlanSize(event) {
+      let existingTickets = event.nonFungibleTickets.concat(
+        event.fungibleTickets
+      );
+      let currentMaxRows = this.rows;
+      let currentMaxCols = this.cols;
+      for (let i = 0; i < existingTickets.length; i++) {
+        let ticket = existingTickets[i];
+        for (let s = 0; s < ticket.seatMapping.length; s++) {
+          let cords = ticket.seatMapping[s].split("/");
+          let col = cords[0];
+          let row = cords[1];
+          let nrCol = Number(col);
+          let nrRow = Number(row);
+          if (nrRow > currentMaxRows) {
+            currentMaxRows = nrRow;
+          }
+          if (nrCol > currentMaxCols) {
+            currentMaxCols = nrCol;
+          }
+        }
+      }
+      this.cols = currentMaxCols;
+      this.rows = currentMaxRows;
+      this.updateGridSize();
+      await sleep(100);
+      console.log(this.cols + ", " + this.rows);
+    },
 
     // Update styles for the grid
     updateGridSize() {
+      console.log("updatingGridSize:", this.cols, this.rows);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
@@ -484,7 +435,6 @@ export default {
           for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself
           for F tickets: the host can select how many tickets should be created for the selected standing area and the ticket type. Store on IPFS: list of all indices of the seats (for frontend display on guest client).  
            */
-      //TODO: call SC to create tickets + store metadata on ipfs including ticket mapping
     },
     increaseColorIndex() {
       if (this.colorIndex == COLOR_ARRAY.length - 1) {
@@ -504,19 +454,22 @@ export default {
     borderColor() {
       return this.onlySeatingPlan ? "#cccccc" : "#ffffff";
     },
+    assignedEvent() {
+      return this.event;
+    },
   },
   async mounted() {
     this.$refs["cont"].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
     this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     this.$root.$on("eventsFullyLoaded", async () => {
-      let event = await idb.getEvent(this.address);
-      if (event != null) {
-        this.setOccupiedSeats(event);
+      let ev = await idb.getEvent(this.address);
+      if (ev != null) {
+        this.setOccupiedSeats(ev);
       }
     });
-    let event = await idb.getEvent(this.address);
-    if (event != null) {
-      this.setOccupiedSeats(event);
+    let ev = await idb.getEvent(this.address);
+    if (ev != null) {
+      this.setOccupiedSeats(ev);
     }
   },
 };
