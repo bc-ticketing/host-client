@@ -52,6 +52,7 @@ export class Event {
       this.contractAddress = contractAddress.contractAddress;
       return;
     }
+    this.owner = "";
     this.loadedMetadata = false;
     this.lastFetchedBlockMetadata = STARTING_BLOCK;
     this.lastFetchedBlockTickets = STARTING_BLOCK;
@@ -69,7 +70,7 @@ export class Event {
     this.ipfsHash = "";
     this.currency = 0;
     this.currencySymbol = "";
-    this.identityContractAddress = "";
+    this.identityApproverAddress = "";
     this.identityLevel = 0;
     this.website = {
       url: '',
@@ -79,6 +80,10 @@ export class Event {
       url: '',
       verification: false
     }
+  }
+
+  setOwner(owner) {
+    this.owner = owner;
   }
 
   /**
@@ -91,15 +96,17 @@ export class Event {
    * @param {*} currentBlock the current block on the network
    */
   async loadMetadata(web3Instance, ABI, currentBlock) {
+    console.log("loadMetadata event executed");
     try {
       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
-      console.log("hashRetrieved? " + hashRetrieved);
+      console.log("hashRetrieved: ", hashRetrieved);
       if (hashRetrieved) {
         const loaded = await this.loadIPFSMetadata();
-        console.log("metadata loaded? " + loaded);
+        console.log("metadata loaded: ", loaded);
         if (loaded) {
           this.loadedMetadata = true;
           this.lastFetchedBlockMetadata = currentBlock;
+          await this.verify();
           return true;
         }
       }
@@ -141,10 +148,6 @@ export class Event {
       metadataObject.size,
       metadataObject.digest
     );
-
-    // if (this.ipfsHash == currentHash) {
-    //   return false;
-    // }
 
     this.ipfsHash = currentHash;
     console.log(this.ipfsHash);
@@ -235,12 +238,17 @@ export class Event {
     this.lastFetchedBlockAftermarket = block;
   }
 
-  // loading identity approver and its level
+  /**
+   * Loads the identity approver address and the level.
+   * 
+   * @param {*} web3Instance the web3 instance
+   * @param {*} ABI the abi of the event contract
+   */
   async loadIdentityData(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const identityContractAddress = await eventSC.methods.identityApprover().call();
+    const identityApproverAddress = await eventSC.methods.identityApprover().call();
     const identityLevel = await eventSC.methods.identityLevel().call();
-    this.identityContractAddress = identityContractAddress;
+    this.identityApproverAddress = identityApproverAddress;
     this.identityLevel = identityLevel;
   }
 
@@ -402,12 +410,37 @@ export class Event {
     }
   }
 
-  async requestTwitterVerification() {
-    this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
+  async verify() {
+    console.log("executing verifications of event");
+    const twitterVerificationChanged = await this.verifyTwitter();
+    const websiteVerificationChanged = await this.verifyWebsite();
+    return twitterVerificationChanged || websiteVerificationChanged;
   }
 
-  async requestWebsiteVerification() {
-    this.website.verification = await requestWebsiteVerification(this.website.url);
+  async verifyTwitter() {
+    console.log("verifying twitter of event");
+    if (this.twitter.url) {
+      console.log(this.twitter.url);
+      const currentState = await requestTwitterVerification(this.twitter.url, this.owner);
+      console.log("currentState:", currentState);
+      if (currentState !== this.twitter.verification) {
+        this.twitter.verification = currentState;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async verifyWebsite() {
+    console.log("verifying website of event");
+    if (this.website.url) {
+      const currentState = await requestWebsiteVerification(this.website.url, this.owner);
+      if (currentState !== this.website.verification) {
+        this.website.verification = currentState;
+        return true;
+      }
+    }
+    return false;
   }
 
   hasFungibleTicketType(id) {

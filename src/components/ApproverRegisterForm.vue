@@ -150,28 +150,49 @@
             </md-field>
           </div>
 
-          <div class="md-layout-item md-small-size-100">
+          <div class="md-layout-item md-small-size-100 info-dialog">
             <md-field>
-              <label for="approver-website">URL</label>
+              <label for="website">Website</label>
               <md-input
-                name="approver-website"
-                id="approver-website"
+                name="website"
+                id="website"
                 v-model="form.approverWebsite"
+                @blur="handleWebsiteBlur"
                 :disabled="sending"
               />
             </md-field>
+            <div class="info-dialog-button verification-icon">
+              <md-icon class="md-accent" v-if="!websiteVerified"
+                >warning</md-icon
+              >
+              <md-icon
+                class="verification-icon"
+                style="color: green"
+                v-if="websiteVerified"
+                >done</md-icon
+              >
+            </div>
           </div>
 
-          <div class="md-layout-item md-small-size-100">
+          <div class="md-layout-item md-small-size-100 info-dialog">
             <md-field>
               <label for="twitter">Twitter</label>
               <md-input
                 name="twitter"
                 id="twitter"
                 v-model="form.approverTwitter"
+                @blur="handleTwitterBlur"
                 :disabled="sending"
               />
             </md-field>
+            <div class="info-dialog-button verification-icon">
+              <md-icon class="md-accent" v-if="!twitterVerified"
+                >warning</md-icon
+              >
+              <md-icon style="color: green" v-if="twitterVerified"
+                >done</md-icon
+              >
+            </div>
           </div>
         </md-card-content>
 
@@ -230,6 +251,10 @@ import {
   APPROVER_REGISTRATION,
   APPROVER_REGISTRATION_SUCCESSFUL,
 } from "../util/constants/constants.js";
+import {
+  requestTwitterVerification,
+  requestWebsiteVerification,
+} from "../util/identity";
 
 export default {
   name: "ApproverRegisterForm",
@@ -242,13 +267,15 @@ export default {
     registered: false,
     exists: null,
 
+    twitterVerified: false,
+    websiteVerified: false,
+
     showNumberOfLevelsDialog: false,
     IpfsHash: null,
     ipfsArgs: null,
     ipfsData: null,
     ipfsString: null,
     form: {
-      // ipfs info
       approverTitle: "",
       methods: [],
       firstLevel: "",
@@ -258,7 +285,6 @@ export default {
       fifthLevel: "",
       approverWebsite: "",
       approverTwitter: "",
-      // blockchain info
       numberOfLevels: 1,
     },
     showNrLevels: false,
@@ -266,6 +292,18 @@ export default {
   computed: {
     web3() {
       return this.$store.state.web3;
+    },
+    formatTwitter() {
+      let tw = this.form.approverTwitter;
+      if (tw.includes("https://twitter.com/")) {
+        return tw;
+      } else {
+        if (tw.includes(".com/")) {
+          return "https://twitter.com/" + tw.split(".com/")[1];
+        } else {
+          return "https://twitter.com/" + tw;
+        }
+      }
     },
     registeredApprovers() {
       return this.$store.state.approvers;
@@ -323,6 +361,24 @@ export default {
         this.hideStatus();
       }, 5000);
     },
+    async handleTwitterBlur() {
+      console.log("handling twitter blur");
+      console.log(this.formatTwitter);
+      this.twitterVerified = await requestTwitterVerification(
+        this.formatTwitter,
+        this.$store.state.web3.account
+      );
+      console.log("twitter verified:", this.twitterVerified);
+    },
+    async handleWebsiteBlur() {
+      console.log("handling website blur");
+      console.log(this.form.approverWebsite);
+      this.websiteVerified = await requestWebsiteVerification(
+        this.form.approverWebsite,
+        this.$store.state.web3.account
+      );
+      console.log("website verified:", this.websiteVerified);
+    },
     createIpfsString() {
       var methods = this.approverMethods.slice(0, this.form.numberOfLevels);
       let json = JSON.stringify({
@@ -331,7 +387,7 @@ export default {
           title: this.form.approverTitle,
           methods: methods,
           website: this.form.approverWebsite,
-          twitter: this.form.approverTwitter,
+          twitter: this.formatTwitter,
         },
       });
       console.log(json);

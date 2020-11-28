@@ -2,8 +2,6 @@ import { argsToCid } from "idetix-utils";
 import axios from "axios";
 import { getJSONFromIpfs } from "../util/getIpfs";
 import { STARTING_BLOCK } from "./constants/constants";
-import { IDENTITY_ABI } from "./abi/Identity";
-// import { eventMetadataChanged } from "./blockchainEventHandler";
 
 export class IdentityApprover {
   constructor(approverAddress) {
@@ -28,19 +26,18 @@ export class IdentityApprover {
     this.ipfsHash = "";
   }
 
-  async loadMetadata(identityContract, ABI, currentBlock) {
-    if (this.loadedMetadata) {
-      return true;
-    }
+  async loadMetadata(identityContract, currentBlock) {
+    console.log("loadMetadata approver executed");
     try {
-      const hashRetrieved = await this.fetchIPFSHash(ABI, identityContract);
-      console.log("hashRetrieved? " + hashRetrieved);
+      const hashRetrieved = await this.fetchIPFSHash(identityContract);
+      console.log("hashRetrieved?", hashRetrieved);
       if (hashRetrieved) {
         const loaded = await this.loadIPFSMetadata();
-        console.log("metadata loaded? " + loaded);
+        console.log("metadata loaded:", loaded);
         if (loaded) {
           this.loadedMetadata = true;
           this.lastFetchedBlock = currentBlock;
+          await this.verify();
           return true;
         }
       }
@@ -48,10 +45,9 @@ export class IdentityApprover {
       console.log(e);
       return false;
     }
-    return false;
   }
 
-  async fetchIPFSHash(ABI, identityContract) {
+  async fetchIPFSHash(identityContract) {
     console.log("fetchipfshash last block approver: " + this.lastFetchedBlock);
     console.log(this.approverAddress);
     const approverMetadata = await identityContract.methods
@@ -97,63 +93,38 @@ export class IdentityApprover {
     }
   }
 
-  // /**
-  //  * Loads the metadata if there are updates.
-  //  * Returns true, if anything new has been loaded.
-  //  *
-  //  * @param {*} web3Instance
-  //  * @param {*} ABI
-  //  */
-  // async loadMetadata(web3Instance, ABI) {
-  //   let changed = false;
-  //   try {
-  //     changed = await this.metadataChanged(ABI, web3Instance);
-  //     console.log("approver metadata changed? " + changed);
-  //     if (changed) {
-  //       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
-  //       console.log("hashRetrieved? " + hashRetrieved);
-  //       if (hashRetrieved) {
-  //         const loaded = await this.loadIPFSMetadata();
-  //         // this.requestTwitterVerification();
-  //         // this.requestWebsiteVerification();
-  //         console.log("metadata loaded? " + loaded);
-  //         if (!loaded) {
-  //           changed = false;
-  //         }
-  //       } else {
-  //         changed = false;
-  //       }
-  //     }
-  //   } catch (e) {
-  //     console.log(e);
-  //     return false;
-  //   }
-  //   return changed;
-  // }
+  async verify() {
+    const twitterVerificationChanged = await this.verifyTwitter();
+    const websiteVerificationChanged = await this.verifyWebsite();
+    return twitterVerificationChanged || websiteVerificationChanged;
+  }
 
-  async requestTwitterVerification() {
-    try {
-      this.twitter.verification = await requestTwitterVerification(
-        getHandle(this.twitter.url)
-      );
-    } catch (e) {
-      console.log(e);
+  async verifyTwitter() {
+    console.log("verifying twitter of approver");
+    if (this.twitter.url) {
+      const currentState = await requestTwitterVerification(this.twitter.url, this.approverAddress);
+      if (currentState !== this.twitter.verification) {
+        this.twitter.verification = currentState;
+        return true;
+      }
     }
+    return false;
   }
 
-  async requestWebsiteVerification() {
-    this.website.verification = await requestWebsiteVerification(
-      this.website.url
-    );
+  /**
+   * Verifies the website of the event
+   */
+  async verifyWebsite() {
+    console.log("verifying website of approver");
+    if (this.website.url) {
+      const currentState = await requestWebsiteVerification(this.website.url, this.approverAddress);
+      if (currentState !== this.website.verification) {
+        this.website.verification = currentState;
+        return true;
+      }
+    }
+    return false;
   }
-
-  // async metadataChanged(identitySC) {
-  //   const changed = await approverMetadataChanged(
-  //     identitySC,
-  //     this.lastFetchedBlock + 1
-  //   )
-  //   return changed;
-  // }
 
   async getApprovalLevel(identitySC, userAddress) {
     const level = await identitySC.methods

@@ -43,6 +43,12 @@ export default {
       this.$root.$emit("loadedEvents");
       this.welcome = false;
     },
+    loadEventsInterval: function () {
+      setInterval(async () => {
+        console.log("loading events");
+        await this.loadEvents();
+      }, 30000);
+    },
     loadApprovers: async function () {
       await this.$store.dispatch("loadApprovers");
       this.$root.$emit("loadedApprovers");
@@ -51,7 +57,6 @@ export default {
       setInterval(async () => {
         console.log("loading approvers");
         await this.loadApprovers();
-        // await this.loadEvents();
       }, 10000);
     },
     anyEventPresent: function () {
@@ -67,6 +72,7 @@ export default {
       await this.loadEvents();
       await this.loadApprovers();
       this.loadApproversInterval();
+      this.loadEventsInterval();
     });
     await this.$store.dispatch("addNullAddressApproverToStore");
     this.$root.$emit("addedNullAddressApproverToStore");
