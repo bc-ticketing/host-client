@@ -57,6 +57,9 @@
               <div v-if="description" class="event-card-content-entry">
                 <b>Description: </b>{{ description }}
               </div>
+              <div v-if="contractAddress" class="event-card-content-entry">
+                <b>Contract: </b>{{ contractAddress }}
+              </div>
             </div>
             <div class="image-content-wrapper">
               <img v-if="image" class="image-content" :src="image" />
@@ -113,7 +116,7 @@ export default {
       if (this.inListView) {
         this.$router.push({
           path: `summary`,
-          query: { address: this.event.contractAddress },
+          query: { address: this.contractAddress },
         });
       }
     },
@@ -159,6 +162,11 @@ export default {
       }
       return "no date found";
     },
+    contractAddress() {
+      return this.event.contractAddress
+        ? this.event.contractAddress
+        : "address not found";
+    },
     description() {
       return this.event.description
         ? this.event.description
@@ -184,19 +192,14 @@ export default {
 .event-card-container {
   margin-bottom: 10px;
 }
-.event-card-content-entry {
-  width: 80%;
-  /* display: block; */
-}
-.md-card-content.event-card-content {
-  padding-bottom: 16px;
-}
 .event-card-content {
   display: flex;
 }
-.event-card-content-text {
-  min-width: 50%;
-  padding: 0;
+.event-card-content-entry {
+  max-width: 500px;
+}
+.md-card-content.event-card-content {
+  padding-bottom: 16px;
 }
 .image-content {
   position: absolute;
