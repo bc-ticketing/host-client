@@ -240,7 +240,6 @@
             >
               {{ ticketType.title }}
             </TicketDetails>
-            <!-- <TicketType v-bind:ticket="ticketType"></TicketType> -->
           </div>
         </md-card-content>
 
@@ -303,7 +302,6 @@ import {
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ERC20_ABI } from "../util/abi/ERC20";
 import SeatingPlan from "../components/SeatingPlan";
-// import TicketType from "../components/TicketType";
 import TicketDetails from "../components/TicketDetails";
 import {
   PROCESSING,
@@ -324,7 +322,10 @@ import {
 } from "../util/constants/constants";
 import idb from "../util/db/idb";
 import getDecimals from "../util/utility.js";
-import { ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
+import {
+  ERC20TESTTOKEN,
+  getCurrencyDecimals,
+} from "../util/constants/ERC20Tokens.js";
 
 export default {
   name: "TicketForm",
@@ -332,7 +333,6 @@ export default {
     SeatingPlan,
     VueTimepicker,
     TicketDetails,
-    // TicketType,
   },
   props: {
     event: Object,
@@ -348,7 +348,6 @@ export default {
     presaleTypeIpfsStrings: [],
     nonPresaleTypeIpfsHashes: [],
     nonPresaleTypeIpfsStrings: [],
-    currencyDecimals: null,
     withPresale: false,
     amountOfSelectedSeats: 0,
     finalizationDate: null,
@@ -751,23 +750,6 @@ export default {
       };
     },
 
-    // async fetchOccupiedSeats() {
-    //   let existingCids = await this.fetchIpfsHashesOfExistingTypes();
-    //   console.log(existingCids);
-    //   var i;
-    //   let map = [];
-    //   for (i = 0; i < existingCids.length; i++) {
-    //     let ipfsData = await this.downloadFromIpfs(existingCids[i]);
-    //     let typeJson = JSON.parse(ipfsData);
-    //     let mapping = typeJson.ticket.mapping;
-    //     var j;
-    //     for (j = 0; j < mapping.length; j++) {
-    //       map.push(mapping[j]);
-    //     }
-    //   }
-    //   console.log(map);
-    //   this.occupiedSeats = map;
-    // },
     async fetchIpfsHashesOfExistingTypes() {
       let pastEvents = await this.contract.getPastEvents("TicketMetadata", {
         fromBlock: 1,
@@ -881,6 +863,9 @@ export default {
     anySavedType() {
       return this.savedTypes.length != 0 || this.savedPresaleTypes.length != 0;
     },
+    currencyDecimals() {
+      return this.event.currency ? getDecimals(this.event.currency) : 0;
+    },
     currencyDecimalFactor() {
       return Math.pow(10, this.currencyDecimals);
     },
@@ -961,16 +946,10 @@ export default {
         this.$route.query.address
       );
     }
-    try {
-      this.event = await idb.getEvent(this.$route.query.address);
-    } catch (e) {
-      console.log(e);
-    }
     if (!this.event) {
       this.showErrorMessage();
       return;
     }
-    this.currencyDecimals = getDecimals(this.event.currency);
     this.finalizationDate = this.getDateAfterMonths(8);
     this.presaleClosingDate = this.getDateAfterMonths(2);
   },
@@ -979,9 +958,6 @@ export default {
       title: {
         // required,
         minLength: minLength(3),
-        // },
-        // finalization: {
-        //   required
       },
     },
   },
