@@ -72,7 +72,11 @@
           </div>
 
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
+            <div class="currency-symbol">
+              <!-- <div class="currency-wrapper" style="display: flex"> -->
+              <div>{{ currencySymbol }}</div>
+            </div>
+            <div class="md-layout-item">
               <md-field>
                 <label for="price">Ticket Price</label>
                 <md-input
@@ -83,6 +87,7 @@
                 />
                 <span class="md-error">The price is required.</span>
               </md-field>
+              <!-- </div> -->
             </div>
           </div>
 
@@ -863,6 +868,9 @@ export default {
     anySavedType() {
       return this.savedTypes.length != 0 || this.savedPresaleTypes.length != 0;
     },
+    currencySymbol() {
+      return this.event.currencySymbol;
+    },
     currencyDecimals() {
       return this.event.currency ? getDecimals(this.event.currency) : 0;
     },
@@ -956,7 +964,7 @@ export default {
   validations: {
     form: {
       title: {
-        // required,
+        required,
         minLength: minLength(3),
       },
     },
@@ -986,5 +994,10 @@ export default {
 }
 .presale-checkbox {
   display: flex;
+}
+.currency-symbol {
+  width: 40px;
+  margin: 24px 10px 0 24px;
+  font-size: 1.3em;
 }
 </style>
