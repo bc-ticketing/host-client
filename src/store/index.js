@@ -81,7 +81,6 @@ export default new Vuex.Store({
       if (!loadedMetadata) {
         await event.verify();
       }
-      console.log("EVENT:", event);
       if (event) {
         console.log("saving following event to db");
         await idb.saveEvent(event);

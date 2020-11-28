@@ -7,7 +7,7 @@ const ERC20TESTTOKEN_DECIMALS = 18;
 
 export { ETH, ETH_DECIMALS, DAI, DAI_DECIMALS, ERC20TESTTOKEN, ERC20TESTTOKEN_DECIMALS };
 
-const erc20TokenMap = {ETH: ETH, DAI: DAI, "ERC20 Test Token": ERC20TESTTOKEN};
+const erc20TokenMap = {ETH: ETH, DAI: DAI, "ERC20": ERC20TESTTOKEN};
 
 export function getCurrencySymbol(tokenAddress) {
   return Object.keys(erc20TokenMap).find(key => erc20TokenMap[key] === tokenAddress);

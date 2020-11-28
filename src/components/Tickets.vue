@@ -59,9 +59,4 @@ export default {
 .summary-container {
   padding-bottom: 10px;
 }
-/* .router-button {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-} */
 </style>

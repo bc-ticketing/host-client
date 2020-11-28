@@ -44,57 +44,6 @@
         </div>
       </div>
     </md-card>
-    <!-- <md-card>
-      <md-toolbar md-elevation="0">
-        <h3 class="md-title" style="flex: 1">Tickets</h3>
-        <md-button
-          class="md-primary"
-          v-if="!ticketFormOpen"
-          @click="openTicketForm"
-          >Add New Ticket Category</md-button
-        >
-        <md-button
-          class="md-accent"
-          v-if="ticketFormOpen"
-          @click="closeTicketForm"
-          >Cancel</md-button
-        >
-      </md-toolbar>
-      <md-card-content>
-        <md-content class="md-scrollbar">
-          <md-app>
-            <md-app-drawer class="md-scrollbar" md-permanent="full">
-              <div v-for="(ticketType, index) in tickets" :key="index">
-                <md-list>
-                  <md-list-item
-                    @click="selectTicketType(ticketType)"
-                    :style="getStyle(ticketType)"
-                  >
-                    <md-icon>move_to_inbox</md-icon>
-                    <span class="md-list-item-text">{{
-                      ticketType.title
-                    }}</span>
-                  </md-list-item>
-                </md-list>
-              </div>
-            </md-app-drawer>
-
-            <md-app-content>
-              <TicketDetails
-                v-bind:created="true"
-                v-bind:ticketType="selectedTicketType"
-                v-bind:event="event"
-                v-if="
-                  selectedTicketType != null || selectedTicketType != undefined
-                "
-              >
-                {{ selectedTicketType.title }}
-              </TicketDetails>
-            </md-app-content>
-          </md-app>
-        </md-content>
-      </md-card-content>
-    </md-card> -->
   </div>
 </template>
 
