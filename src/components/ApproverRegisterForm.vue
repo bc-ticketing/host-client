@@ -479,4 +479,7 @@ export default {
 .already-registered-container {
   text-align: center;
 }
+.info-dialog-button.verification-icon {
+  margin-left: 20px;
+}
 </style>

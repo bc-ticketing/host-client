@@ -485,7 +485,9 @@
             >Submit changes</md-button
           >
           <md-button
-            v-if="inNewMode && !deployingContractState"
+            v-if="
+              inNewMode && !deployingContractState && !this.$v.form.$invalid
+            "
             class="md-primary"
             @click.prevent="createEvent"
             :disabled="sending"
@@ -613,7 +615,7 @@ export default {
       twitter: "",
       selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
-      granularity: 2,
+      granularity: 4,
     },
     noApprover: {
       title: "No approver",
@@ -1051,5 +1053,8 @@ export default {
 }
 .dialog-approver-link {
   margin-left: 10px;
+}
+.info-dialog-button.verification-icon {
+  margin-left: 20px;
 }
 </style>

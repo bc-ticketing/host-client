@@ -59,7 +59,7 @@
                 v-if="approver"
                 class="event-card-content-entry"
               >
-                <b>Identity Approver: </b>{{ approver.title }}
+                <b>Identity Approver: </b>{{ approverTitle }}
               </div>
               <div v-if="maxTicketsPerPerson" class="event-card-content-entry">
                 <b>Max tickets per person: </b>{{ maxTicketsPerPerson }}
@@ -79,29 +79,29 @@
             </div>
 
             <md-dialog :md-active.sync="showIdentityApproverDialog">
-              <md-dialog-title>{{ approver.title }}</md-dialog-title>
+              <md-dialog-title>{{ approverTitle }}</md-dialog-title>
               <div class="dialog-approver-link-container">
                 <div class="dialog-approver-entry">
                   <div class="dialog-approver-entry-title"><b>Website:</b></div>
                   <a
                     class="dialog-approver-link"
-                    v-if="approver.website.url"
-                    :href="approver.website.url"
+                    v-if="approverWebsiteFound"
+                    :href="approverWebsiteURL"
                     target="_blank"
-                    >{{ approver.website.url }}</a
+                    >{{ approverWebsiteURL }}</a
                   >
-                  <p class="dialog-text" v-if="!approver.website.url">
+                  <p class="dialog-text" v-if="!approverWebsiteFound">
                     No website provided
                   </p>
                   <md-icon
                     class="verification-icon md-accent"
-                    v-if="approver.website.url && !approverWebsiteVerified"
+                    v-if="approverWebsiteFound && !approverWebsiteVerified"
                     >warning</md-icon
                   >
                   <md-icon
                     class="verification-icon"
                     style="color: green"
-                    v-if="approver.website.url && approverWebsiteVerified"
+                    v-if="approverWebsiteFound && approverWebsiteVerified"
                     >done</md-icon
                   >
                 </div>
@@ -109,23 +109,23 @@
                   <div class="dialog-approver-entry-title"><b>Twitter:</b></div>
                   <a
                     class="dialog-approver-link"
-                    v-if="approver.twitter.url"
-                    :href="approver.twitter.url"
+                    v-if="approverTwitterFound"
+                    :href="approverTwitterURL"
                     target="_blank"
-                    >{{ approver.twitter.url }}</a
+                    >{{ approverTwitterURL }}</a
                   >
-                  <p class="dialog-text" v-if="!approver.twitter.url">
+                  <p class="dialog-text" v-if="!approverTwitterFound">
                     No Twitter provided
                   </p>
                   <md-icon
                     class="verification-icon md-accent"
-                    v-if="approver.twitter.url && !approverTwitterVerified"
+                    v-if="approverTwitterFound && !approverTwitterVerified"
                     >warning</md-icon
                   >
                   <md-icon
                     class="verification-icon"
                     style="color: green"
-                    v-if="approver.twitter.url && approverTwitterVerified"
+                    v-if="approverTwitterFound && approverTwitterVerified"
                     >done</md-icon
                   >
                 </div>
@@ -139,7 +139,7 @@
                 <div
                   class="dialog-text dialog-approver-methods"
                   :key="method.level"
-                  v-for="method in approver.methods"
+                  v-for="method in approverMethods"
                   v-bind:class="{
                     'approver-level': method.level == approverLevel,
                   }"
@@ -224,14 +224,32 @@ export default {
         (a) => a.approverAddress === this.event.identityApproverAddress
       );
     },
+    approverTitle() {
+      return this.approver ? this.approver.title : "Not found";
+    },
+    approverMethods() {
+      return this.approver ? this.approver.methods : [];
+    },
+    approverWebsiteURL() {
+      return this.approver ? this.approver.website.url : "Not found";
+    },
+    approverWebsiteFound() {
+      return this.approverWebsiteURL !== "Not found";
+    },
+    approverTwitterURL() {
+      return this.approver ? this.approver.twitter.url : "Not found";
+    },
+    approverTwitterFound() {
+      return this.approverTwitterURL !== "Not found";
+    },
     approverLevel() {
       return this.event.identityLevel;
     },
     approverTwitterVerified() {
-      return this.approver.twitter.verification;
+      return this.approver ? this.approver.twitter.verification : false;
     },
     approverWebsiteVerified() {
-      return this.approver.website.verification;
+      return this.approver ? this.approver.website.verification : false;
     },
     title() {
       return this.event.title ? this.event.title : "no title found";
