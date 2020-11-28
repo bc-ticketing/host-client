@@ -410,30 +410,54 @@
           </div>
 
           <div class="md-layout md-gutter">
-            <div class="md-layout-item md-small-size-100">
+            <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field>
                 <label for="website">Website</label>
                 <md-input
                   name="website"
                   id="website"
                   v-model.lazy="$v.form.website.$model"
+                  @blur="handleWebsiteBlur"
                   :disabled="sending"
                 />
               </md-field>
+              <div class="info-dialog-button verification-icon">
+                <md-icon class="md-accent" v-if="!websiteVerified"
+                  >warning</md-icon
+                >
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="websiteVerified"
+                  >done</md-icon
+                >
+              </div>
             </div>
           </div>
 
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
-            <div class="md-layout-item md-small-size-100">
+            <div class="md-layout-item md-small-size-100 info-dialog">
               <md-field>
                 <label for="twitter">Twitter</label>
                 <md-input
                   name="twitter"
                   id="twitter"
                   v-model.lazy="$v.form.twitter.$model"
+                  @blur="handleTwitterBlur"
                   :disabled="sending"
                 />
               </md-field>
+              <div class="info-dialog-button verification-icon">
+                <md-icon class="md-accent" v-if="!twitterVerified"
+                  >warning</md-icon
+                >
+                <md-icon
+                  class="verification-icon"
+                  style="color: green"
+                  v-if="twitterVerified"
+                  >done</md-icon
+                >
+              </div>
             </div>
           </div>
         </md-card-content>
@@ -485,7 +509,7 @@ import {
   email,
   url,
   minLength,
-  maxLength,
+  maxLength
 } from "vuelidate/lib/validators";
 import VueTimepicker from "vue2-timepicker";
 import "vue2-timepicker/dist/VueTimepicker.css";
@@ -519,17 +543,21 @@ import {
   EVENT_DEPLOYED,
   EVENT_DEPLOYING,
   EVENT_METADATA_CHANGE,
-  EVENT_METADATA_CHANGE_SUCCESSFUL,
+  EVENT_METADATA_CHANGE_SUCCESSFUL
 } from "../util/constants/constants";
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   EVENT_FACTORY_ABI,
-  EVENT_FACTORY_ADDRESS,
+  EVENT_FACTORY_ADDRESS
 } from "../util/abi/EventFactory.js";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 import { ETH, DAI, ERC20TESTTOKEN } from "../util/constants/ERC20Tokens.js";
 import idb from "../util/db/idb";
-import { IdentityApprover } from "../util/identity";
+import {
+  IdentityApprover,
+  requestTwitterVerification,
+  requestWebsiteVerification
+} from "../util/identity";
 import { getApproverFromStore } from "../util/utility";
 import { getJSONFromIpfs } from "../util/getIpfs";
 
@@ -540,7 +568,7 @@ export default {
   props: {
     event: Object,
     inEditMode: Boolean,
-    inNewMode: Boolean,
+    inNewMode: Boolean
   },
   data: () => ({
     sending: false,
@@ -567,6 +595,10 @@ export default {
     ipfsAdded: false,
     eventContractDeployed: false,
     lastEventInfo: null,
+
+    twitterVerified: false,
+    websiteVerified: false,
+
     form: {
       // ipfs info
       title: "title",
@@ -576,69 +608,69 @@ export default {
       erc20Token: ERC20TESTTOKEN,
       startTime: {
         HH: "18",
-        mm: "00",
+        mm: "00"
       },
       website: "",
       twitter: "",
       idApprover: "0x4ACeea81cf19876a016436233E054E709E9d19D9",
       selectedApproverAddress: NULL_ADDRESS,
       selectedApproverLevel: 0,
-      granularity: 2,
+      granularity: 2
     },
     noApprover: {
       title: "No approver",
-      approverAddress: NULL_ADDRESS,
+      approverAddress: NULL_ADDRESS
     },
     zeroApproverLevel: {
       level: 0,
-      value: "No identity approval required",
+      value: "No identity approval required"
     },
     approverLevels: [{ level: 0, value: "No identity approval required" }],
     useERC20Token: false,
     erc20Tokens: {
       testToken: ERC20TESTTOKEN,
-      dai: DAI,
+      dai: DAI
     },
     imageData: "",
-    disabledDates: (date) => {
+    disabledDates: date => {
       const day = date.getDay();
       return day >= 0;
     },
-    dateUponSending: null,
+    dateUponSending: null
   }),
   validations: {
     form: {
       title: {
-        required,
+        required
       },
       location: {
-        required,
+        required
       },
       date: {
-        required,
+        required
       },
       eventDescription: {
-        required,
+        required
       },
       erc20Token: {
-        required,
+        required
       },
       selectedApproverLevel: {
-        required,
+        required
       },
       idApprover: {
-        required,
+        required
       },
       granularity: {
-        required,
+        required
       },
       website: {
-        url,
+        url
       },
       twitter: {
-        url,
-      },
-    },
+        url
+      }
+    }
   },
   computed: {
     web3() {
@@ -662,8 +694,7 @@ export default {
     },
     getApproverLevel() {
       return this.approverLevels.find(
-        (approverLevel) =>
-          approverLevel.level === this.form.selectedApproverLevel
+        approverLevel => approverLevel.level === this.form.selectedApproverLevel
       );
     },
     selectedApprover() {
@@ -673,12 +704,12 @@ export default {
     },
     approverRegistered() {
       return this.form.selectedApproverAddress != NULL_ADDRESS;
-    },
+    }
   },
   watch: {
-    sending: function (val) {
+    sending: function(val) {
       this.dateUponSending = this.form.date;
-    },
+    }
   },
   async created() {
     const pinataAuth = await pinata.testAuthentication();
@@ -718,7 +749,7 @@ export default {
       this.form.twitter = this.event.twitter.url;
       this.form.image = this.event.image;
     },
-    leaveEditMode: function () {
+    leaveEditMode: function() {
       this.$emit("finishEditing");
     },
     getValidationClass(fieldName) {
@@ -727,10 +758,28 @@ export default {
         if (this.errors) {
           return {
             "md-invalid": field.$invalid,
-            "md-required": field.$required,
+            "md-required": field.$required
           };
         }
       }
+    },
+    async handleTwitterBlur() {
+      console.log("handling twitter blur");
+      console.log(this.form.twitter);
+      this.twitterVerified = await requestTwitterVerification(
+        this.form.twitter,
+        this.$store.state.web3.account
+      );
+      console.log("twitter verified:", this.twitterVerified);
+    },
+    async handleWebsiteBlur() {
+      console.log("handling website blur");
+      console.log(this.form.twitter);
+      this.websiteVerified = await requestWebsiteVerification(
+        this.form.website,
+        this.$store.state.web3.account
+      );
+      console.log("website verified:", this.websiteVerified);
     },
     async createEvent() {
       this.errors = this.$v.form.$invalid;
@@ -785,8 +834,8 @@ export default {
           duration: "",
           website: this.form.website,
           twitter: this.form.twitter,
-          image: imgData,
-        },
+          image: imgData
+        }
       });
     },
     validateForm() {
@@ -842,7 +891,7 @@ export default {
             this.leaveEditMode();
           }
         )
-        .catch(async (e) => {
+        .catch(async e => {
           // Transaction rejected or failed
           this.invokingMetadataChangeState = false;
           this.showErrorStatus();
@@ -897,11 +946,11 @@ export default {
               this.hideStatus();
             }
             this.$router.push({
-              path: `/`,
+              path: `/`
             });
           }
         )
-        .catch(async (e) => {
+        .catch(async e => {
           // Transaction rejected or failed
           this.deployingContractState = false;
           this.showErrorStatus();
@@ -920,7 +969,7 @@ export default {
         // create a new FileReader to read this image and convert to base64 format
         var reader = new FileReader();
         // Define a callback function to run, when FileReader finishes its job
-        reader.onload = (e) => {
+        reader.onload = e => {
           // Note: arrow function used here, so that "this.imageData" refers to the imageData of Vue component
           // Read image as base64 and set to imageData
           this.imageData = e.target.result;
@@ -946,7 +995,7 @@ export default {
         this.approverLevels.push(this.zeroApproverLevel);
         this.form.selectedApproverLevel = 0;
       }
-    },
+    }
     // Called on change in approver field
     // chaeckIfApproverRegistered() {
     //   this.approverLevels = [this.zeroApproverLevel];
@@ -969,7 +1018,7 @@ export default {
     //   this.approverRegistered = false;
     //   return false;
     // }
-  },
+  }
 };
 </script>
 
@@ -1006,6 +1055,9 @@ export default {
   min-width: 64px;
 }
 .dialog-approver-entry-value {
+  margin-left: 10px;
+}
+.verification-icon {
   margin-left: 10px;
 }
 </style>
