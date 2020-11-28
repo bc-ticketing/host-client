@@ -14,8 +14,8 @@
                 >
                 <md-input
                   type="number"
-                  :min="0"
-                  max="100"
+                  :min="1"
+                  :max="maxAllowedTicketAmount"
                   name="maxTickets"
                   id="maxTickets"
                   v-model="maxTickets"
@@ -84,6 +84,7 @@ import {
   EVENT_MAX_TICKETS_CHANGE,
   EVENT_MAX_TICKETS_CHANGE_SUCCESSFUL,
   WAITING_FOR_SIGNATURE,
+  MAX_ALLOWED_TICKET_AMOUNT,
 } from "../util/constants/constants";
 import { EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI } from "../util/abi/EventMintableAftermarketPresale";
 
@@ -112,7 +113,7 @@ export default {
         this.sending = false;
         return false;
       }
-      if (this.maxTickets <= 0) {
+      if (this.maxTickets <= 0 || this.maxTickets > MAX_ALLOWED_TICKET_AMOUNT) {
         this.showStatus(PROGRESS_DETERMINATE, "Please choose a valid number.");
         this.sending = false;
         return false;
@@ -188,6 +189,9 @@ export default {
   computed: {
     web3() {
       return this.$store.state.web3;
+    },
+    maxAllowedTicketAmount() {
+      return MAX_ALLOWED_TICKET_AMOUNT;
     },
   },
   created() {

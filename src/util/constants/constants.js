@@ -39,7 +39,7 @@ export const STARTING_BLOCK = 7400000;
 export const AVERAGE_TIME_PER_BLOCK = 15000; // in ms
 export const AVERAGE_TIME_PER_BLOCK_LOCAL = 100; // in ms
 export const AVERAGE_TIME_WAITING_FOR_RECEIPT = 3000; // in ms
-export const MAX_TICKETS_PER_PERSON = 5;
+export const MAX_ALLOWED_TICKET_AMOUNT = 100;
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // General messages
