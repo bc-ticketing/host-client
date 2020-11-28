@@ -96,11 +96,7 @@
 </template>
 
 <script>
-import {
-  WEEKDAYS,
-  MONTHS,
-  MAX_TICKETS_PER_PERSON,
-} from "../util/constants/constants.js";
+import { WEEKDAYS, MONTHS } from "../util/constants/constants.js";
 import { getCurrencySymbol } from "../util/constants/ERC20Tokens.js";
 
 export default {
@@ -148,7 +144,7 @@ export default {
     maxTicketsPerPerson() {
       return this.event.maxTicketsPerPerson
         ? this.event.maxTicketsPerPerson
-        : MAX_TICKETS_PER_PERSON;
+        : "not found";
     },
     date() {
       if (this.event.timestamp) {
