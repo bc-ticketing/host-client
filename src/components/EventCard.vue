@@ -80,7 +80,7 @@
           <md-button class="md-primary" @click="editMaxTicketsPerPerson()"
             >Maximum tickets per person</md-button
           >
-          <md-button class="md-accent" @click="editMetadata()"
+          <md-button class="md-accent" @click="showEditDialog = false"
             >Cancel</md-button
           >
         </md-dialog>
