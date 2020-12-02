@@ -1,48 +1,38 @@
 # host-client
 
-## Setup environment
-1) install ipfs (https://docs.ipfs.io/install/)
-2) make sure your ipfs node accepts CORS request from localhosts
+Clone the repository with the following command in the folder of your desire:
+
 ```bash
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin  '["http://localhost"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]' 
+git clone https://github.com/bc-ticketing/host-client.git
 ```
-3) run ipfs daemon
-```bash
-ipfs daemon
-```
-4) install and start ipfs companion to connect browser to local ipfs node (https://chrome.google.com/webstore/detail/ipfs-companion/nibjojkomfdiaoajekhjakgkdhaomnch?hl=en)
 
 ## Run Environment
 
-First, start local blockchain with by opening the Ganache application.
-
-Then:
+First, go to root of the project and install the dependencies.
 
 ```bash
-# get recent contracts, deploy them and run
-./deployRun.sh
+cd host-client
+npm install
 ```
 
+Before you run the application locally, you will need to create a `.env`. For that, you can simply copy the file `.env_sample` and fill the necessary information.
+For the pinata keys, you need an account [here](https://pinata.cloud/) and fill in the api and your private key. This is used to pin the metadata of events, tickets and approvers to the [IPFS](https://ipfs.io/) network. Further, you need to set the trust certificate api that you are going to use, which you can retrieve from the [social-trust-certificates-api](https://github.com/bc-ticketing/social-trust-certificates-api) repository and finally, you need an [Infura](https://infura.io/) key.
+
+After setting these keys, you can now start serving the application locally.
+
 ```bash
-# if contracts already deployed
-npm install
 npm run serve
 ```
 
-## Standalone setup and run commands
+The current contracts are deployed on the Kovan test net with the following addresses:
+- EventFactory:   0x3840DFe78536c4b27A928B1B86898302C938Ae9D
+- Identity:       0x2583d96704f7F0a6737b158b59739ac4b239F1dE
+- TestERC20Token: 0xBFd25cac00F0E9a0cdFA634bdaED379FdC69E24d
 
-```bash
-# compiles and minifies for production
-npm run build
-```
+To use your own deployed contracts, use the [idetix](https://github.com/bc-ticketing/idetix) repository to compile and deploy them and then copy the addresses into following files:
 
-```bash
-# run unit tests
-npm run test:unit
-```
+- /src/util/abi/EventFactory.js --> EVENT_FACTORY_ADDRESS="{event factory contract address here}"
 
-```bash
-# lints and fixes files
-npm run lint
-```
+- /src/util/abi/Identity.js --> IDENTITY_ADDRESS="{identity contract address here}"
+  
+- /src/util/constants/ERC20Tokens.js --> ERC20TESTTOKEN="{erc20 test token contract address here}"
