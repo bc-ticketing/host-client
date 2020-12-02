@@ -234,8 +234,6 @@ const pinata = pinataSDK(
   process.env.VUE_APP_PINATA_API_KEY,
   process.env.VUE_APP_PINATA_SECRET_API_KEY
 );
-
-// project internal imports
 import { cidToArgs, argsToCid } from "idetix-utils";
 import {
   AVERAGE_TIME_PER_BLOCK,
@@ -445,7 +443,12 @@ export default {
           console.log(e);
           this.sending = false;
           this.showErrorStatus();
-          const result = await pinata.unpin(this.IpfsHash);
+          try {
+            const result = await pinata.unpin(this.IpfsHash);
+            console.log(result);
+          } catch (e) {
+            console.log(e);
+          }
         });
     },
   },

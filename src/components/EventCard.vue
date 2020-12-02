@@ -54,12 +54,11 @@
               <div v-if="!twitter.url" class="event-card-content-entry">
                 <b>Twitter: </b>None provided
               </div>
-              <div
-                @click="showIdentityApproverDialog = true"
-                v-if="approver"
-                class="event-card-content-entry"
-              >
-                <b>Identity Approver: </b>{{ approverTitle }}
+              <div v-if="approver" class="event-card-content-entry">
+                <b>Identity Approver: </b
+                ><a @click="showIdentityApproverDialog = true">
+                  {{ approverTitle }}
+                </a>
               </div>
               <div v-if="maxTicketsPerPerson" class="event-card-content-entry">
                 <b>Max tickets per person: </b>{{ maxTicketsPerPerson }}

@@ -1,3 +1,4 @@
+<!-- This component is a form to create an event contract. -->
 <template>
   <div class="create-event-form-container">
     <form novalidate class="md-layout" @submit.prevent="validateForm">
@@ -391,7 +392,6 @@
           <div class="md-layout md-gutter" v-if="inEditMode || inNewMode">
             <div class="md-layout-item md-small-size-100">
               <md-field :class="getValidationClass('eventDescription')">
-                <!-- <md-field> -->
                 <label for="eventDescription">Description</label>
                 <md-textarea
                   id="eventDescription"
@@ -510,7 +510,6 @@
 
 <script>
 import getWeb3 from "../util/getWeb3";
-import IpfsHttpClient, { CID } from "ipfs-http-client";
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -529,7 +528,6 @@ const pinata = pinataSDK(
   process.env.VUE_APP_PINATA_SECRET_API_KEY
 );
 
-// project internal imports
 import {
   NETWORKS,
   NULL_ADDRESS,
@@ -882,10 +880,13 @@ export default {
               await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
-              const result = await pinata.unpin(this.IpfsHashToUnpin);
-              console.log(result);
+              try {
+                const result = await pinata.unpin(this.IpfsHashToUnpin);
+                console.log(result);
+              } catch (e) {
+                console.log(e);
+              }
               console.log("Got the transaction receipt: ", transactionReceipt);
-              this.invokingMetadataChangeState = false;
               this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
               await this.$store.dispatch(
                 "loadMetadataUpdatesOfEvent",
@@ -899,6 +900,7 @@ export default {
             );
             await sleep(2000);
             this.hideStatus();
+            this.invokingMetadataChangeState = false;
             this.leaveEditMode();
           }
         )
@@ -907,8 +909,12 @@ export default {
           this.invokingMetadataChangeState = false;
           this.showErrorStatus();
           console.log(e);
-          const result = await pinata.unpin(this.IpfsHash);
-          console.log(result);
+          try {
+            const result = await pinata.unpin(this.IpfsHash);
+            console.log(result);
+          } catch (e) {
+            console.log(e);
+          }
         });
     },
 
@@ -966,8 +972,12 @@ export default {
           this.deployingContractState = false;
           this.showErrorStatus();
           console.log(e);
-          const result = await pinata.unpin(this.IpfsHash);
-          console.log(result);
+          try {
+            const result = await pinata.unpin(this.IpfsHash);
+            console.log(result);
+          } catch (e) {
+            console.log(e);
+          }
         });
     },
     readImageFile(event) {

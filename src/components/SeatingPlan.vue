@@ -105,14 +105,13 @@
 import { COLOR_ARRAY } from "../util/utility";
 import idb from "../util/db/idb";
 import sleep from "await-sleep";
-// This view is a demo for our seating plan generator, which will be used in the host client to let an event host generate somewhat accurate, yet arbitrary, seating plans for their venue.
-// The code will also be adapted and used in the guest client for displaying which seats are available for purchase to a customer.
 
+// States of the seat divs:
 // occupied: This seat is already included in another ticket type
 // free:     This seat is not linked to any ticket type yet
-// selected: This seat is selected. When save category is clicked,
-//             a ticket type containing this seat is saved in the
-//             parent TicketForm.
+// selected: This seat is selected. When save type is clicked,
+//             a ticket type containing all these seats is saved
+//             in the parent TicketForm.
 export default {
   name: "SeatingPlan",
   data() {
@@ -350,9 +349,6 @@ export default {
           this.amountSelected += 1;
           seat[0].dataset.status = "selected";
           seat[0].style.backgroundColor = this.color;
-          // if (this.fungible) {
-          //   seat[0].classList.add("fungible");
-          // }
         }
       }
       this.last_selected = { x: col, y: row };
@@ -372,7 +368,6 @@ export default {
         for (let j = 1; j <= this.rows; j++) {
           var seat = this.$refs[`seat_${i}_${j}`];
           seat[0].classList.remove("temporary-selected");
-          //this.last_selected = {x:col, y: row};
         }
       }
     },
@@ -426,7 +421,6 @@ export default {
           }
         }
       }
-      // console.log(JSON.stringify(selectedSeats));
       this.$emit("savetickettype", selectedSeats, this.color);
       this.increaseColorIndex();
       this.amountSelected = 0;
@@ -434,7 +428,7 @@ export default {
           selectedSeats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
           for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself
           for F tickets: the host can select how many tickets should be created for the selected standing area and the ticket type. Store on IPFS: list of all indices of the seats (for frontend display on guest client).  
-           */
+      */
     },
     increaseColorIndex() {
       if (this.colorIndex == COLOR_ARRAY.length - 1) {

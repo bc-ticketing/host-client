@@ -34,7 +34,7 @@ export const MONTHS = {
 };
 
 // General constants
-export const IPFS_TIMEOUT = 20000 // in ms
+export const IPFS_TIMEOUT = 5000 // in ms
 export const STARTING_BLOCK = 7400000;
 export const AVERAGE_TIME_PER_BLOCK = 15000; // in ms
 export const AVERAGE_TIME_PER_BLOCK_LOCAL = 100; // in ms
@@ -72,9 +72,6 @@ export const TICKETS_CREATED_PRESALE = 'The presale tickets were successfully cr
 export const TICKETS_CREATED_ALL = 'All tickets were successfully created';
 export const TICKETS_WAITING_FOR_SIGNATURE = 'Please sign the transaction for the non-presale tickets.';
 export const TICKETS_WAITING_FOR_SIGNATURE_PRESALE = 'Please sign the transaction for the presale tickets.';
-
-// export const WAITING_FOR_SIGNATURE_PRESALE = 'Please sign the transaction for the presale tickets.';
-// export const WAITING_FOR_SIGNATURE_NON_PRESALE = 'Please sign the transaction for the tickets without presale.';
 
 // Approver
 export const APPROVER_REGISTRATION = 'Please wait - Your registration is being processed.';

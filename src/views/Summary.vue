@@ -1,5 +1,4 @@
-<!-- This view contains a summary of a specific event, e.g. its tickets and some statistics. -->
-<!-- Events can be edited in the form contained in this view. -->
+<!-- This view contains a summary of a specific event contract, e.g. its metadata, its ticket types with their metadata and options to edit the event contract. -->
 <template>
   <div class="summary-container">
     <div v-if="loading" class="loading-spinner-container">
