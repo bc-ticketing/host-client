@@ -1,4 +1,4 @@
-<!-- This component contains a form to create tickets for an event. -->
+<!-- This component contains a form to create tickets of an event contract. -->
 <template>
   <div class="create-ticket-type-container">
     <form novalidate class="md-layout" @submit.prevent="isTicketFormComplete">
@@ -73,7 +73,6 @@
 
           <div class="md-layout md-gutter">
             <div class="currency-symbol">
-              <!-- <div class="currency-wrapper" style="display: flex"> -->
               <div>{{ currencySymbol }}</div>
             </div>
             <div class="md-layout-item">
@@ -87,7 +86,6 @@
                 />
                 <span class="md-error">The price is required.</span>
               </md-field>
-              <!-- </div> -->
             </div>
           </div>
 
@@ -272,7 +270,6 @@
 </template>
 
 <script>
-// external imports
 import { validationMixin } from "vuelidate";
 import {
   required,
@@ -293,7 +290,6 @@ const pinata = pinataSDK(
   process.env.VUE_APP_PINATA_SECRET_API_KEY
 );
 
-// internal imports
 import {
   NETWORKS,
   TICKETS_CREATING_PRESALE,
@@ -358,14 +354,14 @@ export default {
     finalizationDate: null,
     showFinalizationDialog: false,
     showPresaleDialog: false,
-    occupiedSeats: [], // list of seats already used in a type on the blockchain
+    occupiedSeats: [], // list of seats already used in a ticket type on the event contract
     savedTypes: [],
     savedPresaleTypes: [],
     form: {
-      title: "Standing Area",
-      description: "ticket description",
+      title: "",
+      description: "",
       isNF: false,
-      price: "2",
+      price: "",
       finalizationTime: {
         HH: "10",
         mm: "00",
@@ -422,7 +418,7 @@ export default {
       }
     },
     async createPresaleTypes() {
-      this.createIpfsStrings(true); // creating ipfs strings for presale types
+      this.createIpfsStrings(true);
       this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       let ipfsStatus = await this.uploadToIpfs(true);
       if (!ipfsStatus) {
@@ -435,7 +431,7 @@ export default {
       return true;
     },
     async createNonPresaleTypes() {
-      this.createIpfsStrings(false); // creating ipfs strings for non presale types
+      this.createIpfsStrings(false);
       this.showStatus(PROGRESS_INDETERMINATE, UPLOADING_TO_IPFS);
       let ipfsStatus = await this.uploadToIpfs(false);
       if (!ipfsStatus) {
@@ -498,9 +494,6 @@ export default {
         let currentString = listOfJsonStrings[i];
         console.log(currentString);
         const result = await pinata.pinJSONToIPFS(JSON.parse(currentString));
-        // if (result.IpfsHash == null) {
-        //   return false;
-        // }
         if (presale) {
           this.presaleTypeIpfsHashes.push(result.IpfsHash);
         } else {
@@ -624,8 +617,12 @@ export default {
           this.showErrorMessage();
           for (let j = 0; j < this.presaleTypeIpfsHashes.length; j++) {
             let hash = this.presaleTypeIpfsHashes[j];
-            const result = await pinata.unpin(hash);
-            console.log(result);
+            try {
+              const result = await pinata.unpin(hash);
+              console.log(result);
+            } catch (e) {
+              console.log(e);
+            }
           }
         });
 
@@ -682,8 +679,12 @@ export default {
           this.showErrorMessage();
           for (let j = 0; j < this.nonPresaleTypeIpfsHashes.length; j++) {
             let hash = this.nonPresaleTypeIpfsHashes[j];
-            const result = await pinata.unpin(hash);
-            console.log(result);
+            try {
+              const result = await pinata.unpin(hash);
+              console.log(result);
+            } catch (e) {
+              console.log(e);
+            }
           }
         });
       this.savedTypes = [];
