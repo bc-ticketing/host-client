@@ -1,5 +1,4 @@
-<!-- This component is a form to easily store the identity approval of an account on the blockchain. -->
-<!-- It shall be used by identity approvers. -->
+<!-- This component is a form to verify the identity of an account in the identity contract. -->
 <template>
   <div class="approve-identity-form">
     <form novalidate class="md-layout">
@@ -102,6 +101,9 @@ export default {
     },
   },
   methods: {
+    clearForm() {
+      this.form.address = "";
+    },
     showStatus(processBarMode, message) {
       this.processBarMode = processBarMode;
       this.processMessage = message;
@@ -161,15 +163,13 @@ export default {
               await sleep(AVERAGE_TIME_WAITING_FOR_RECEIPT);
             }
             if (transactionReceipt) {
-              // await sleep(5000);
-              // console.log("Got the transaction receipt: ", transactionReceipt);
-              // this.invokingMetadataChangeState = false;
-              // this.showStatus(PROGRESS_INDETERMINATE, PROCESSING);
-              // await this.$store.dispatch(
-              //   "loadMetadataUpdatesOfEvent",
-              //   this.$route.query.address
-              // );
-              // this.$emit("updatedEventMetadata");
+              console.log("Got the transaction receipt: ", transactionReceipt);
+              this.showStatus(
+                PROGRESS_DETERMINATE,
+                IDENTITY_VERIFICATION_SUCCESSFUL
+              );
+              await sleep(2000);
+              this.hideStatus();
             }
             this.showStatus(
               PROGRESS_DETERMINATE,
@@ -177,14 +177,13 @@ export default {
             );
             await sleep(2000);
             this.hideStatus();
-            // todo: clear form
+            this.clearForm();
           }
         )
         .catch(async (e) => {
           // Transaction rejected or failed
           this.sending = false;
         });
-      // todo waiting for receipt
       console.log(approval);
     },
     async getSecurityLevel() {

@@ -1,5 +1,4 @@
-<!-- This component contains an event card that is exchanged for a form to edit the metadata of an event. -->
-<!-- It is used in the overview of an event. -->
+<!-- This component contains an ticket summary and a ticket form. -->
 <template>
   <div class="tickets-container">
     <div class="summary-container">

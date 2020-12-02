@@ -1,3 +1,4 @@
+<!-- This component is a form to set the maximal tickets per person in an event contract. -->
 <template>
   <div class="max-tickets-form-container">
     <form novalidate class="md-layout">

@@ -1,3 +1,4 @@
+<!-- This component is presents the details of a ticket type. -->
 <template>
   <div
     v-bind:style="{

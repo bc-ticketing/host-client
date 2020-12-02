@@ -1,3 +1,4 @@
+<!-- This component contains the ticket types and displays the data of the selected ticket type. -->
 <template>
   <div class="ticket-summary-container">
     <md-card>
