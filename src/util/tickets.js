@@ -1,7 +1,7 @@
 /*
  * This file contains data classes for all ticket types and utility functions for state alterations. All functions that interact with the blockchain for buying/selling tickets are contained here as well as helper functions to get infos from ticket objects
  */
-import { argsToCid, getIdAsBigNumber } from "idetix-utils";
+import { argsToCid, getIdAsBigNumber, getTicketTypeIndex } from "idetix-utils";
 import {
     NULL_ADDRESS,
     TRANSACTION_DENIED,
@@ -50,6 +50,38 @@ export function getAllSellOferingsNfTicketType(ticketType) {
         }
     }
     return offers;
+}
+
+export async function getNumberOfTicketsSold(ticket, web3Instance, ABI) {
+    const eventSC = new web3Instance.eth.Contract(ABI, ticket.eventContractAddress);
+    if (ticket.isNf) {
+        const allNonFungibles = await eventSC.getPastEvents("MintNonFungibles", {
+            fromBlock: 1
+        });
+        let sum = 0;
+        for (let s = 0; s < allNonFungibles.length; s++) {
+            for (let t = 0; t < allNonFungibles[s].returnValues.ids.length; t++) {
+                let id = new BigNumber(allNonFungibles[s].returnValues.ids[t]);
+                if (Number(getTicketTypeIndex(id)) === ticket.typeId) {
+                    sum = sum + 1;
+                }
+            }
+        }
+        ticket.ticketsSold = sum;
+    } else {
+        const fungibleBought = await eventSC.getPastEvents("MintFungibles", {
+            filter: {
+                ticketType: getFullTicketTypeId(ticket.isNf, ticket.typeId)
+            },
+            fromBlock: 1
+        });
+        let sum = 0;
+        for (let j = 0; j < fungibleBought.length; j++) {
+            sum = sum + Number(fungibleBought[j].returnValues.quantity);
+        }
+        ticket.ticketsSold = sum;
+    }
+    return ticket;
 }
 
 /**
@@ -195,10 +227,11 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
     );
     const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
         filter: {
-        ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId)
+            ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId)
         },
         fromBlock: 1
     });
+    console.log("ticketMetadata", ticketMetadata)
     if (ticketMetadata.length < 1) {
         return true; // no new metadata
     }

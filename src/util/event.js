@@ -17,6 +17,7 @@ import {
   addSellOrders,
   removeSellOrders,
   getLowestSellOrder,
+  getNumberOfTicketsSold,
 } from "./tickets";
 import axios from "axios";
 import {
@@ -219,6 +220,25 @@ export class Event {
 
   setLastFetchedBlockTickets(block) {
     this.lastFetchedBlockTickets = block;
+  }
+
+  async loadNrTicketsBought(web3Instance, ABI) {
+    console.log("nr fungible", this.fungibleTickets.length);
+    console.log("nr non-fungible", this.nonFungibleTickets.length);
+    for (let i = 0; i < this.fungibleTickets.length; i++) {
+      // console.log(this.fungibleTickets);
+      // console.log("index", i);
+      let ticket = this.fungibleTickets[i];
+      console.log(ticket);
+      await getNumberOfTicketsSold(ticket, web3Instance, ABI);
+    }
+    for (let j = 0; j < this.nonFungibleTickets.length; j++) {
+      // console.log(this.nonFungibleTickets);
+      // console.log("index", j);
+      let ticket = this.nonFungibleTickets[j];
+      console.log(ticket);
+      await getNumberOfTicketsSold(ticket, web3Instance, ABI);
+    }
   }
 
   // loading aftermarket related information

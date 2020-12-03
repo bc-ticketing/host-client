@@ -492,7 +492,6 @@ export default {
       var i;
       for (i = 0; i < listOfJsonStrings.length; i++) {
         let currentString = listOfJsonStrings[i];
-        console.log(currentString);
         const result = await pinata.pinJSONToIPFS(JSON.parse(currentString));
         if (presale) {
           this.presaleTypeIpfsHashes.push(result.IpfsHash);
@@ -575,7 +574,6 @@ export default {
      * Invokes the method `createPresaleTypes` on the event contract.
      */
     async invokeCreatePresaleTypes(params) {
-      console.log(params);
       this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       let response = await this.contract.methods
         .createPresaleTypes(
