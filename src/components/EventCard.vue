@@ -38,10 +38,10 @@
               <div v-else class="event-card-content-entry">
                 <b>Website: </b>None provided
               </div>
-              <div v-if="twitter.url" class="event-card-content-entry">
+              <div v-if="twitterPresent" class="event-card-content-entry">
                 <b>Twitter: </b
                 ><a :href="twitter.url" target="_blank">{{ twitter.url }}</a>
-                <md-icon style="md-accent" v-if="!twitter.verification"
+                <md-icon class="md-accent" v-if="!twitter.verification"
                   >warning</md-icon
                 >
                 <md-icon
@@ -51,7 +51,7 @@
                   >done</md-icon
                 >
               </div>
-              <div v-if="!twitter.url" class="event-card-content-entry">
+              <div v-if="!twitterPresent" class="event-card-content-entry">
                 <b>Twitter: </b>None provided
               </div>
               <div v-if="approver" class="event-card-content-entry">
@@ -299,6 +299,15 @@ export default {
     },
     twitter() {
       return this.event.twitter ? this.event.twitter : "no twitter found";
+    },
+    prettyTwitter() {
+      let split = this.event.twitter.url.split("twitter.com");
+      return split[split.length - 1] === "/"
+        ? "no twitter found"
+        : this.event.twitter.url;
+    },
+    twitterPresent() {
+      return this.prettyTwitter !== "no twitter found";
     },
     image() {
       return this.event.image ? this.event.image : "no image found";
