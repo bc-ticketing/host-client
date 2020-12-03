@@ -828,8 +828,8 @@ export default {
 
     createIpfsString() {
       let imgData = this.imageData;
-      if (this.event) {
-        if (this.event.image !== "") {
+      if (imgData == "") {
+        if (this.event.image != "") {
           imgData = this.event.image;
         }
       }
