@@ -9,9 +9,6 @@
       v-bind:inModificationView="false"
       v-bind:inSummaryView="false"
     ></EventCard>
-    <h3 v-if="this.$store.state.events.size == 0">
-      No events found for your active address: {{ web3.account }}.
-    </h3>
   </div>
 </template>
 

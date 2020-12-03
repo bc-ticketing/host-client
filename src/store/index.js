@@ -226,6 +226,7 @@ export default new Vuex.Store({
       }
       if (event) {
         await event.loadTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
+        await event.loadNrTicketsBought(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
         await idb.saveEvent(event);
         commit("UPDATE_EVENT_IN_STORE", event);
       }
