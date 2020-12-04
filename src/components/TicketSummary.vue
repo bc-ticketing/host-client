@@ -98,12 +98,11 @@ export default {
     },
   },
   created() {
-    console.log("TicketSummary created executed");
     this.tickets = this.event.fungibleTickets.concat(
       this.event.nonFungibleTickets
     );
     if (this.tickets.length == 0) {
-      console.log("no ticket found for event");
+      console.log("no ticket found for event", this.event.contractAddress);
     } else {
       this.selectedTicketType = this.tickets[0];
     }

@@ -1,3 +1,5 @@
+// This file could be used in future work to integrate a local IPFS node to upload the metadata instead of the service of Pinata.
+
 // // import ipfsClient from "ipfs-http-client";
 
 // const ipfsClient = require("ipfs-http-client");

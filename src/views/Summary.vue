@@ -61,18 +61,15 @@ export default {
   }),
   methods: {
     async updateEvent() {
-      console.log("updateEvent triggered in Summary view");
       this.event = await idb.getEvent(this.$route.query.address);
       this.eventEditMode = false;
       this.existingSeats = true;
     },
     setExistingSeats(existing) {
-      console.log("setExistingSeats");
       this.existingSeats = existing;
     },
   },
   async created() {
-    console.log("summary view created executed");
     let address = this.$route.query.address;
     this.$root.$on("web3Injected", async () => {
       if (!this.loading && !this.eventSet) {
@@ -96,7 +93,6 @@ export default {
         this.loading = true;
         this.event = await idb.getEvent(address);
         if (this.event != null) {
-          console.log(this.event);
           this.eventSet = true;
           this.notFoundMessageVisible = false;
           this.existingSeats = true;
@@ -108,7 +104,6 @@ export default {
       this.loading = true;
       this.event = await idb.getEvent(address);
       if (this.event != null) {
-        console.log(this.event);
         this.eventSet = true;
         this.existingSeats = true;
       }

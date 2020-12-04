@@ -153,7 +153,6 @@ export function getHighestBuyOrder(ticket) {
     const sorted = ticket.buyOrders.sort((a, b) => {
         a.percentage - b.percentage;
     });
-    console.log(sorted);
     return sorted.length > 0 ? sorted[0] : {};
 }
 
@@ -199,7 +198,6 @@ export async function loadIPFSMetadata(ticket) {
         console.log("ipfs data null for hash: " + this.ipfsHash);
         return;
     }
-    console.log(ipfsData);
     const metadata = ipfsData;
     ticket.description = metadata.ticket.description;
     ticket.seatMapping = metadata.ticket.mapping;
@@ -231,7 +229,6 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
         },
         fromBlock: 1
     });
-    console.log("ticketMetadata", ticketMetadata)
     if (ticketMetadata.length < 1) {
         return true; // no new metadata
     }
@@ -306,7 +303,6 @@ export function addSellOrders(
     ticketId = 0
 ) {
     if (ticketId == 0) {
-        console.log('adding sell order');
         ticketType.sellOrders.push({
         address: address,
         percentage: percentage,

@@ -774,27 +774,19 @@ export default {
       }
     },
     async handleTwitterBlur() {
-      console.log("handling twitter blur");
-      console.log(this.form.twitter);
       this.twitterVerified = await requestTwitterVerification(
         this.form.twitter,
         this.$store.state.web3.account
       );
-      console.log("twitter verified:", this.twitterVerified);
     },
     async handleWebsiteBlur() {
-      console.log("handling website blur");
-      console.log(this.form.website);
       this.websiteVerified = await requestWebsiteVerification(
         this.form.website,
         this.$store.state.web3.account
       );
-      console.log("website verified:", this.websiteVerified);
     },
     async createEvent() {
-      console.log("creating event");
       this.errors = this.$v.form.$invalid;
-      console.log("errors:", this.errors);
       if (this.errors === true) {
         return;
       }
@@ -822,8 +814,6 @@ export default {
       this.ipfsString = this.createIpfsString();
       const result = await pinata.pinJSONToIPFS(JSON.parse(this.ipfsString));
       this.IpfsHash = result.IpfsHash;
-      console.log(this.IpfsHash);
-      console.log(this.ipfsString);
     },
 
     createIpfsString() {
@@ -882,7 +872,6 @@ export default {
             if (transactionReceipt) {
               try {
                 const result = await pinata.unpin(this.IpfsHashToUnpin);
-                console.log(result);
               } catch (e) {
                 console.log(e);
               }
@@ -911,7 +900,6 @@ export default {
           console.log(e);
           try {
             const result = await pinata.unpin(this.IpfsHash);
-            console.log(result);
           } catch (e) {
             console.log(e);
           }
@@ -920,12 +908,6 @@ export default {
 
     async deployEventContract() {
       const args = cidToArgs(this.IpfsHash);
-      console.log(this.IpfsHash);
-      console.log(args);
-      console.log(this.form.selectedApproverAddress);
-      console.log(this.form.selectedApproverLevel);
-      console.log(this.usedToken);
-      console.log(this.form.granularity);
       this.showStatus(PROGRESS_DETERMINATE, WAITING_FOR_SIGNATURE);
       const createEvent = await this.eventFactory.methods
         .createEvent(
@@ -974,7 +956,6 @@ export default {
           console.log(e);
           try {
             const result = await pinata.unpin(this.IpfsHash);
-            console.log(result);
           } catch (e) {
             console.log(e);
           }
@@ -983,8 +964,6 @@ export default {
     readImageFile(event) {
       // Reference to the DOM input element
       var input = event.target;
-      console.log("readImageFile");
-      console.log(event);
       // Ensure that you have a file before attempting to read it
       if (input.files && input.files[0]) {
         // create a new FileReader to read this image and convert to base64 format
@@ -1001,7 +980,6 @@ export default {
     },
 
     setApproverLevels() {
-      console.log("setting approver levels");
       this.approverLevels = [];
       let methods = getApproverFromStore(this.form.selectedApproverAddress)
         .methods;

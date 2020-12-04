@@ -39,23 +39,23 @@ export default {
   }),
   methods: {
     loadEvents: async function () {
+      console.log("loading events");
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
       this.welcome = false;
     },
     loadEventsInterval: function () {
       setInterval(async () => {
-        console.log("loading events");
         await this.loadEvents();
       }, 30000);
     },
     loadApprovers: async function () {
+      console.log("loading approvers");
       await this.$store.dispatch("loadApprovers");
       this.$root.$emit("loadedApprovers");
     },
     loadApproversInterval: function () {
       setInterval(async () => {
-        console.log("loading approvers");
         await this.loadApprovers();
       }, 10000);
     },
