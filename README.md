@@ -1,4 +1,4 @@
-# host-client
+# Host Client
 
 Clone the repository with the following command in the folder of your desire:
 
@@ -8,7 +8,7 @@ git clone https://github.com/bc-ticketing/host-client.git
 
 ## Run Environment
 
-First, go to root of the project and install the dependencies.
+First, go to the root of the project and install the dependencies.
 
 ```bash
 cd host-client
@@ -29,7 +29,7 @@ The current contracts are deployed on the Kovan test net with the following addr
 - Identity:       0x2583d96704f7F0a6737b158b59739ac4b239F1dE
 - TestERC20Token: 0xBFd25cac00F0E9a0cdFA634bdaED379FdC69E24d
 
-To use your own deployed contracts, use the [idetix](https://github.com/bc-ticketing/idetix) repository to compile and deploy them and then copy the addresses into following files:
+To use your own deployed contracts, use the [idetix](https://github.com/bc-ticketing/idetix) repository to compile and deploy them and then copy the addresses into the following files:
 
 - /src/util/abi/EventFactory.js --> EVENT_FACTORY_ADDRESS="{event factory contract address here}"
 
