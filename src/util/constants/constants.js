@@ -35,7 +35,7 @@ export const MONTHS = {
 
 // General constants
 export const IPFS_TIMEOUT = 5000 // in ms
-export const STARTING_BLOCK = 7400000;
+export const STARTING_BLOCK = 0;
 export const AVERAGE_TIME_PER_BLOCK = 15000; // in ms
 export const AVERAGE_TIME_PER_BLOCK_LOCAL = 100; // in ms
 export const AVERAGE_TIME_WAITING_FOR_RECEIPT = 3000; // in ms

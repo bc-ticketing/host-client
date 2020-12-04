@@ -360,22 +360,16 @@ export default {
       }, 5000);
     },
     async handleTwitterBlur() {
-      console.log("handling twitter blur");
-      console.log(this.formatTwitter);
       this.twitterVerified = await requestTwitterVerification(
         this.formatTwitter,
         this.$store.state.web3.account
       );
-      console.log("twitter verified:", this.twitterVerified);
     },
     async handleWebsiteBlur() {
-      console.log("handling website blur");
-      console.log(this.form.approverWebsite);
       this.websiteVerified = await requestWebsiteVerification(
         this.form.approverWebsite,
         this.$store.state.web3.account
       );
-      console.log("website verified:", this.websiteVerified);
     },
     createIpfsString() {
       var methods = this.approverMethods.slice(0, this.form.numberOfLevels);
@@ -388,7 +382,6 @@ export default {
           twitter: this.formatTwitter,
         },
       });
-      console.log(json);
       return json;
     },
 
@@ -445,7 +438,6 @@ export default {
           this.showErrorStatus();
           try {
             const result = await pinata.unpin(this.IpfsHash);
-            console.log(result);
           } catch (e) {
             console.log(e);
           }

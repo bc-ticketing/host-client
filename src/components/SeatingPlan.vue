@@ -247,12 +247,10 @@ export default {
       this.rows = currentMaxRows;
       this.updateGridSize();
       await sleep(100);
-      console.log(this.cols + ", " + this.rows);
     },
 
     // Update styles for the grid
     updateGridSize() {
-      console.log("updatingGridSize:", this.cols, this.rows);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
@@ -272,7 +270,6 @@ export default {
       if (this.sending) {
         return;
       }
-      // console.log("mouseDownTriggered");
       this.mouseDown = true;
       if (this.blockSelection) {
         this.selection_start = { x: col, y: row };
@@ -285,7 +282,6 @@ export default {
       if (this.sending) {
         return;
       }
-      // console.log("mouseUpTriggered");
       this.mouseDown = false;
       if (this.blockSelection) {
         let start_x =

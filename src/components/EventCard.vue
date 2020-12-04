@@ -313,9 +313,6 @@ export default {
       return this.event.image ? this.event.image : "no image found";
     },
   },
-  created() {
-    console.log("eventcard created executed");
-  },
 };
 </script>
 

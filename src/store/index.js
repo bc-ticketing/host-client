@@ -45,36 +45,31 @@ export default new Vuex.Store({
       }
     },
     UPDATE_EVENT_IN_STORE(state, payload) {
-      console.log("starting UPDATE_EVENT_IN_STORE");
       const events = state.events;
       const index = events.indexOf(events.find(e => e.contractAddress === payload.contractAddress));
       // mutate events by replacing the event with the updated event object
       if (index != -1) {
         state.events.splice(index, 1, payload);
       }
-      console.log("ending UPDATE_EVENT_IN_STORE");
     },
     CLEAR_EVENTS(state) {
       state.lastFetchedBlockEvents = STARTING_BLOCK;
       state.events = [];
-      console.log("CLEAR_EVENTS mutation executed");
     }
   },
 
   // Actions
   actions: {
     async loadMetadataUpdatesOfEvent({ commit }, address) {
-      console.log("action loadMetadataUpdatesOfEvent");
+      console.log("loading metadata updates", address);
       const currentBlock = state.web3.currentBlock;
       const inDb = await idb.getEvent(address); // whether this event is present in the db
       let event;
       let loadedMetadata;
       if (!inDb) {
-        console.log("event not in db - saving to db");
         event = new Event(address);
         loadedMetadata = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
       } else {
-        console.log("in db");
         event = new Event(inDb);
         loadedMetadata = await event.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
       }
@@ -82,31 +77,25 @@ export default new Vuex.Store({
         await event.verify();
       }
       if (event) {
-        console.log("saving following event to db");
         await idb.saveEvent(event);
-        console.log("saved event to db");
         commit("UPDATE_EVENT_IN_STORE", event);
       }
     },
 
     async loadMaxTicketsChange({ commit }, address) {
-        console.log("action loadMaxTicketsChange");
+        console.log("loading maximal tickets", address);
         const currentBlock = state.web3.currentBlock;
         const inDb = await idb.getEvent(address); // whether this event is present in the db
         let event;
         if (!inDb) {
-          console.log("event not in db - saving to db");
           event = new Event(address);
           await event.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
         } else {
-          console.log("in db");
           event = new Event(inDb);
           await event.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
         }
         if (event) {
-          console.log("saving following event to db");
           await idb.saveEvent(event);
-          console.log("saved event to db");
           commit("UPDATE_EVENT_IN_STORE", event);
         }
     },
@@ -166,7 +155,6 @@ export default new Vuex.Store({
       const creationEvents = await state.eventFactory.getPastEvents("EventCreated", {
         fromBlock: state.lastFetchedBlockEvents + 1
       });
-      console.log(creationEvents);
       // Add all newly created events to the store and the db
       for (let i = 0; i < creationEvents.length; i++) {
         const address = creationEvents[i].returnValues[0];
@@ -177,20 +165,15 @@ export default new Vuex.Store({
         const owner = await eventContract.methods.getOwner().call();
         if (state.web3.account == owner) {
           const inDb = await idb.getEvent(address); // whether this event is present in the db
-          console.log("event inDb? " + inDb);
           if (!inDb) {
-            console.log("event not in db - saving to db");
             newEvent = new Event(address);
-            console.log("setting owner", owner);
             newEvent.owner = owner;
             await newEvent.loadMetadata(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI, currentBlock);
             await newEvent.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             await newEvent.loadIdentityData(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             await newEvent.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
           } else {
-            console.log("in db");
             newEvent = new Event(inDb);
-            console.log("setting owner", owner);
             await newEvent.loadCurrency(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             await newEvent.loadIdentityData(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
             await newEvent.loadMaxTicketsPerPerson(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_PRESALE_ABI);
@@ -202,7 +185,6 @@ export default new Vuex.Store({
       }
       state.lastFetchedBlockEvents = currentBlock;
       if (newEvents.length > 0) {
-        console.log("new events found - committing ADD_EVENTS_TO_STORE mutation");
         commit("ADD_EVENTS_TO_STORE", newEvents);
       }
     },
@@ -213,15 +195,13 @@ export default new Vuex.Store({
      * @param {String} address the contract address from which to load the tickets.
      */
     async loadTicketsOfEvent({ commit }, address) {
-      console.log("loadTickets action executed for event contract address: " + address);
+      console.log("loading tickets", address);
       const currentBlock = state.web3.currentBlock;
       const inDb = await idb.getEvent(address);
       let event;
       if (!inDb) {
-        console.log("event not in db - saving to db");
         event = new Event(address);
       } else {
-        console.log("in db");
         event = new Event(inDb);
       }
       if (event) {
@@ -243,7 +223,6 @@ export default new Vuex.Store({
      * @param {*} param0 
      */
     async addNullAddressApproverToStore({ commit }) {
-      console.log("adding null address approver to store")
       let approvers = [];
       let nullAddressApprover = new IdentityApprover(NULL_ADDRESS)
       nullAddressApprover.title = "No approver";
@@ -273,13 +252,10 @@ export default new Vuex.Store({
         //   highestFetchedBlock = registerEvents[i].blockNumber;
         // }
         const inDb = await idb.getApprover(address); // whether this approver is present
-        console.log("approver inDb? " + inDb);
         if (!inDb) {
-          console.log("approver not in db - fetching approver data");
           newApprover = new IdentityApprover(address);
           await newApprover.loadMetadata(state.identity, currentBlock);
         } else {
-          console.log("approver in db");
           newApprover = new IdentityApprover(inDb);
           if (!newApprover.loadedMetadata) {
             await newApprover.loadMetadata(state.identity, currentBlock);

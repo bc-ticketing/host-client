@@ -184,7 +184,6 @@ export default {
           // Transaction rejected or failed
           this.sending = false;
         });
-      console.log(approval);
     },
     async getSecurityLevel() {
       const secLevel = await this.identityContract.methods

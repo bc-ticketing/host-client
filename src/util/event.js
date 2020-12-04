@@ -97,13 +97,10 @@ export class Event {
    * @param {*} currentBlock the current block on the network
    */
   async loadMetadata(web3Instance, ABI, currentBlock) {
-    console.log("loadMetadata event executed");
     try {
       const hashRetrieved = await this.fetchIPFSHash(ABI, web3Instance);
-      console.log("hashRetrieved: ", hashRetrieved);
       if (hashRetrieved) {
         const loaded = await this.loadIPFSMetadata();
-        console.log("metadata loaded: ", loaded);
         if (loaded) {
           this.loadedMetadata = true;
           this.lastFetchedBlockMetadata = currentBlock;
@@ -127,20 +124,14 @@ export class Event {
    */
   async fetchIPFSHash(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-
-    console.log("fetchipfshash last block: " + this.lastFetchedBlockMetadata);
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
       fromBlock: this.lastFetchedBlockMetadata + 1
     });
-
-    console.log(eventMetadata);
     if (eventMetadata.length == 0) {
-      // no update found
       return true;
     }
 
     var metadataObject = eventMetadata[eventMetadata.length - 1].returnValues;
-    console.log(metadataObject);
     if (metadataObject == null) {
       return false;
     }
@@ -151,7 +142,6 @@ export class Event {
     );
 
     this.ipfsHash = currentHash;
-    console.log(this.ipfsHash);
     return true;
   }
 
@@ -165,7 +155,6 @@ export class Event {
     if (ipfsData == null) {
       return false;
     }
-    console.log(ipfsData);
     const metadata = ipfsData;
     this.location = metadata.event.location;
     this.title = metadata.event.title;
@@ -207,7 +196,6 @@ export class Event {
   // Loads all ticket types for this event.
   async loadTickets(web3Instance, ABI, currentBlock) {
     try {
-      console.log("loading tickets");
       await this.loadFungibleTickets(web3Instance, ABI, currentBlock);
       await this.loadNonFungibleTickets(web3Instance, ABI, currentBlock);
     } catch (e) {
@@ -223,20 +211,12 @@ export class Event {
   }
 
   async loadNrTicketsBought(web3Instance, ABI) {
-    console.log("nr fungible", this.fungibleTickets.length);
-    console.log("nr non-fungible", this.nonFungibleTickets.length);
     for (let i = 0; i < this.fungibleTickets.length; i++) {
-      // console.log(this.fungibleTickets);
-      // console.log("index", i);
       let ticket = this.fungibleTickets[i];
-      console.log(ticket);
       await getNumberOfTicketsSold(ticket, web3Instance, ABI);
     }
     for (let j = 0; j < this.nonFungibleTickets.length; j++) {
-      // console.log(this.nonFungibleTickets);
-      // console.log("index", j);
       let ticket = this.nonFungibleTickets[j];
-      console.log(ticket);
       await getNumberOfTicketsSold(ticket, web3Instance, ABI);
     }
   }
@@ -431,18 +411,14 @@ export class Event {
   }
 
   async verify() {
-    console.log("executing verifications of event");
     const twitterVerificationChanged = await this.verifyTwitter();
     const websiteVerificationChanged = await this.verifyWebsite();
     return twitterVerificationChanged || websiteVerificationChanged;
   }
 
   async verifyTwitter() {
-    console.log("verifying twitter of event");
     if (this.twitter.url) {
-      console.log(this.twitter.url);
       const currentState = await requestTwitterVerification(this.twitter.url, this.owner);
-      console.log("currentState:", currentState);
       if (currentState !== this.twitter.verification) {
         this.twitter.verification = currentState;
         return true;
@@ -452,7 +428,6 @@ export class Event {
   }
 
   async verifyWebsite() {
-    console.log("verifying website of event");
     if (this.website.url) {
       const currentState = await requestWebsiteVerification(this.website.url, this.owner);
       if (currentState !== this.website.verification) {
@@ -479,7 +454,6 @@ export class Event {
    * Loads new fungible ticket types of this event and adds them to the list of tickets.
    */
   async loadFungibleTickets(web3Instance, ABI, currentBlock) {
-    console.log("loading fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
@@ -491,7 +465,6 @@ export class Event {
           this.lastFetchedBlockTickets + 1,
           typeIdentifier.toFixed()
         );
-        console.log(changed);
         if (changed) {
           const exists = this.hasFungibleTicketType(i);
           let ticketType = exists
@@ -515,10 +488,7 @@ export class Event {
           const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
           if (hashRetrieved) {
             await loadIPFSMetadata(ticketType);
-            //await loadSellOrders(ticketType, web3Instance, ABI);
-            //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
-          console.log(ticketType);
           if (!exists) {
             this.fungibleTickets.push(ticketType);
           }
@@ -531,13 +501,11 @@ export class Event {
    * Loads new non-fungible ticket types of this event and adds them to the list of tickets.
    */
   async loadNonFungibleTickets(web3Instance, ABI, currentBlock) {
-    console.log("loading non-fungible");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
-        console.log(nonce);
         const typeIdentifier = getIdAsBigNumber(true, i);
         const changed = await ticketMetadataChanged(
           eventSC,
@@ -572,17 +540,12 @@ export class Event {
             }
             const owner = await eventSC.methods.nfOwners(ticketId).call();
             ticket.owner = owner;
-            //const sellOrder = await eventSC.methods.nfTickets(ticketId).call();
-            //ticket.sellOrder = sellOrder;
             ticketType.tickets.push(ticket);
           }
           const hashRetrieved = await fetchIpfsHash(ticketType, web3Instance, ABI);
           if (hashRetrieved) {
             await loadIPFSMetadata(ticketType);
-            //await loadSellOrders(ticketType, web3Instance, ABI);
-            //await loadBuyOrders(ticketType, web3Instance, ABI);
           }
-          console.log(ticketType);
           if (!exists) {
             this.nonFungibleTickets.push(ticketType);
           }
@@ -617,7 +580,6 @@ export class Event {
   }
 
   async loadOwnerShipChanges(web3Instance, ABI) {
-    console.log("loading ownership changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintNonFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
@@ -634,7 +596,6 @@ export class Event {
   }
 
   async loadTicketsSoldChanges(web3Instance, ABI) {
-    console.log("loading tickets sold changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const events = await MintFungibles(eventSC, this.lastFetchedBlockAftermarket + 1);
     for (const event of events) {
@@ -669,7 +630,6 @@ export class Event {
         /* SELL */
       } else {
         if (placedOrFilled === "placed") {
-          console.log('placed');
           addSellOrders(ticketType, percentage, quantity, address);
         } else {
           removeSellOrders(ticketType, percentage, quantity, address);
@@ -695,7 +655,6 @@ export class Event {
   }
 
   async loadAftermarketChanges(web3Instance, ABI) {
-    console.log("loading aftermarket changes");
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
 
     const buyOrdersPlaced = await BuyOrderPlaced(
@@ -765,7 +724,6 @@ export class Event {
       this.lastFetchedBlockAftermarket + 1
     );
     for (const event of sellOrderFungiblePlaced) {
-      console.log('sell order fungible placed');
       const ticketTypeId = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)

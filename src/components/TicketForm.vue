@@ -617,7 +617,6 @@ export default {
             let hash = this.presaleTypeIpfsHashes[j];
             try {
               const result = await pinata.unpin(hash);
-              console.log(result);
             } catch (e) {
               console.log(e);
             }
@@ -679,7 +678,6 @@ export default {
             let hash = this.nonPresaleTypeIpfsHashes[j];
             try {
               const result = await pinata.unpin(hash);
-              console.log(result);
             } catch (e) {
               console.log(e);
             }
@@ -695,18 +693,14 @@ export default {
      *  and saves it to either `savedTypes` or `savedPresaleTypes`.
      */
     async saveTicketType(seats, color) {
-      console.log("save ticket executed in TicketForm");
       if (seats.length == 0) {
-        console.log("no seats selected - doing nothing");
         return;
       } else {
         if (this.withPresale) {
           let type = await this.getTypeAsPresale(seats, color);
           this.savedPresaleTypes.push(type);
-          console.log(type);
         } else {
           this.savedTypes.push(this.getTypeAsNonPresale(seats, color));
-          console.log(this.getTypeAsNonPresale(seats, color));
         }
       }
     },
@@ -823,7 +817,6 @@ export default {
      */
     async computePresaleBlock() {
       let currentBlockNumber = BigNumber(await this.getCurrentBlockNumber());
-      console.log(currentBlockNumber.toFixed());
       let nowUnixInSeconds = BigNumber(new Date().getTime()).dividedBy(
         BigNumber(1000)
       );
@@ -933,7 +926,6 @@ export default {
     },
   },
   async created() {
-    console.log("ticket form created executed");
     const pinataAuth = await pinata.testAuthentication();
     console.log(pinataAuth);
     this.$root.$on("web3Injected", async () => {
