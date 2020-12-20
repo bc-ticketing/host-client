@@ -37,7 +37,7 @@ import {
   eventMetadataChanged,
   getPresaleBlock
 } from "./blockchainEventHandler";
-import { NULL_ADDRESS, STARTING_BLOCK, MAX_TICKETS_PER_PERSON } from "./constants/constants";
+import { NULL_ADDRESS, STARTING_BLOCK, MAX_ALLOWED_TICKET_AMOUNT } from "./constants/constants";
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
 import { getJSONFromIpfs } from "../util/getIpfs";
@@ -59,7 +59,7 @@ export class Event {
     this.lastFetchedBlockTickets = STARTING_BLOCK;
     this.lastFetchedBlockAftermarket = STARTING_BLOCK;
     this.contractAddress = contractAddress;
-    this.maxTicketsPerPerson = MAX_TICKETS_PER_PERSON;
+    this.maxTicketsPerPerson = MAX_ALLOWED_TICKET_AMOUNT;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
     this.location = "";

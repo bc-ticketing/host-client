@@ -2,7 +2,6 @@ import Vue from "vue";
 import Vuex from "vuex";
 import state from "./state";
 import { getWeb3, updateWeb3 } from "../util/getWeb3";
-import getIpfs from "../util/getIpfs";
 import { Event } from "../util/event";
 
 import { EVENT_FACTORY_ABI, EVENT_FACTORY_ADDRESS } from "../util/abi/EventFactory";
@@ -271,16 +270,5 @@ export default new Vuex.Store({
     },
 
     // approver area end
-    // general area start
-
-    /**
-     * Only needed when using own ipfs instance.
-     */
-    async registerIpfs({ commit }) {
-      const ipfs = await getIpfs();
-      commit("REGISTER_IPFS", ipfs);
-    }
-
-    // general area end
   }
 });
