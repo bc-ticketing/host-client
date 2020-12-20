@@ -1,10 +1,50 @@
+<p align="center">
+    <img src="./docs/img/ticket-icon.png" alt="Ticketing dApp" align="center">
+</p>
+
+<h2 align="center">Blockchain Ticketing</h2>
+<h3 align="center">Software Project</h3>
+<div align="center"><code >University of Zurich</code></div>
+
+---
+
 # Host Client
 
-Clone the repository with the following command in the folder of your desire:
+## Requirements
+
+- [Git](https://git-scm.com/) command line interface
+- [Node.js](https://nodejs.org/) command line interface
+- [Metamask Extension](https://metamask.io/) for your browser communicating with the Ethereum blockchain
+
+## Clone the Repository
 
 ```bash
-git clone https://github.com/bc-ticketing/host-client.git
+git clone --recurse-submodules https://github.com/bc-ticketing/host-client.git
 ```
+
+## Necessary Environment Variables and Contract Addresses
+
+Before you run the application locally, you will need to create a `.env` file in the root directory. For that, you can simply copy the file `.env_sample` and fill the necessary information.
+For the pinata keys, you need a [pinata](https://pinata.cloud/) account and add the according keys to the environment variables as explained below. Pinata is used to pin the metadata of events, tickets and approvers to the [IPFS](https://ipfs.io/) network.
+Further, you need to set the trust certificate api that you are going to use to verify that your trust verification is set correct. (For more information see the [social-trust-certificates-api](https://github.com/bc-ticketing/social-trust-certificates-api) repository.)
+
+The application needs a file named `.env` in the root directory. The content of the file needs to be a set of key-value pairs in the format `KEY=VALUE`. The following values need to be set:
+
+### Pinata Keys (in .env)
+`VUE_APP_PINATA_API_KEY` & `VUE_APP_PINATA_SECRET_API_KEY`
+
+### Trust Certificates API (in .env)
+`VUE_APP_TRUST_CERTIFICATES_API`
+
+### Identity Contract Address
+> Public address of the deployed Identity contract
+
+`IDENTITY_ADDRESS` in the file `/src/util/abi/Identity.js`
+
+### Event Factory Contract Address
+> Public address of the deployed Event Factory contract
+
+`EVENT_FACTORY_ADDRESS` in the file `/src/util/abi/EventFactory.js`
 
 ## Run Environment
 
@@ -15,24 +55,8 @@ cd host-client
 npm install
 ```
 
-Before you run the application locally, you will need to create a `.env`. For that, you can simply copy the file `.env_sample` and fill the necessary information.
-For the pinata keys, you need an account [here](https://pinata.cloud/) and fill in the api and your private key. This is used to pin the metadata of events, tickets and approvers to the [IPFS](https://ipfs.io/) network. Further, you need to set the trust certificate api that you are going to use, which you can retrieve from the [social-trust-certificates-api](https://github.com/bc-ticketing/social-trust-certificates-api) repository and finally, you need an [Infura](https://infura.io/) key.
-
-After setting these keys, you can now start serving the application locally.
+After setting the needed keys and contract addresses, you can start serving the application locally.
 
 ```bash
 npm run serve
 ```
-
-The current contracts are deployed on the Kovan test net with the following addresses:
-- EventFactory:   0x3840DFe78536c4b27A928B1B86898302C938Ae9D
-- Identity:       0x2583d96704f7F0a6737b158b59739ac4b239F1dE
-- TestERC20Token: 0xBFd25cac00F0E9a0cdFA634bdaED379FdC69E24d
-
-To use your own deployed contracts, use the [idetix](https://github.com/bc-ticketing/idetix) repository to compile and deploy them and then copy the addresses into the following files:
-
-- /src/util/abi/EventFactory.js --> EVENT_FACTORY_ADDRESS="{event factory contract address here}"
-
-- /src/util/abi/Identity.js --> IDENTITY_ADDRESS="{identity contract address here}"
-  
-- /src/util/constants/ERC20Tokens.js --> ERC20TESTTOKEN="{erc20 test token contract address here}"
